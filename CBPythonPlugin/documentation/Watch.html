@@ -1,0 +1,14 @@
+<html>
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+        <title>Watch</title>
+        <link type="text/css" rel="stylesheet" href="wikistyle.css">
+    </head>
+    <body>
+<span class="parent-nodes">parent nodes: <span class="parent-node"><a href="PythonPlugin.html">PythonPlugin</a></span></span><br /><br />
+<h2>Python Debugger Watch</h2>
+<ul><li />The debug watch allows you to watch variables, expressions and members of a class instance in a simple text control. <li />Enter one variable/object/class instance per line.<li />On the next watch update, for each line the debugger will return the type and value of the variable and/or expression in the watch or an error if the variable does not exist. <li />The watch will automatically update on each code step, but you can manually update by selecting Update Watch from the Python Menu<li />To view the members of an object instance append a ":" character to your variable or expression (this is an attempt to be pythonic). For each member of the class, the debugger will return a new line containing the member name, type and value prefixed by "..."<li />The deactivate lines of a watch prefix them with "#" (the python comment character). <li />The debugger will delete any lines prefixed with "." or "*" from the watch (hence deleting any orphaned clas members or error messages)<li />The debugger will convert tab characters and newlines in variable values to \n and \t<li />Leading whitespace in variable names/expressions is stripped<li />You cannot manually enter tab characters (you could enter them elsewhere and paste is required)<li />You should have no problems cutting and pasting variables and values to/from the watch<br />
+</ul>
+Limitations:<ul><li />Without significantly rewriting the pdb front end it is difficult to disentangle debugger output from program output (this is easier in Python 2.5). Thus it is possible for watch output to include program output if the watch expression calls functions that write to stdout.<li />The simple text control is a little clumsy. I'm planning to offer a wxGrid as an alternative.<li />Changes in variables aren't highlighted (this will be fixed eventually)<li />The watch does not automatically update as you add new variables/expressions</ul>
+    </body>
+</html>

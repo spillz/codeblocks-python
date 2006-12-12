@@ -1,0 +1,46 @@
+<?xml version="1.0" ?>
+<resource>
+  <object class="wxToolBarAddOn" name="py_debugger_toolbar">
+    <object class="tool" name="idPyDebuggerMenuDebug">
+	  <tooltip>Debug / Continue</tooltip>
+      <longhelp>Debug or continue program (depends on context)</longhelp>
+      <bitmap>dbgrun.png</bitmap>
+    </object>
+    <object class="tool" name="idPyDebuggerMenuRunToCursor">
+      <tooltip>Run to cursor</tooltip>
+      <longhelp>Run program until it reaches the current line</longhelp>
+      <bitmap>dbgrunto.png</bitmap>
+    </object>
+    <object class="tool" name="idPyDebuggerMenuNext">
+      <tooltip>Next line</tooltip>
+      <longhelp>Execute the next line of code</longhelp>
+      <bitmap>dbgnext.png</bitmap>
+    </object>
+    <object class="tool" name="idPyDebuggerMenuNextInstr">
+      <tooltip>Next instruction</tooltip>
+      <longhelp>Execute the next assembly instruction</longhelp>
+      <bitmap>dbgstepi.png</bitmap>
+    </object>
+    <object class="tool" name="idPyDebuggerMenuStep">
+      <tooltip>Step into</tooltip>
+      <longhelp>Execute the next line of code, but step inside functions</longhelp>
+      <bitmap>dbgstep.png</bitmap>
+    </object>
+    <object class="tool" name="idPyDebuggerMenuStepOut">
+      <tooltip>Step out</tooltip>
+      <longhelp>Continue execution until the current frame exits</longhelp>
+      <bitmap>dbgstepout.png</bitmap>
+    </object>
+    <object class="tool" name="idPyDebuggerMenuStop">
+      <tooltip>Stop debugger</tooltip>
+      <longhelp>Stop current debugging session</longhelp>
+      <bitmap>stop.png</bitmap>
+    </object>
+    <object class="separator" />
+    <object class="tool" name="idPyDebuggerToolWindows">
+      <tooltip>Debugging windows</tooltip>
+      <longhelp>Show/hide debugging windows</longhelp>
+      <bitmap>window.png</bitmap>
+    </object>
+  </object>
+</resource>

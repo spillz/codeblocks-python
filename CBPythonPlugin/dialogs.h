@@ -43,4 +43,6 @@ class DebuggerWatch : public wxPanel
 };
 
 
+
+
 #endif // DIALOGS_H

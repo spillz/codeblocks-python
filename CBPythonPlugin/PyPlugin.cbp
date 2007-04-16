@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_project_file>
-	<FileVersion major="1" minor="5" />
+	<FileVersion major="1" minor="6" />
 	<Project>
 		<Option title="Python-Plugin" />
 		<Option pch_mode="2" />
-		<Option default_target="" />
 		<Option compiler="gcc" />
-		<Option virtualFolders="" />
 		<Build>
 			<Target title="default">
 				<Option output="PyPlugin.dll" prefix_auto="1" extension_auto="1" />
@@ -29,10 +27,12 @@
 					<Add option="-DCB_PRECOMP" />
 					<Add option="-DWX_PRECOMP" />
 					<Add option="-DwxUSE_UNICODE" />
-					<Add directory="$(#cb)\sdk" />
-					<Add directory="$(#cb)\sdk\wxscintilla\include" />
+					<Add directory="$(#cb.include)\sdk" />
+					<Add directory="$(#cb.include)\wxscintilla\include" />
 					<Add directory="$(#wx.include)" />
 					<Add directory="$(#wx.lib)\gcc_dll\mswu" />
+					<Add directory="$(#cb.include)" />
+					<Add directory="$(#WX)\contrib\include" />
 				</Compiler>
 				<Linker>
 					<Add library="codeblocks" />
@@ -48,55 +48,22 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
+			<Add option="-DCB_PRECOMP" />
+			<Add option="-DWX_PRECOMP" />
 		</Compiler>
-		<Unit filename="ConfigDialog.cpp">
-			<Option compilerVar="CPP" />
-			<Option target="default" />
-		</Unit>
-		<Unit filename="ConfigDialog.h">
-			<Option compilerVar="CPP" />
-			<Option compile="0" />
-			<Option link="0" />
-			<Option target="default" />
-		</Unit>
-		<Unit filename="PyPlugin.cpp">
-			<Option compilerVar="CPP" />
-			<Option target="default" />
-		</Unit>
-		<Unit filename="PyPlugin.h">
-			<Option compilerVar="CPP" />
-			<Option compile="0" />
-			<Option link="0" />
-			<Option target="default" />
-		</Unit>
-		<Unit filename="Resources\dialogs.fbp">
-			<Option compilerVar="CPP" />
-			<Option compile="0" />
-			<Option link="0" />
-			<Option target="default" />
-		</Unit>
-		<Unit filename="dialogs.cpp">
-			<Option compilerVar="CPP" />
-			<Option target="default" />
-		</Unit>
-		<Unit filename="dialogs.h">
-			<Option compilerVar="CPP" />
-			<Option compile="0" />
-			<Option link="0" />
-			<Option target="default" />
-		</Unit>
-		<Unit filename="manifest.xml">
-			<Option compilerVar="CPP" />
-			<Option compile="0" />
-			<Option link="0" />
-			<Option target="default" />
-		</Unit>
-		<Unit filename="pdb2.py">
-			<Option compilerVar="CPP" />
-			<Option compile="0" />
-			<Option link="0" />
-			<Option target="default" />
-		</Unit>
-		<Extensions />
+		<Unit filename="ASTtest.py" />
+		<Unit filename="ConfigDialog.cpp" />
+		<Unit filename="ConfigDialog.h" />
+		<Unit filename="PyPlugin.cpp" />
+		<Unit filename="PyPlugin.h" />
+		<Unit filename="Resources\dialogs.fbp" />
+		<Unit filename="dialogs.cpp" />
+		<Unit filename="dialogs.h" />
+		<Unit filename="function_attribute.py" />
+		<Unit filename="manifest.xml" />
+		<Unit filename="pdb2.py" />
+		<Extensions>
+			<code_completion />
+		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

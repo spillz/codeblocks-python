@@ -193,43 +193,23 @@ bool PyPlugin::IsPythonFile(const wxString &file)
 wxString PyPlugin::AssembleBreakpointCommands()
 {
     wxString commands;
-    EditorManager* edMan = Manager::Get()->GetEditorManager();
-    for (int i = 0; i < edMan->GetEditorsCount(); ++i)
+    for(BPList::iterator itr=m_bplist.begin();itr!=m_bplist.end();itr++)
     {
-        cbEditor* ed = edMan->GetBuiltinEditor(i);
-        if (ed)
+        wxString sfile=itr->filename;
+        if(sfile.Contains(_T(" ")))
         {
-            wxString file=ed->GetFilename();
-            if(!IsPythonFile(file))
-                continue;
-            std::vector<int> bplist=ed->FindBreakpoints();
-            for(std::vector<int>::iterator bp=bplist.begin();bp!=bplist.end();bp++)
-            { //TODO: Take command format from a configuration file
-                wxString sfile=file;
-                if(sfile.Contains(_T(" ")))
-                {
-                    wxFileName f(sfile);
-                    sfile=f.GetShortPath();
-                }
-                wxString cmd=_T("break ")+sfile+_T(":")+wxString::Format(_T("%i"),(*bp)+1)+_T("\n");
-                commands+=cmd;
-            }
+            wxFileName f(sfile);
+            sfile=f.GetShortPath();
+        }
+        for(BPLtype::iterator bp=itr->linenums.begin();bp!=itr->linenums.end();bp++)
+        {
+            wxString cmd=_T("break ")+sfile+_T(":")+wxString::Format(_T("%i"),(*bp)+1)+_T("\n");
+            commands+=cmd;
         }
     }
     return commands;
 }
 
-
-/*
-Debug test:
-test1:
-test2=
-test3=abcd=ef
-test4==abvd
-   test5:
-   ~  test6
-
-*/
 
 wxString PyPlugin::AssembleWatchCommands()
 { //TODO: get this working
@@ -584,23 +564,35 @@ bool PyPlugin::AddBreakpoint(const wxString& file, int line)
 {
     if(!IsPythonFile(file))
         return false;
-    if(m_DebuggerActive)
-    {
-/*        if(m_TimerPollDebugger.IsRunning())
+    wxFileName f(file);
+    for (BPList::iterator itr=m_bplist.begin(); itr!=m_bplist.end(); ++itr)
+        if(itr->filename=f.GetFullPath())
         {
-            char cmd=3; // send a ctrl-c message
-            m_ostream->Write(&cmd,1);
-            m_TimerPollDebugger.Stop();
-        }*/
-        wxString sfile=file;
-        if(sfile.Contains(_T(" ")))
-        {
-            wxFileName f(sfile);
-            sfile=f.GetShortPath();
+            if(!itr->linenums.insert(line).second)
+                return false; // already a bp here
+            if(m_DebuggerActive) // if the debugger is running already we need to send a message to the interpreter to add the new breakpoint
+            {
+        /*        if(m_TimerPollDebugger.IsRunning())
+                {
+                    char cmd=3; // send a ctrl-c message
+                    m_ostream->Write(&cmd,1);
+                    m_TimerPollDebugger.Stop();
+                }*/
+                wxString sfile=file;
+                if(sfile.Contains(_T(" ")))
+                {
+                    wxFileName f(sfile);
+                    sfile=f.GetShortPath();
+                }
+                wxString cmd=_T("break ")+sfile+_T(":")+wxString::Format(_T("%i"),line+1)+_T("\n");
+                DispatchCommands(cmd,DBGCMDTYPE_BREAKPOINT);
+            }
+            return true;
         }
-        wxString cmd=_T("break ")+sfile+_T(":")+wxString::Format(_T("%i"),line+1)+_T("\n");
-        DispatchCommands(cmd,DBGCMDTYPE_BREAKPOINT);
-    }
+    FileBreakpoints fbp;
+    fbp.filename=f.GetFullPath();
+    fbp.linenums.insert(line);
+    m_bplist.push_back(fbp);
     return true;
 }
 
@@ -608,24 +600,44 @@ bool PyPlugin::RemoveBreakpoint(const wxString& file, int line)
 {
     if(!IsPythonFile(file))
         return false;
-    if(m_DebuggerActive)
-    {
-/*        if(m_TimerPollDebugger.IsRunning())
+    wxFileName f(file);
+
+    for (size_t i=0;i<m_bplist.size();++i)
+        if(m_bplist[i].filename==f.GetFullPath())
         {
-            char cmd=3; // send a ctrl-c message
-            m_ostream->Write(&cmd,1);
-            m_TimerPollDebugger.Stop();
-        }*/
-        wxString sfile=file;
-        if(sfile.Contains(_T(" ")))
-        {
-            wxFileName f(sfile);
-            sfile=f.GetShortPath();
+            if(m_bplist[i].linenums.empty()) // this shouldn't happen... if the linenum list is empty the file should not be here
+            {
+                wxMessageBox(_("Python Plugin Warning: request to remove a non-existent line"));
+                m_bplist.erase(m_bplist.begin()+i);
+                return false;
+            }
+            if(m_bplist[i].linenums.erase(line)<=0)
+            {
+                wxMessageBox(_("Python Plugin Warning: request to remove a non-existent line"));
+                return false; // no bp here
+            }
+            if(m_bplist[i].linenums.empty()) //delete this file from the list
+                m_bplist.erase(m_bplist.begin()+i);
+            if(m_DebuggerActive)
+            {
+        /*        if(m_TimerPollDebugger.IsRunning())
+                {
+                    char cmd=3; // send a ctrl-c message
+                    m_ostream->Write(&cmd,1);
+                    m_TimerPollDebugger.Stop();
+                }*/
+                wxString sfile=file;
+                if(sfile.Contains(_T(" ")))
+                {
+                    wxFileName f(sfile);
+                    sfile=f.GetShortPath();
+                }
+                wxString cmd=_T("clear ")+sfile+_T(":")+wxString::Format(_T("%i"),line+1)+_T("\n");
+                DispatchCommands(cmd,DBGCMDTYPE_BREAKPOINT);
+             }
+             return true;
         }
-        wxString cmd=_T("clear ")+sfile+_T(":")+wxString::Format(_T("%i"),line+1)+_T("\n");
-        DispatchCommands(cmd,DBGCMDTYPE_BREAKPOINT);
-     }
-    return true;
+    return false;
 }
 
 

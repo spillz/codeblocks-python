@@ -1,4 +1,7 @@
-Code::Blocks Python Plugin
+Code::Blocks Python Plugin Release Notes
+
+Rev 2: updated python plugin to be compatible with C::B rev 3855. no more patching of CB source required!
+Rev 1: first upload
 
 Outstanding Bugs, Missing Features and Annoyances
 

@@ -18,7 +18,7 @@
 #endif
 
 #include <cbplugin.h> // for "class cbPlugin"
-#include <sdk.h>
+#include "sdk.h"
 #include "ConfigDialog.h"
 #include "Dialogs.h"
 
@@ -58,6 +58,15 @@ B) Python Projects (Easy)
 C) Python Source Browser and Code Completion (Medium/Hard)
 */
 
+typedef std::set<int> BPLtype;
+
+struct FileBreakpoints
+{
+    wxString filename;
+    BPLtype linenums;
+};
+
+typedef std::vector<FileBreakpoints> BPList;
 
 struct PythonCmdDispatchData
 {
@@ -81,7 +90,6 @@ class PyPlugin : public cbDebuggerPlugin
 		  * @param line The line number to put the breakpoint in @c file.
 		  * @return True if succeeded, false if not.
 		  */
-        // Should only need to respond to most of the BP events while active debugging is in progress
 		virtual bool AddBreakpoint(const wxString& file, int line);
 
 		/** @brief Request to add a breakpoint based on a function signature.
@@ -292,6 +300,10 @@ class PyPlugin : public cbDebuggerPlugin
         wxTimer m_TimerPollDebugger;
         int m_DebugCommandCount; //number of commands dispatched to the debugger that have yet to be handled
         std::list<PythonCmdDispatchData> m_DispatchedCommands;
+
+        // breakpoint list
+        BPList m_bplist;
+
 
         bool m_DebuggerActive;
         wxString m_DefaultInterpreter;

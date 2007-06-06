@@ -13,6 +13,8 @@
 //#include "InterpretedLangs.h"
 #include "interpreterproperties.h"
 
+
+
 class InterpretedLangs;
 class InterpreterCollection;
 
@@ -73,6 +75,8 @@ class ConfigDialog : public cbConfigurationPanel
 
     DECLARE_EVENT_TABLE()
 };
+
+
 
 #endif // CONFIGDIALOG
 

@@ -1,6 +1,7 @@
 #include "interpreterproperties.h"
-#include <sdk.h> // Code::Blocks SDK
+#include "sdk.h" // Code::Blocks SDK
 #include <configurationpanel.h>
+#include <stdlib.h>
 //#include "InterpretedLangs.h"
 
 /*
@@ -11,16 +12,17 @@ virtual InterpreterCollection::~InterpreterProperties()
 
 wxString istr0(int i)
 {
-    char buffer[20]="";
-    char *buf=&buffer[0];
-    buf=_itoa(i,buf,10);
-    wxString s;
-    while(*buf!=0)
-    {
-        s+=*buf;
-        buf++;
-    }
-    return s;
+    return wxString::Format(_T("%i"),i);
+//    char buffer[20]="";
+//    char *buf=&buffer[0];
+//    buf=itoa(i,buf,10);
+//    wxString s;
+//    while(*buf!=0)
+//    {
+//        s+=*buf;
+//        buf++;
+//    }
+//    return s;
 }
 
 bool InterpreterCollection::WriteConfig()
@@ -43,6 +45,7 @@ bool InterpreterCollection::WriteConfig()
             wxString jstr=istr0(j);
             cfg->Write(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/name"), interps[i].actions[j].name);
             cfg->Write(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/command"), interps[i].actions[j].command);
+            cfg->Write(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/windowed"), interps[i].actions[j].windowed);
         }
     }
 //    cfg->EnumerateSubPaths("/InterpProps");
@@ -75,6 +78,7 @@ bool InterpreterCollection::ReadConfig()
             wxString jstr=istr0(j);
             cfg->Read(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/name"), &interps[i].actions[j].name);
             cfg->Read(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/command"), &interps[i].actions[j].command);
+            cfg->Read(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/windowed"), &interps[i].actions[j].windowed);
         }
     }
 //    cfg->EnumerateSubPaths("/InterpProps");

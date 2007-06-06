@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="Python-Plugin-Unix" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="default">
+				<Option output="$(#cb)/devel/share/codeblocks/plugins/libPyPlugin.so" prefix_auto="0" extension_auto="0" />
+				<Option working_dir="$(#cb)/devel" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Option host_application="$(#cb)/devel/codeblocks" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+				<Linker>
+					<Add library="codeblocks" />
+					<Add library="wxscintilla" />
+					<Add library="libpython2.5" />
+				</Linker>
+				<ExtraCommands>
+					<Add after="zip -j9 $(#cb)/devel/share/codeblocks/PyPlugin.zip manifest.xml resources/*.xrc resources/images/*.png resources/images/16x16/*.png" />
+				</ExtraCommands>
+			</Target>
+			<Environment>
+				<Variable name="wx=$wx_LINUX" value="" />
+				<Variable name="py" value="python2.5" />
+			</Environment>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-g" />
+			<Add option="`wx-config --cflags`" />
+			<Add option="-fmessage-length=0" />
+			<Add option="-fexceptions" />
+			<Add option="-Winvalid-pch" />
+			<Add option="-Ulinux" />
+			<Add option="-Uunix" />
+			<Add option="-fPIC" />
+			<Add option="-DcbDEBUG" />
+			<Add option="-DCB_PRECOMP" />
+			<Add directory="$(#cb)/include" />
+			<Add directory="$(#cb)/include/wxscintilla/include" />
+			<Add directory="/usr/include/$py" />
+		</Compiler>
+		<Linker>
+			<Add option="`wx-config --libs`" />
+			<Add directory="$(#cb)/devel" />
+		</Linker>
+		<Unit filename="CodeBrowsingSamples/browse.py" />
+		<Unit filename="CodeBrowsingSamples/cb_py_interpreter_code.py" />
+		<Unit filename="ConfigDialog.cpp" />
+		<Unit filename="ConfigDialog.h" />
+		<Unit filename="PyPlugin.cpp" />
+		<Unit filename="PyPlugin.h" />
+		<Unit filename="Resources/dialogs.fbp" />
+		<Unit filename="dialogs.cpp" />
+		<Unit filename="dialogs.h" />
+		<Unit filename="manifest.xml" />
+		<Unit filename="pdb2.py" />
+		<Unit filename="py_embedder.cpp" />
+		<Unit filename="py_embedder.h" />
+		<Extensions>
+			<code_completion />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

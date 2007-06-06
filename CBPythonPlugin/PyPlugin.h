@@ -20,7 +20,7 @@
 #include <cbplugin.h> // for "class cbPlugin"
 #include "sdk.h"
 #include "ConfigDialog.h"
-#include "Dialogs.h"
+#include "dialogs.h"
 
 
 #define DBGCMDTYPE_FLOWCONTROL 1

@@ -1,4 +1,3 @@
-#include <sdk.h> // Code::Blocks SDK
 #include <configurationpanel.h>
 #include "InterpretedLangs.h"
 
@@ -12,8 +11,9 @@ namespace
 
 int ID_LangMenu_Settings=wxNewId();
 int ID_LangMenu_RunPiped=wxNewId();
+int ID_LangMenu_ShowConsole=wxNewId();
 int ID_PipedProcess=wxNewId();
-int ID_TimerPollDebugger=wxNewId();
+int ID_PollPipedProcess=wxNewId();
 //int ID_LangMenu_SetTarget=wxNewId();
 //int ID_LangMenu_RunTarget=wxNewId();
 //int ID_LangMenu_Run=wxNewId();
@@ -91,49 +91,35 @@ BEGIN_EVENT_TABLE(InterpretedLangs, cbPlugin)
     EVT_MENU_RANGE(ID_ContextMenu_0,ID_ContextMenu_9,InterpretedLangs::OnRunTarget)
     EVT_MENU_RANGE(ID_NoTargMenu_0, ID_NoTargMenu_9, InterpretedLangs::OnRun)
     EVT_MENU_RANGE(ID_SubMenu_0, ID_SubMenu_20, InterpretedLangs::OnRunTarget)
-//    EVT_END_PROCESS(wxID_ANY, InterpretedLangs::OnTerminatePipedProcess)
-//    EVT_PIPEDPROCESS_STDOUT(ID_PipedProcess, InterpretedLangs::OnPipedOutput)
-//    EVT_IDLE(InterpretedLangs::OnIdle)
-//    EVT_TIMER(ID_TimerPollDebugger, InterpretedLangs::OnTimer)
+    EVT_MENU(ID_LangMenu_ShowConsole,InterpretedLangs::OnShowConsole)
+
 END_EVENT_TABLE()
 
-void InterpretedLangs::OnPipedOutput(wxCommandEvent& event)
+
+void InterpretedLangs::OnShowConsole(wxCommandEvent& event)
 {
-    wxString msg = event.GetString();
-    if (!msg.IsEmpty())
-    {
-//        Manager::Get()->GetMessageManager()->Log(m_PageIndex, _T("O>>> %s"), msg.c_str());
-        wxMessageBox(msg);
-    }
+    // This toggles display of the console I/O window
+    CodeBlocksDockEvent evt(event.IsChecked() ? cbEVT_SHOW_DOCK_WINDOW : cbEVT_HIDE_DOCK_WINDOW);
+    evt.pWindow = m_commandio;
+    Manager::Get()->GetAppWindow()->ProcessEvent(evt);
 }
 
-//void InterpretedLangs::OnIdle(wxIdleEvent& event)
-//{
-//    if (m_pp && ((PipedProcess*)m_pp)->HasInput())
-//        event.RequestMore();
-//    else
-//        event.Skip();
-//}
-
-void InterpretedLangs::OnTimer(wxTimerEvent& event)
+void InterpretedLangs::ShowConsole()
 {
-    wxWakeUpIdle();
+    // This toggles display of the console I/O window
+    CodeBlocksDockEvent evt(cbEVT_SHOW_DOCK_WINDOW);
+    evt.pWindow = m_commandio;
+    Manager::Get()->GetAppWindow()->ProcessEvent(evt);
 }
 
+void InterpretedLangs::HideConsole()
+{
+    // This toggles display of the console I/O window
+    CodeBlocksDockEvent evt(cbEVT_HIDE_DOCK_WINDOW);
+    evt.pWindow = m_commandio;
+    Manager::Get()->GetAppWindow()->ProcessEvent(evt);
+}
 
-//void InterpretedLangs::OnRunPiped(wxCommandEvent &event)
-//{
-//    m_TimerPollDebugger.SetOwner(this, ID_TimerPollDebugger);
-//    m_pp=new PipedProcess((void **)&m_pp,this,ID_PipedProcess);
-//    m_pp->Launch(_T("C:/Python24/python.exe"),25);
-//    m_istream=m_pp->GetInputStream();
-//    m_ostream=m_pp->GetOutputStream();
-//}
-
-//void InterpretedLangs::OnTerminatePipedProcess(wxProcessEvent &event)
-//{
-//    delete m_pp;
-//}
 
 void InterpretedLangs::OnSettings(wxCommandEvent& event)
 {
@@ -170,6 +156,8 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
 {
     int ID=event.GetId();
     wxString commandstr;
+    wxString consolename;
+    bool windowed=false;
     if(ID>=ID_ContextMenu_0&&ID<=ID_ContextMenu_9)
     {
         if(!wxFileName::FileExists(m_RunTarget))
@@ -181,6 +169,8 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
         }
         int actionnum=ID-ID_ContextMenu_0;
         commandstr=m_ic.interps[m_interpnum].actions[actionnum].command;
+        consolename=m_ic.interps[m_interpnum].name+_T(" ")+m_ic.interps[m_interpnum].actions[actionnum].name;
+        windowed=(m_ic.interps[m_interpnum].actions[actionnum].windowed==_("W"));
         commandstr.Replace(_T("$interpreter"),wxFileName(m_ic.interps[m_interpnum].exec).GetShortPath(),false);
         commandstr.Replace(_T("$file"),wxFileName(m_RunTarget).GetShortPath(),false);
     } else
@@ -205,7 +195,8 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
         }
         int actionnum=ID-m->FindItemByPosition(0)->GetId();
         commandstr=m_ic.interps[m_interpnum].actions[actionnum].command;
-
+        consolename=m_ic.interps[m_interpnum].name+_T(" ")+m_ic.interps[m_interpnum].actions[actionnum].name;
+        windowed=(m_ic.interps[m_interpnum].actions[actionnum].windowed==_("W"));
         m_wildcard=m_ic.interps[m_interpnum].extensions;
         OnSetTarget(event);
         wxFileName fn(m_RunTarget);
@@ -219,13 +210,21 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
         wxMessageBox(_T("WARNING: Unprocessed Interpreter Message"));
         return;
     }
-    wxExecute(commandstr,wxEXEC_ASYNC,NULL);
+    if(windowed)
+    {
+        m_commandio->LaunchProcess(commandstr,consolename,0);
+        ShowConsole();
+    } else
+    {
+        wxExecute(commandstr,wxEXEC_ASYNC);
+    }
 }
 
 void InterpretedLangs::OnRun(wxCommandEvent& event)
 {
     int ID=event.GetId();
     wxString commandstr;
+    wxString consolename;
     wxMenu *m=LangMenu->FindItem(ID)->GetMenu(); // get pointer object to selected item in submenu
     for(m_interpnum=0;m_interpnum<m_ic.interps.size()&&m_interpnum<10;m_interpnum++)
     {
@@ -237,8 +236,11 @@ void InterpretedLangs::OnRun(wxCommandEvent& event)
         wxMessageBox(_T("Warning: Sub menu not found - cancelling command"));
         return;
     }
-    commandstr=wxFileName(m_ic.interps[m_interpnum].exec).GetShortPath();
-    wxExecute(commandstr,wxEXEC_ASYNC,NULL);
+    commandstr=m_ic.interps[m_interpnum].exec;
+    consolename=m_ic.interps[m_interpnum].name;
+
+    wxExecute(commandstr,wxEXEC_ASYNC);
+//    m_commandio->LaunchProcess(commandstr,consolename,0);
 }
 
 
@@ -281,6 +283,19 @@ void InterpretedLangs::OnAttach()
 
 	m_ic.ReadConfig();
 
+	m_pipeoutput=true;
+
+    m_commandio = new ShellManager(Manager::Get()->GetAppWindow());
+
+    CodeBlocksDockEvent evt(cbEVT_ADD_DOCK_WINDOW);
+    evt.name = _T("Shells");
+    evt.title = _T("Shells");
+    evt.pWindow = m_commandio;
+    evt.dockSide = CodeBlocksDockEvent::dsFloating;
+    evt.desiredSize.Set(400, 300);
+    evt.floatingSize.Set(400, 300);
+    evt.minimumSize.Set(200, 150);
+    Manager::Get()->GetAppWindow()->ProcessEvent(evt);
 }
 
 void InterpretedLangs::OnRelease(bool appShutDown)
@@ -290,6 +305,15 @@ void InterpretedLangs::OnRelease(bool appShutDown)
 	// which means you must not use any of the SDK Managers
 	// NOTE: after this function, the inherited member variable
 	// m_IsAttached will be FALSE...
+
+    if (m_commandio)
+    {
+        CodeBlocksDockEvent evt(cbEVT_REMOVE_DOCK_WINDOW);
+        evt.pWindow = m_commandio;
+        Manager::Get()->GetAppWindow()->ProcessEvent(evt);
+        m_commandio->Destroy();
+    }
+    m_commandio = 0;
 }
 
 int InterpretedLangs::Configure()
@@ -321,6 +345,7 @@ void InterpretedLangs::CreateMenu()
         submenu->Append(ID_NoTargMenu_0+i,_T("Run Without Target"),_T(""));
         LangMenu->Append(ID_Menu_0+i,m_ic.interps[i].name,submenu);
     }
+    LangMenu->Append(ID_LangMenu_ShowConsole,_T("Toggle I/O console"),_T(""),wxITEM_CHECK);
 }
 
 
@@ -331,6 +356,7 @@ void InterpretedLangs::UpdateMenu()
     {
         for(unsigned int i=0;i<m_ic.interps.size();i++)
             LangMenu->Destroy(ID_Menu_0+i);
+        LangMenu->Destroy(ID_LangMenu_ShowConsole);
         CreateMenu();
     }
 }
@@ -416,107 +442,3 @@ void InterpretedLangs::BuildModuleMenu(const ModuleType type, wxMenu* menu, cons
 //	NotImplemented(_T("InterpretedLangs::BuildModuleMenu()"));
 }
 
-
-/*
-// ----------------------------------------------------------------------------
-// Piped Process for the Interpreter
-// ----------------------------------------------------------------------------
-
-// Not sure whether to do message handling here or in the InterpretedLangs class...
-
-class InterpreterProcess: public wxProcess
-{
-public:
-    InterpreterProcess(MyFrame *parent, const wxString& cmd, , const wxString& input)
-        : wxProcess(parent), m_cmd(cmd)
-    {
-        m_parent = parent;
-        Redirect();
-    }
-    virtual bool HasInput();
-    virtual void OnTerminate(int pid, int status);
-private:
-    wxString m_input;
-    InterpretedLangs *m_parent;
-    wxString m_cmd;
-
-}
-
-bool InterpreterProcess::HasInput()
-{
-    if ( !m_input.empty() )
-    {
-        wxTextOutputStream os(*GetOutputStream());
-        os.WriteString(m_input);
-
-        CloseOutput();
-        m_input.clear();
-
-        // call us once again - may be we'll have output
-        return true;
-    }
-
-    bool hasInput = false;
-
-    if ( IsInputAvailable() )
-    {
-        wxTextInputStream tis(*GetInputStream());
-
-        // this assumes that the output is always line buffered
-        wxString msg;
-        msg << m_cmd << _T(" (stdout): ") << tis.ReadLine();
-
-        m_parent->GetLogListBox()->Append(msg);
-
-        hasInput = true;
-    }
-
-    if ( IsErrorAvailable() )
-    {
-        wxTextInputStream tis(*GetErrorStream());
-
-        // this assumes that the output is always line buffered
-        wxString msg;
-        msg << m_cmd << _T(" (stderr): ") << tis.ReadLine();
-
-        m_parent->GetLogListBox()->Append(msg);
-
-        hasInput = true;
-    }
-
-    return hasInput;
-}
-
-void InterpreterProcess::OnTerminate(int pid, int status)
-{
-    if ( !m_input.empty() )
-    {
-        wxTextOutputStream os(*GetOutputStream());
-        os.WriteString(m_input);
-
-        CloseOutput();
-        m_input.clear();
-
-        // call us once again - may be we'll have output
-        return true;
-    }
-
-    // show the rest of the output
-    while ( HasInput() )
-        ;
-
-    m_parent->OnProcessTerminated(this);
-
-    wxLogStatus(m_parent, _T("Process %u ('%s') terminated with exit code %d."),
-                pid, m_cmd.c_str(), status);
-
-    // we're not needed any more
-    delete this;
-}
-
-// ----------------------------------------------------------------------------
-// End of Piped Process for the Interpreter
-// ----------------------------------------------------------------------------
-
-
-*/

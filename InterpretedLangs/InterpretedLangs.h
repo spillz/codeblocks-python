@@ -17,10 +17,12 @@
 	#include <wx/wx.h>
 #endif
 
-//#include <sdk.h>
 #include <cbplugin.h> // for "class cbPlugin"
+#include "sdk.h"
 #include "interpreterproperties.h"
 #include "ConfigDialog.h"
+
+#include "ShellCtrl.h"
 
 //class ConfigDialog;
 
@@ -128,6 +130,8 @@ class InterpretedLangs : public cbPlugin
     public:
         void UpdateMenu();
         void CreateMenu();
+        void ShowConsole();
+        void HideConsole();
         InterpreterCollection m_ic; //object holding interpreter properties
 
     private:
@@ -137,19 +141,30 @@ class InterpretedLangs : public cbPlugin
         void OnRunTarget(wxCommandEvent& event);
         void OnRun(wxCommandEvent& event);
         void OnRunPiped(wxCommandEvent &event);
+        void OnShowConsole(wxCommandEvent& event);
+        void OnTerminatePipedProcess(wxProcessEvent& event);
+        void OnPollPipedProcess(wxTimerEvent& event);
+
 //        void OnTerminatePipedProcess(wxProcessEvent &event);
-        void OnPipedOutput(wxCommandEvent& event);
-        void OnIdle(wxIdleEvent& event);
-        void OnTimer(wxTimerEvent& event);
         wxMenu *LangMenu;  // pointer to the interpreters menu
         unsigned int m_interpnum;
         wxString m_wildcard;
-        wxOutputStream *m_ostream;
-        wxInputStream *m_istream;
 //        PipedProcess *m_pp;
         wxTimer m_TimerPollDebugger; // This appears to be illegal... TODO: Fix it (maybe make it a pointer and instantiate later)
 
         wxString m_RunTarget;
+
+        // data structures used to pipe console output to a dockable window (m_commandio)
+        bool m_pipeoutput;
+        wxOutputStream *m_ostream; //handle to console program output
+        wxInputStream *m_istream; //handle to console program input
+        wxProcess *m_pp; // handle to the console program
+        wxTimer m_timerpollconsole; //timer object used to regularly poll the piped console program for new output
+        // Output from the piped console program held in buffers
+        wxString m_outbuf; //contains buffer of streamed output from console
+        int m_bufpos; //search position in console output buffer (used to check whether processing is finished)
+
+        ShellManager *m_commandio;
 
         DECLARE_EVENT_TABLE();
 };

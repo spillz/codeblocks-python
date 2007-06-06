@@ -15,6 +15,7 @@ struct InterpreterAction
 {
    wxString name; // the action's name, e.g. "Run"
    wxString command; // the command, e.g. "$interpreter --run $file"
+   wxString windowed; //"W" for spawning in the shells dockable panel, "E" for an external window
 };
 
 struct Interpreter

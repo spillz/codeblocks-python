@@ -1,7 +1,31 @@
-"""An extension to the Python debugger for parsing debugger output in Code::Blocks"""
+"""An extension to the Python debugger for parsing debugger output in Code::Blocks IL Plugin"""
 #TO DO: figure out a way to separate stdin for program vs debugger
-#Maybe take debugger input from a stream
 
+'''
+One way to handle the above problem would be to embed python in the plugin and either use
+the default pdb implementation or modify it to suit Code::Blocks.
+Can then setup overrides for stdout and stderr before running any code
+with the following:
+
+     import sys
+
+     #class StdinDelivery:
+	 #def read(self, stuff):
+	 #    ecna.stdin(stuff) #this should call a C++ function, which supplies input (possibly requesting it from the plugin)
+
+
+     class StdoutCatcher:
+	 def write(self, stuff):
+	     ecna.stdout(stuff) #this should call a C++ function, which notifies the plugin
+
+     class StderrCatcher:
+	 def write(self, stuff):
+	     ecna.stderr(stuff) #this should call a C++ function, which notifies the plugin
+
+     sys.stdout = StdoutCatcher()
+     sys.stderr = StderrCatcher()
+     #syd.stdin = StdinDelivery()
+'''
 
 #TO DO: eliminate the imports that aren't used
 import sys
@@ -25,7 +49,7 @@ class prettyout(object):
 
 
 def main():
-    pout=prettyout() #TODO: Derive a class from sys.stdout and handle its write method to add decoration for easy parsing in C::B
+    pout=prettyout()
     if not sys.argv[1:]:
         print >>pout, "usage: pdb.py scriptfile [arg] ..."
         sys.exit(2)

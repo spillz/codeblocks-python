@@ -1,5 +1,6 @@
-#include "ConfigDialog.h"
+#include "sdk.h" // Code::Blocks SDK
 #include "InterpretedLangs.h"
+#include "ConfigDialog.h"
 
 #include <vector>
 //#include <wx/xrc/xmlres.h>
@@ -41,6 +42,8 @@ int ID_EXT=wxNewId();
 int ID_ACTIONS=wxNewId();
 int ID_OK=wxNewId();
 int ID_CANCEL=wxNewId();
+
+
 
 //  EVT_UPDATE_UI( -1, ConfigDialog::UpdateUI)
 //  EVT_LISTBOX(XRCID("lstHelp"), ConfigDialog::ListChange)
@@ -144,7 +147,7 @@ ConfigDialog::ConfigDialog(wxWindow* parent, InterpretedLangs* plugin) //: cbCon
 	wxBoxSizer* bSizer21;
 	bSizer21 = new wxBoxSizer( wxHORIZONTAL );
 
-	m_staticText5 = new wxStaticText( this, wxID_DEFAULT, wxT("File Extensions (example: *.py;*.pyw)"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText5 = new wxStaticText( this, wxID_DEFAULT, wxT("File Extensions (example: *.py;*.pyc)"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer21->Add( m_staticText5, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 
 	m_editext = new wxTextCtrl( this, ID_EXT, wxT(""), wxDefaultPosition, wxDefaultSize, 0|wxTAB_TRAVERSAL );
@@ -152,7 +155,7 @@ ConfigDialog::ConfigDialog(wxWindow* parent, InterpretedLangs* plugin) //: cbCon
 
 	bSizer18->Add( bSizer21, 0, wxEXPAND, 5 );
 
-	m_staticText4 = new wxStaticText( this, wxID_DEFAULT, wxT("Actions (Name;Command) variables: $interpreter, $file"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4 = new wxStaticText( this, wxID_DEFAULT, wxT("Actions (Name;Command;W|E) variables: $interpreter, $file"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer18->Add( m_staticText4, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 
 	m_editactions = new wxTextCtrl( this, ID_ACTIONS, wxT(""), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTAB_TRAVERSAL );
@@ -166,109 +169,8 @@ ConfigDialog::ConfigDialog(wxWindow* parent, InterpretedLangs* plugin) //: cbCon
 
 	this->SetSizer( bSizer12 );
 
-
-/*
-  wxBoxSizer* bSizer12;
-	bSizer12 = new wxBoxSizer( wxVERTICAL );
-
-	m_staticText1 = new wxStaticText( this, wxID_DEFAULT, wxT("Known Interpreters"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer12->Add( m_staticText1, 0, wxALL, 5 );
-
-	wxBoxSizer* bSizer14;
-	bSizer14 = new wxBoxSizer( wxHORIZONTAL );
-
-	wxBoxSizer* bSizer11;
-	bSizer11 = new wxBoxSizer( wxVERTICAL );
-
-	m_butnew = new wxButton( this, ID_NEW, wxT("New"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer11->Add( m_butnew, 0, wxLEFT|wxRIGHT, 5 );
-
-	m_butcopy = new wxButton( this, ID_COPY, wxT("Copy"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer11->Add( m_butcopy, 0, wxLEFT|wxRIGHT, 5 );
-
-	m_butdelete = new wxButton( this, ID_DELETE, wxT("Delete"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer11->Add( m_butdelete, 0, wxRIGHT|wxLEFT, 5 );
-
-	bSizer11->Add( 0, 10, 1, wxALL, 5 );
-
-	m_butup = new wxButton( this, ID_UP, wxT("Up"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer11->Add( m_butup, 0, wxRIGHT|wxLEFT, 5 );
-
-	m_down = new wxButton( this, ID_DOWN, wxT("Down"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer11->Add( m_down, 0, wxRIGHT|wxLEFT, 5 );
-
-	bSizer14->Add( bSizer11, 0, wxTOP, 5 );
-
-	m_interplist = new wxListBox( this, ID_INTERP_LIST, wxDefaultPosition, wxDefaultSize, 0, NULL, wxLB_SINGLE );
-	bSizer14->Add( m_interplist, 1, wxBOTTOM|wxEXPAND|wxRIGHT|wxTOP, 5 );
-
-	bSizer12->Add( bSizer14, 0, wxEXPAND, 5 );
-
-	wxBoxSizer* bSizer15;
-	bSizer15 = new wxBoxSizer( wxHORIZONTAL );
-
-	wxBoxSizer* bSizer16;
-	bSizer16 = new wxBoxSizer( wxVERTICAL );
-
-	wxBoxSizer* bSizer18;
-	bSizer18 = new wxBoxSizer( wxVERTICAL );
-
-	wxBoxSizer* bSizer19;
-	bSizer19 = new wxBoxSizer( wxHORIZONTAL );
-
-	m_staticText2 = new wxStaticText( this, wxID_DEFAULT, wxT("Name"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer19->Add( m_staticText2, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-
-	m_editname = new wxTextCtrl( this, ID_NAME, wxT(""), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer19->Add( m_editname, 1, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-
-	bSizer18->Add( bSizer19, 0, wxEXPAND, 5 );
-
-	wxBoxSizer* bSizer20;
-	bSizer20 = new wxBoxSizer( wxHORIZONTAL );
-
-	m_staticText3 = new wxStaticText( this, wxID_DEFAULT, wxT("Interpreter Executable"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer20->Add( m_staticText3, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-
-	m_editexec = new wxTextCtrl( this, ID_EXEC, wxT(""), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer20->Add( m_editexec, 1, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-
-	m_butbrowse = new wxButton( this, ID_BROWSE_EXEC, wxT("..."), wxDefaultPosition, wxSize( 30,-1 ), 0 );
-	bSizer20->Add( m_butbrowse, 0, wxALIGN_CENTER_VERTICAL, 5 );
-
-	bSizer18->Add( bSizer20, 0, wxEXPAND, 5 );
-
-	wxBoxSizer* bSizer21;
-	bSizer21 = new wxBoxSizer( wxHORIZONTAL );
-
-	m_staticText5 = new wxStaticText( this, wxID_DEFAULT, wxT("File Extensions (example: *.py;*.pyc)"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer21->Add( m_staticText5, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-
-	m_editext = new wxTextCtrl( this, ID_EXT, wxT(""), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer21->Add( m_editext, 1, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-
-	bSizer18->Add( bSizer21, 0, wxEXPAND, 5 );
-
-	m_staticText4 = new wxStaticText( this, wxID_DEFAULT, wxT("Actions (Name;Command) variables: $interpreter, $file"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer18->Add( m_staticText4, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-
-	m_editactions = new wxTextCtrl( this, ID_ACTIONS, wxT(""), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE );
-	bSizer18->Add( m_editactions, 1, wxALL|wxEXPAND, 5 );
-
-	bSizer16->Add( bSizer18, 1, wxEXPAND, 5 );
-
-	bSizer15->Add( bSizer16, 1, wxEXPAND, 5 );
-
-	bSizer12->Add( bSizer15, 1, wxEXPAND, 5 );
-
-	this->SetSizer( bSizer12 );*/
-//	this->Layout();
-///////////////////////////////////////////////////////////////////////////////////////////////////// End Form Builder Generated
 	bSizer12->SetSizeHints(this);
 
-	// Do initialization here...
-//	wxString a=_T("Test");
-//	m_listBox3->InsertItems(1, &a, 0);
     m_activeinterp=0;
     for(unsigned int i=0;i<m_ic.interps.size();i++)
         m_interplist->Append(m_ic.interps[i].name);
@@ -341,7 +243,7 @@ void ConfigDialog::SetDialogItems()
         m_editext->SetValue(interp.extensions);
         wxString actionstring;
         for(unsigned int i=0;i<interp.actions.size();i++)
-            actionstring+=interp.actions[i].name+_T(";")+interp.actions[i].command+_T("\n");
+            actionstring+=interp.actions[i].name+_T(";")+interp.actions[i].command+_T(";")+interp.actions[i].windowed+_T("\n");
         m_editactions->SetValue(actionstring);
     }
 }
@@ -355,16 +257,19 @@ void ConfigDialog::GetDialogItems()
     interp.name=m_editname->GetValue();
     interp.exec=m_editexec->GetValue();
     interp.extensions=m_editext->GetValue();
-    wxString actionstring=m_editactions->GetValue();
+    wxString actions=m_editactions->GetValue();
     InterpreterAction act;
     interp.actions.clear();
-    for(int i=0;actionstring!=_T("");i++)
+    for(int i=0;actions!=_T("");i++)
     {
+        wxString actionstring=actions.BeforeFirst('\n');
         act.name=actionstring.BeforeFirst(';');
         actionstring=actionstring.AfterFirst(';');
-        act.command=actionstring.BeforeFirst('\n');
-        actionstring=actionstring.AfterFirst('\n');
+        act.command=actionstring.BeforeFirst(';');
+        actionstring=actionstring.AfterFirst(';');
+        act.windowed=actionstring;
         interp.actions.push_back(act);
+        actions=actions.AfterFirst('\n');
     }
 }
 

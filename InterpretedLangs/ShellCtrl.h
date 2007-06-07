@@ -26,8 +26,8 @@ class ShellTermCtrl : public wxTextCtrl
                     const wxString& value = wxEmptyString,
                     const wxPoint& pos = wxDefaultPosition,
                     const wxSize& size = wxDefaultSize,
-                    long style = wxTE_RICH|wxTE_MULTILINE|wxHSCROLL|wxTE_READONLY|wxTE_PROCESS_ENTER|wxEXPAND);
-        ~ShellTermCtrl() {if (m_proc) {if (!m_dead) {m_proc->Detach(); } /*delete m_proc;*/} }
+                    long style = wxTE_RICH|wxTE_MULTILINE|wxTE_READONLY|wxTE_PROCESS_ENTER|wxEXPAND);
+        ~ShellTermCtrl() {if (m_proc) {if (!m_dead) {m_proc->Detach();} } }
         long LaunchProcess(wxString processcmd, int stderrmode);
         void KillProcess();
         void KillWindow();

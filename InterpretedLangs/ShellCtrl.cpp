@@ -28,7 +28,10 @@ ShellTermCtrl::ShellTermCtrl(wxWindow* parent,wxWindowID id, ShellManager *shell
 void ShellTermCtrl::OnEndProcess(wxProcessEvent &event)
 {
     m_exitcode=event.GetExitCode();
+    ReadStream(); //read any left over output TODO: while loop to handle extremely large amount of output
     m_dead=true;
+    delete m_proc;
+    m_proc=NULL;
     m_killlevel=0;
     if(m_shellmgr)
         m_shellmgr->OnShellTerminate(this);
@@ -38,8 +41,8 @@ long ShellTermCtrl::LaunchProcess(wxString processcmd, int stderrmode)
 {
     if(!m_dead)
         return -1;
-    if(m_proc)
-        delete m_proc;
+    if(m_proc) //this should never happen
+        m_proc->Detach(); //self cleanup
     m_proc=new wxProcess(this,ID_PROC);
     m_proc->Redirect();
     m_procid=wxExecute(processcmd,wxEXEC_ASYNC,m_proc);
@@ -58,21 +61,21 @@ void ShellTermCtrl::KillProcess()
 {
     if(m_dead)
         return;
+//    if(m_killlevel==0) //some process will complete if we send EOF. TODO: make sending EOF a separate option
+//    {
+//        m_proc->CloseOutput();
+//        m_killlevel=1;
+//        return;
+//    }
+    long pid=GetPid();
     if(m_killlevel==0)
     {
-        m_proc->CloseOutput();
         m_killlevel=1;
-        return;
-    }
-    long pid=GetPid();
-    if(m_killlevel==1)
-    {
-        m_killlevel=2;
         if(wxProcess::Exists(pid))
-            wxProcess::Kill(pid);
+            wxProcess::Kill(pid,wxSIGTERM);
         return;
     }
-    if(m_killlevel==2)
+    if(m_killlevel==1)
     {
         if(wxProcess::Exists(pid))
         {
@@ -82,8 +85,11 @@ void ShellTermCtrl::KillProcess()
     }
 }
 
+
 void ShellTermCtrl::ReadStream(int maxchars)
 {
+    if(maxchars<=0)
+        maxchars=60000;
     if(m_proc->IsInputAvailable())
     {
         char buf0[maxchars+1];

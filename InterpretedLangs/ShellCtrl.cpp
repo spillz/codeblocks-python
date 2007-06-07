@@ -28,7 +28,7 @@ ShellTermCtrl::ShellTermCtrl(wxWindow* parent,wxWindowID id, ShellManager *shell
 void ShellTermCtrl::OnEndProcess(wxProcessEvent &event)
 {
     m_exitcode=event.GetExitCode();
-    ReadStream(); //read any left over output TODO: while loop to handle extremely large amount of output
+    ReadStream(-1); //read any left over output TODO: while loop to handle extremely large amount of output
     m_dead=true;
     delete m_proc;
     m_proc=NULL;
@@ -88,9 +88,13 @@ void ShellTermCtrl::KillProcess()
 
 void ShellTermCtrl::ReadStream(int maxchars)
 {
+    bool oneshot=true;
     if(maxchars<=0)
-        maxchars=60000;
-    if(m_proc->IsInputAvailable())
+    {
+        maxchars=20000;
+        oneshot=false;
+    }
+    while(m_proc->IsInputAvailable())
     {
         char buf0[maxchars+1];
         for(int i=0;i<maxchars+1;i++)
@@ -98,18 +102,25 @@ void ShellTermCtrl::ReadStream(int maxchars)
         m_istream->Read(buf0,maxchars);
         wxString m_latest=wxString::FromAscii(buf0);
         AppendText(m_latest);
+        if(oneshot)
+            break;
     }
     if(m_proc->IsErrorAvailable())
     {
         wxTextAttr ta(wxColour(255,0,0));
         wxTextAttr oldta=GetDefaultStyle();
         SetDefaultStyle(ta);
-        char buf0[maxchars+1];
-        for(int i=0;i<maxchars+1;i++)
-            buf0[i]=0;
-        m_estream->Read(buf0,maxchars);
-        wxString m_latest=wxString::FromAscii(buf0);
-        AppendText(m_latest);
+        while(m_proc->IsErrorAvailable())
+        {
+            char buf0[maxchars+1];
+            for(int i=0;i<maxchars+1;i++)
+                buf0[i]=0;
+            m_estream->Read(buf0,maxchars);
+            wxString m_latest=wxString::FromAscii(buf0);
+            AppendText(m_latest);
+            if(oneshot)
+                break;
+        }
         SetDefaultStyle(oldta);
     }
 }

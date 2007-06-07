@@ -60,6 +60,9 @@
 		<Unit filename="interpreterproperties.h" />
 		<Unit filename="manifest.xml" />
 		<Unit filename="pyeval.py" />
+		<Unit filename="run_child.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Extensions>
 			<code_completion />
 			<envvars />

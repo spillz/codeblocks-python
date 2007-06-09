@@ -220,7 +220,23 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
         ShowConsole();
     } else
     {
-        wxExecute(commandstr,wxEXEC_ASYNC);
+#ifndef __WXMSW__
+        // for non-win platforms, use m_ConsoleTerm to run the console app
+        wxString term = Manager::Get()->GetConfigManager(_T("app"))->Read(_T("/console_terminal"), DEFAULT_CONSOLE_TERM);
+        term.Replace(_T("$TITLE"), _T("'") + consolename + _T("'"));
+        wxString cmdline;
+        cmdline<< term << _T(" ");
+        #define CONSOLE_RUNNER "cb_console_runner"
+#else
+        #define CONSOLE_RUNNER "cb_console_runner.exe"
+#endif
+        wxString baseDir = ConfigManager::GetExecutableFolder();
+        if (wxFileExists(baseDir + wxT("/" CONSOLE_RUNNER)))
+            cmdline << baseDir << wxT("/" CONSOLE_RUNNER " ");
+        cmdline<<commandstr;
+
+        if(!wxExecute(cmdline))
+            cbMessageBox(_T("Command Launch Failed: ")+commandstr);
     }
 }
 

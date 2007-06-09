@@ -13,7 +13,6 @@ int ID_LangMenu_Settings=wxNewId();
 int ID_LangMenu_RunPiped=wxNewId();
 int ID_LangMenu_ShowConsole=wxNewId();
 int ID_PipedProcess=wxNewId();
-int ID_PollPipedProcess=wxNewId();
 //int ID_LangMenu_SetTarget=wxNewId();
 //int ID_LangMenu_RunTarget=wxNewId();
 //int ID_LangMenu_Run=wxNewId();
@@ -123,7 +122,7 @@ void InterpretedLangs::HideConsole()
 
 void InterpretedLangs::OnSettings(wxCommandEvent& event)
 {
-    wxMessageBox(_T("Settings..."));
+    cbMessageBox(_T("Settings..."));
 }
 
 void InterpretedLangs::OnSubMenuSelect(wxUpdateUIEvent& event)
@@ -136,7 +135,7 @@ void InterpretedLangs::OnSubMenuSelect(wxUpdateUIEvent& event)
         {
         wxString a;
         a<<_T("Sub menu")<<m_interpnum<<_T(" opened");
-        wxMessageBox(a);
+        cbMessageBox(a);
         }
     }
 }
@@ -152,6 +151,8 @@ void InterpretedLangs::OnSetTarget(wxCommandEvent& event)
     delete fd;
 }
 
+
+//TODO: Broken code - need to fix context menu items (see todo below)
 void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
 {
     int ID=event.GetId();
@@ -162,12 +163,12 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
     {
         if(!wxFileName::FileExists(m_RunTarget))
         {
-            wxMessageBox(_T("Target ")+m_RunTarget+_T(" does not exist, please select another or Cancel"));
+            cbMessageBox(_T("Target ")+m_RunTarget+_T(" does not exist, please select another or Cancel"));
             OnSetTarget(event);
             if(m_RunTarget==_T(""))
                 return;
         }
-        int actionnum=ID-ID_ContextMenu_0;
+        int actionnum=ID-ID_ContextMenu_0; //TODO: this is not always correct if the actions list contains non-filename executing commands
         commandstr=m_ic.interps[m_interpnum].actions[actionnum].command;
         consolename=m_ic.interps[m_interpnum].name+_T(" ")+m_ic.interps[m_interpnum].actions[actionnum].name;
         windowed=(m_ic.interps[m_interpnum].actions[actionnum].windowed==_("W"));
@@ -176,21 +177,21 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
     } else
     if(ID>=ID_SubMenu_0&&ID<=ID_SubMenu_20)
     {
-        wxMenu *m=LangMenu->FindItem(ID)->GetMenu(); // get pointer object to selected item in submenu
+        wxMenu *m=m_LangMenu->FindItem(ID)->GetMenu(); // get pointer object to selected item in submenu
         if(m==NULL)
         {
-            wxMessageBox(_T("WARNING: Sub menu not found - cancelling command"));
+            cbMessageBox(_T("WARNING: Sub menu not found - cancelling command"));
             return;
         }
         // need to figure out which interpeter we're using by matching the pointer to the parent of the selected item with pointers to our menus
         for(m_interpnum=0;m_interpnum<m_ic.interps.size()&&m_interpnum<10;m_interpnum++)
         {
-            if(LangMenu->FindItem(ID_Menu_0+m_interpnum)->GetSubMenu()==m) //compare pointer to submenu with known submenus and break out of loop if matched
+            if(m_LangMenu->FindItem(ID_Menu_0+m_interpnum)->GetSubMenu()==m) //compare pointer to submenu with known submenus and break out of loop if matched
                 break;
         }
         if(m_interpnum>=m_ic.interps.size()||m_interpnum>=10)
         {
-            wxMessageBox(_T("WARNING: Sub menu not found - cancelling command"));
+            cbMessageBox(_T("WARNING: Sub menu not found - cancelling command"));
             return;
         }
         int actionnum=ID-m->FindItemByPosition(0)->GetId();
@@ -198,16 +199,19 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
         consolename=m_ic.interps[m_interpnum].name+_T(" ")+m_ic.interps[m_interpnum].actions[actionnum].name;
         windowed=(m_ic.interps[m_interpnum].actions[actionnum].windowed==_("W"));
         m_wildcard=m_ic.interps[m_interpnum].extensions;
-        OnSetTarget(event);
-        wxFileName fn(m_RunTarget);
-        if(!fn.FileExists(m_RunTarget))
-            return;
+        if(m_ic.interps[m_interpnum].actions[actionnum].command.Find(_T("$file"))>0)
+        {
+            OnSetTarget(event);
+            wxFileName fn(m_RunTarget);
+            if(!fn.FileExists(m_RunTarget))
+                return;
+            commandstr.Replace(_T("$file"),wxFileName(m_RunTarget).GetShortPath(),false);
+        }
 
         commandstr.Replace(_T("$interpreter"),wxFileName(m_ic.interps[m_interpnum].exec).GetShortPath(),false);
-        commandstr.Replace(_T("$file"),wxFileName(m_RunTarget).GetShortPath(),false);
     } else
     {
-        wxMessageBox(_T("WARNING: Unprocessed Interpreter Message"));
+        cbMessageBox(_T("WARNING: Unprocessed Interpreter Message"));
         return;
     }
     if(windowed)
@@ -220,20 +224,22 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
     }
 }
 
+
+// DEPRECATED - NO LONGER REQUIRED
 void InterpretedLangs::OnRun(wxCommandEvent& event)
 {
     int ID=event.GetId();
     wxString commandstr;
     wxString consolename;
-    wxMenu *m=LangMenu->FindItem(ID)->GetMenu(); // get pointer object to selected item in submenu
+    wxMenu *m=m_LangMenu->FindItem(ID)->GetMenu(); // get pointer object to selected item in submenu
     for(m_interpnum=0;m_interpnum<m_ic.interps.size()&&m_interpnum<10;m_interpnum++)
     {
-        if(LangMenu->FindItem(ID_Menu_0+m_interpnum)->GetSubMenu()==m) //compare pointer to submenu with known submenus and break out if loop if matched
+        if(m_LangMenu->FindItem(ID_Menu_0+m_interpnum)->GetSubMenu()==m) //compare pointer to submenu with known submenus and break out if loop if matched
             break;
     }
     if(m_interpnum>=m_ic.interps.size()||m_interpnum>=10)
     {
-        wxMessageBox(_T("Warning: Sub menu not found - cancelling command"));
+        cbMessageBox(_T("Warning: Sub menu not found - cancelling command"));
         return;
     }
     commandstr=m_ic.interps[m_interpnum].exec;
@@ -341,22 +347,26 @@ void InterpretedLangs::CreateMenu()
             maxj=20;
         unsigned int jstart=j;
         for(;j<maxj;j++)
-            submenu->Append(ID_SubMenu_0+j,m_ic.interps[i].actions[j-jstart].name+_T("..."),_T(""));
-        submenu->Append(ID_NoTargMenu_0+i,_T("Run Without Target"),_T(""));
-        LangMenu->Append(ID_Menu_0+i,m_ic.interps[i].name,submenu);
+        {
+            wxString tail;
+            if(m_ic.interps[i].actions[j-jstart].command.Find(_T("$file"))>0)
+                tail=_T("...");
+            submenu->Append(ID_SubMenu_0+j,m_ic.interps[i].actions[j-jstart].name+tail,_T(""));
+        }
+        m_LangMenu->Append(ID_Menu_0+i,m_ic.interps[i].name,submenu);
     }
-    LangMenu->Append(ID_LangMenu_ShowConsole,_T("Toggle I/O console"),_T(""),wxITEM_CHECK);
+    m_LangMenu->Append(ID_LangMenu_ShowConsole,_T("Toggle I/O console"),_T(""),wxITEM_CHECK);
 }
 
 
 void InterpretedLangs::UpdateMenu()
 {
     //delete the old menu items
-    if(LangMenu)
+    if(m_LangMenu)
     {
         for(unsigned int i=0;i<m_ic.interps.size();i++)
-            LangMenu->Destroy(ID_Menu_0+i);
-        LangMenu->Destroy(ID_LangMenu_ShowConsole);
+            m_LangMenu->Destroy(ID_Menu_0+i);
+        m_LangMenu->Destroy(ID_LangMenu_ShowConsole);
         CreateMenu();
     }
 }
@@ -368,15 +378,15 @@ void InterpretedLangs::BuildMenu(wxMenuBar* menuBar)
 	//to add any menu items you want...
 	//Append any items you need in the menu...
 	//NOTE: Be careful in here... The application's menubar is at your disposal.
-	LangMenu=new wxMenu;
+	m_LangMenu=new wxMenu;
 	CreateMenu();
 	int pos = menuBar->FindMenu(_T("Plugins"));
 	if(pos!=wxNOT_FOUND)
-        menuBar->Insert(pos, LangMenu, _T("Interpreters"));
+        menuBar->Insert(pos, m_LangMenu, _T("Interpreters"));
     else
     {
-        delete LangMenu;
-        LangMenu=0;
+        delete m_LangMenu;
+        m_LangMenu=0;
     }
 //	NotImplemented(_T("InterpretedLangs::BuildMenu()"));
 }
@@ -398,20 +408,24 @@ void InterpretedLangs::BuildModuleMenu(const ModuleType type, wxMenu* menu, cons
                 {
                     wxString name=f->file.GetFullPath();
                     wxString ext=f->file.GetExt();
-//                    wxString debugstr = _T("filename: ")+name+_T("\nextension: ")+ext;
-//                    wxMessageBox(debugstr);
                     for(unsigned int i=0;i<m_ic.interps.size();i++)
                         if(m_ic.interps[i].extensions.Find(ext)>=0)
                         {
                             m_RunTarget=name;
                             m_interpnum=i;
-                            if(m_ic.interps[i].actions.size()>0)
-                                menu->AppendSeparator();
+                            size_t sep_pos=menu->GetMenuItemCount();
+                            size_t added=0;
                             for(unsigned int j=0;j<m_ic.interps[i].actions.size();j++)
                             {
-                                wxString menutext=m_ic.interps[i].name+_T(" ")+m_ic.interps[i].actions[j].name;
-                                menu->Append(ID_ContextMenu_0+j,menutext,_T(""));
+                                if(m_ic.interps[i].actions[j].command.Find(_T("$file"))>=0)
+                                {
+                                    wxString menutext=m_ic.interps[i].name+_T(" ")+m_ic.interps[i].actions[j].name;
+                                    menu->Append(ID_ContextMenu_0+j,menutext,_T(""));
+                                    added++;
+                                }
                             }
+                            if(added>0)
+                                menu->InsertSeparator(sep_pos);
                             return;
                         }
                 }
@@ -429,13 +443,19 @@ void InterpretedLangs::BuildModuleMenu(const ModuleType type, wxMenu* menu, cons
             {
                 m_RunTarget=name;
                 m_interpnum=i;
-                if(m_ic.interps[i].actions.size()>0)
-                    menu->AppendSeparator();
+                size_t sep_pos=menu->GetMenuItemCount();
+                size_t added=0;
                 for(unsigned int j=0;j<m_ic.interps[i].actions.size();j++)
                 {
-                    wxString menutext=m_ic.interps[i].name+_T(" ")+m_ic.interps[i].actions[j].name;
-                    menu->Append(ID_ContextMenu_0+j,menutext,_T(""));
+                    if(m_ic.interps[i].actions[j].command.Find(_T("$file"))>=0)
+                    {
+                        wxString menutext=m_ic.interps[i].name+_T(" ")+m_ic.interps[i].actions[j].name;
+                        menu->Append(ID_ContextMenu_0+j,menutext,_T(""));
+                        added++;
+                    }
                 }
+                if(added>0)
+                    menu->InsertSeparator(sep_pos);
                 return;
             }
 	}

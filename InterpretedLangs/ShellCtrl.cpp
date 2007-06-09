@@ -136,16 +136,16 @@ void ShellTermCtrl::OnUserInput(wxKeyEvent& ke)
     kc1[1]=0;
     if(kc1[0]=='\r')
     {
-        //wxMessageBox(_T("converting keystroke"));
+        //cbMessageBox(_T("converting keystroke"));
         kc1[0]='\n';
     }
-//    wxMessageBox(_T("key press: ")+wxString::FromAscii(kc1)+wxString::Format(_T(" keycode: %i"),ke.GetKeyCode()));
+//    cbMessageBox(_T("key press: ")+wxString::FromAscii(kc1)+wxString::Format(_T(" keycode: %i"),ke.GetKeyCode()));
     wxChar kc2=ke.GetUnicodeKey();
     wxString buf(kc2);
     //kc1[0]=buf[0];
     m_ostream->Write(kc1,1);
 //    m_proc->GetOutputStream()->Write(kc1,1);
-//    wxMessageBox(_T("bytes written: ")+wxString::Format(_T("code: %u"),m_ostream->LastWrite()));
+//    cbMessageBox(_T("bytes written: ")+wxString::Format(_T("code: %u"),m_ostream->LastWrite()));
     AppendText(kc2);
     SetInsertionPointEnd();
 }
@@ -202,7 +202,7 @@ long ShellManager::LaunchProcess(wxString processcmd, wxString name, int stderrm
     }
     else
     {
-        wxMessageBox(_T("process launch failed."));
+        cbMessageBox(_T("process launch failed."));
         delete shell;
         return -1;
     }

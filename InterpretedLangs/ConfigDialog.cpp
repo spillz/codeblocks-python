@@ -3,28 +3,6 @@
 #include "ConfigDialog.h"
 
 #include <vector>
-//#include <wx/xrc/xmlres.h>
-
-/*
-#include <manager.h>
-#include <editormanager.h>
-#include <messagemanager.h>
-#include <projectmanager.h>
-
-#include <wx/filedlg.h>
-#include <wx/textdlg.h>
-#include <wx/msgdlg.h>
-#include <wx/listbox.h>
-#include <wx/textctrl.h>
-#include <wx/checkbox.h>
-#include <wx/button.h>
-
-#include <algorithm>
-*/
-
-//using std::find;
-//using std::make_pair;
-//using std::swap;
 
 int ID_NEW=wxNewId();
 int ID_COPY=wxNewId();
@@ -66,7 +44,6 @@ END_EVENT_TABLE()
 ConfigDialog::ConfigDialog(wxWindow* parent, InterpretedLangs* plugin) //: cbConfigurationPanel()
 {
     m_plugin=plugin;
-//    m_plugin=plugin;
     m_icperm=&(plugin->m_ic);
     m_ic.interps=plugin->m_ic.interps; //temporary interpreter properties for edit mode (existing properties are not overwritten until user presses APPLY/OK)
 
@@ -178,33 +155,10 @@ ConfigDialog::ConfigDialog(wxWindow* parent, InterpretedLangs* plugin) //: cbCon
 
 }
 
-
-
 ConfigDialog::~ConfigDialog()
 {
   //dtor
 }
-
-/*
-void ConfigDialog::OnEditBrowseExec(wxCommandEvent& event)
-{
-  wxString filename = wxFileSelector
-  (
-    _T("Choose a help file"),
-    wxEmptyString,
-    wxEmptyString,
-    wxEmptyString,
-    _T(
-      "All files (*.*)|*.*"
-    )
-  );
-
-  if (!filename.IsEmpty())
-  {
-//    XRCCTRL(*this, "txtHelp", wxTextCtrl)->SetValue(filename);
-  }
-}
-*/
 
 void ConfigDialog::OnApply()
 {
@@ -213,7 +167,6 @@ void ConfigDialog::OnApply()
     m_icperm->WriteConfig();
     m_plugin->UpdateMenu();
 }
-
 
 void ConfigDialog::NameChange(wxCommandEvent& event)
 {
@@ -314,7 +267,7 @@ void ConfigDialog::Copy(wxCommandEvent &event)
 void ConfigDialog::Delete(wxCommandEvent &event)
 {
   if(m_ic.interps.size()>0)
-      if (wxMessageBox(_("Are you sure you want to remove this interpreter?"), _("Remove"), wxICON_QUESTION | wxYES_NO) == wxYES)
+      if (cbMessageBox(_("Are you sure you want to remove this interpreter?"), _("Remove"), wxICON_QUESTION | wxYES_NO) == wxYES)
       {
           GetDialogItems();
           m_ic.interps.erase(m_ic.interps.begin()+m_activeinterp);
@@ -365,139 +318,16 @@ void ConfigDialog::OnEditCancel(wxCommandEvent &event)
 
 void ConfigDialog::OnEditBrowseExec(wxCommandEvent &event)
 {
+    #ifdef __WXMSW__
     wxString interpextension=_T("*.*");
+    #else
+    wxString interpextension=_T("*");
+    #endif
     wxFileDialog *fd=new wxFileDialog(NULL,_T("Choose the interpreter executable"),_T(""),_T(""),interpextension,wxOPEN|wxFILE_MUST_EXIST);
     if(fd->ShowModal()==wxID_OK)
     {
         m_editexec->SetValue(fd->GetPath());
     }
     delete fd;
-}
-
-/*
-void ConfigDialog::UpdateUI(wxUpdateUIEvent &event)
-{
-  int sel = XRCCTRL(*this, "lstHelp", wxListBox)->GetSelection();
-  int count = XRCCTRL(*this, "lstHelp", wxListBox)->GetCount();
-  XRCCTRL(*this, "btnRename", wxButton)->Enable(sel != -1);
-  XRCCTRL(*this, "btnDelete", wxButton)->Enable(sel != -1);
-  XRCCTRL(*this, "btnBrowse", wxButton)->Enable(sel != -1);
-  XRCCTRL(*this, "txtHelp", wxTextCtrl)->Enable(sel != -1);
-  XRCCTRL(*this, "chkDefault", wxCheckBox)->Enable(sel != -1);
-
-  if (sel == -1 || count == 1)
-  {
-  	XRCCTRL(*this, "btnUp", wxButton)->Disable();
-  	XRCCTRL(*this, "btnDown", wxButton)->Disable();
-  }
-  else if (sel == 0)
-  {
-  	XRCCTRL(*this, "btnUp", wxButton)->Disable();
-  	XRCCTRL(*this, "btnDown", wxButton)->Enable();
-  }
-  else if (sel == count - 1)
-  {
-  	XRCCTRL(*this, "btnUp", wxButton)->Enable();
-  	XRCCTRL(*this, "btnDown", wxButton)->Disable();
-  }
-  else
-  {
-  	XRCCTRL(*this, "btnUp", wxButton)->Enable();
-  	XRCCTRL(*this, "btnDown", wxButton)->Enable();
-  }
-}
-*/
-
-
-class InterpreterEditDialog: public wxDialog
-{
-public:
-    InterpreterEditDialog( wxWindow* parent, int id, wxString title, wxPoint pos, wxSize size, int style );
-    InterpreterEditDialog( wxWindow* parent);
-    virtual ~InterpreterEditDialog();
-};
-
-
-InterpreterEditDialog::InterpreterEditDialog(wxWindow* parent)
-{
-    InterpreterEditDialog(parent,wxID_DEFAULT,_T("Edit Interpreter Settings"),wxDefaultPosition,wxDefaultSize,wxDEFAULT_DIALOG_STYLE);
-}
-
-InterpreterEditDialog::~InterpreterEditDialog()
-{
-}
-
-InterpreterEditDialog::InterpreterEditDialog( wxWindow* parent, int id, wxString title, wxPoint pos, wxSize size, int style )
-{
-  //:wxDialog( parent, id, title, pos, size, style )
-  Create( parent, id, title, pos, size, style );
-	wxBoxSizer* bSizer15;
-	bSizer15 = new wxBoxSizer( wxHORIZONTAL );
-
-	wxBoxSizer* bSizer16;
-	bSizer16 = new wxBoxSizer( wxVERTICAL );
-
-	wxBoxSizer* bSizer18;
-	bSizer18 = new wxBoxSizer( wxVERTICAL );
-
-	wxBoxSizer* bSizer19;
-	bSizer19 = new wxBoxSizer( wxHORIZONTAL );
-
-	wxStaticText *m_staticText2 = new wxStaticText( this, wxID_DEFAULT, wxT("Name"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer19->Add( m_staticText2, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-
-	wxTextCtrl *m_textCtrl3 = new wxTextCtrl( this, ID_NAME, wxT(""), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer19->Add( m_textCtrl3, 1, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-
-	bSizer18->Add( bSizer19, 0, wxEXPAND, 5 );
-
-	wxBoxSizer* bSizer20;
-	bSizer20 = new wxBoxSizer( wxHORIZONTAL );
-
-	wxStaticText *m_staticText3 = new wxStaticText( this, wxID_DEFAULT, wxT("Interpreter Executable"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer20->Add( m_staticText3, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-
-	wxTextCtrl *m_textCtrl4 = new wxTextCtrl( this, ID_EXEC, wxT(""), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer20->Add( m_textCtrl4, 1, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-
-	wxButton *m_button20 = new wxButton( this, ID_BROWSE_EXEC, wxT("..."), wxDefaultPosition, wxSize( 30,-1 ), 0 );
-	bSizer20->Add( m_button20, 0, wxALIGN_CENTER_VERTICAL, 5 );
-
-	bSizer18->Add( bSizer20, 0, wxEXPAND, 5 );
-
-	wxBoxSizer* bSizer21;
-	bSizer21 = new wxBoxSizer( wxHORIZONTAL );
-
-	wxStaticText *m_staticText5 = new wxStaticText( this, wxID_DEFAULT, wxT("File Extensions (example: *.py;*.pyd)"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer21->Add( m_staticText5, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-
-	wxTextCtrl *m_textCtrl6 = new wxTextCtrl( this, ID_EXT, wxT(""), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer21->Add( m_textCtrl6, 1, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-
-	bSizer18->Add( bSizer21, 0, wxEXPAND, 5 );
-
-	wxStaticText *m_staticText4 = new wxStaticText( this, wxID_DEFAULT, wxT("Actions (Name;Command) variables: $interpreter, $file"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer18->Add( m_staticText4, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-
-	wxTextCtrl *m_textCtrl5 = new wxTextCtrl( this, ID_ACTIONS, wxT(""), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE );
-	bSizer18->Add( m_textCtrl5, 1, wxALL|wxEXPAND, 5 );
-
-	bSizer16->Add( bSizer18, 1, wxEXPAND, 5 );
-
-	bSizer15->Add( bSizer16, 1, wxEXPAND, 5 );
-
-	wxBoxSizer* bSizer17;
-	bSizer17 = new wxBoxSizer( wxVERTICAL );
-
-	wxButton *m_button18 = new wxButton( this, wxID_OK, wxT("OK"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer17->Add( m_button18, 0, wxRIGHT|wxLEFT, 5 );
-
-	wxButton *m_button19 = new wxButton( this, wxID_CANCEL, wxT("Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer17->Add( m_button19, 0, wxRIGHT|wxLEFT, 5 );
-
-	bSizer15->Add( bSizer17, 0, wxEXPAND, 5 );
-
-	this->SetSizer( bSizer15 );
-//	this->Layout();
 }
 

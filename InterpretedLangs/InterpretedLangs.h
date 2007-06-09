@@ -142,11 +142,9 @@ class InterpretedLangs : public cbPlugin
         void OnRun(wxCommandEvent& event);
         void OnRunPiped(wxCommandEvent &event);
         void OnShowConsole(wxCommandEvent& event);
-        void OnTerminatePipedProcess(wxProcessEvent& event);
-        void OnPollPipedProcess(wxTimerEvent& event);
 
 //        void OnTerminatePipedProcess(wxProcessEvent &event);
-        wxMenu *LangMenu;  // pointer to the interpreters menu
+        wxMenu *m_LangMenu;  // pointer to the interpreters menu
         unsigned int m_interpnum;
         wxString m_wildcard;
 //        PipedProcess *m_pp;

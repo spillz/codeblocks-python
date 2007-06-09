@@ -74,6 +74,7 @@ class ShellManager : public wxPanel
         void KillWindow(int id);
         ShellTermCtrl *GetPage(size_t i);
         ShellTermCtrl *GetPage(const wxString &name);
+        int NumAlive();
     private:
         //Responders to standard wxWidgets Messages
         void OnUserInput(wxKeyEvent& ke);

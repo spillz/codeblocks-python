@@ -88,6 +88,8 @@ void ShellTermCtrl::KillProcess()
 
 void ShellTermCtrl::ReadStream(int maxchars)
 {
+    if(!m_proc)
+        return;
     bool oneshot=true;
     if(maxchars<=0)
     {
@@ -246,10 +248,24 @@ size_t ShellManager::GetTermNum(ShellTermCtrl *term)
     return m_nb->GetPageCount();
 }
 
+int ShellManager::NumAlive()
+{
+    int count=0;
+    for(int i=0;i<m_nb->GetPageCount();i++)
+        count+=!GetPage(i)->IsDead();
+    wxString c;
+    c.Printf(_T("%i"),count);
+    wxMessageBox(c);
+    return count;
+}
+
+
 void ShellManager::OnShellTerminate(ShellTermCtrl *term)
 {
     size_t i=GetTermNum(term);
     m_nb->SetPageText(i,_T("[DONE]")+m_nb->GetPageText(i));
+    if(NumAlive()==0)
+        m_synctimer.Stop();
 }
 
 

@@ -253,9 +253,6 @@ int ShellManager::NumAlive()
     int count=0;
     for(int i=0;i<m_nb->GetPageCount();i++)
         count+=!GetPage(i)->IsDead();
-    wxString c;
-    c.Printf(_T("%i"),count);
-    wxMessageBox(c);
     return count;
 }
 

@@ -146,6 +146,7 @@ class InterpretedLangs : public cbPlugin
 //        void OnTerminatePipedProcess(wxProcessEvent &event);
         wxMenu *m_LangMenu;  // pointer to the interpreters menu
         unsigned int m_interpnum;
+        unsigned int m_contextactions[10];
         wxString m_wildcard;
 //        PipedProcess *m_pp;
         wxTimer m_TimerPollDebugger; // This appears to be illegal... TODO: Fix it (maybe make it a pointer and instantiate later)

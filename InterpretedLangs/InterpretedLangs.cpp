@@ -170,7 +170,7 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
             if(m_RunTarget==_T(""))
                 return;
         }
-        int actionnum=ID-ID_ContextMenu_0; //TODO: this is not always correct if the actions list contains non-filename executing commands
+        int actionnum=m_contextactions[ID-ID_ContextMenu_0];
         commandstr=m_ic.interps[m_interpnum].actions[actionnum].command;
         consolename=m_ic.interps[m_interpnum].name+_T(" ")+m_ic.interps[m_interpnum].actions[actionnum].name;
         windowed=(m_ic.interps[m_interpnum].actions[actionnum].windowed==_("W"));
@@ -230,11 +230,11 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
         ShowConsole();
     } else if (console)
     {
+        wxString cmdline;
 #ifndef __WXMSW__
         // for non-win platforms, use m_ConsoleTerm to run the console app
         wxString term = Manager::Get()->GetConfigManager(_T("app"))->Read(_T("/console_terminal"), DEFAULT_CONSOLE_TERM);
         term.Replace(_T("$TITLE"), _T("'") + consolename + _T("'"));
-        wxString cmdline;
         cmdline<< term << _T(" ");
         #define CONSOLE_RUNNER "cb_console_runner"
 #else
@@ -355,7 +355,7 @@ void InterpretedLangs::OnRelease(bool appShutDown)
 int InterpretedLangs::Configure()
 {
 	//create and display the configuration dialog for your plugin
-	cbConfigurationDialog dlg(Manager::Get()->GetAppWindow(), wxID_ANY, _("Your dialog title"));
+	cbConfigurationDialog dlg(Manager::Get()->GetAppWindow(), wxID_ANY, _("Interpreter Settings"));
 	cbConfigurationPanel* panel = GetConfigurationPanel(&dlg);
 	if (panel)
 	{
@@ -450,6 +450,7 @@ void InterpretedLangs::BuildModuleMenu(const ModuleType type, wxMenu* menu, cons
                                 if(m_ic.interps[i].actions[j].command.Find(_T("$file"))>=0)
                                 {
                                     wxString menutext=m_ic.interps[i].name+_T(" ")+m_ic.interps[i].actions[j].name;
+                                    m_contextactions[added]=j;
                                     menu->Append(ID_ContextMenu_0+j,menutext,_T(""));
                                     added++;
                                 }
@@ -481,6 +482,7 @@ void InterpretedLangs::BuildModuleMenu(const ModuleType type, wxMenu* menu, cons
                     {
                         wxString menutext=m_ic.interps[i].name+_T(" ")+m_ic.interps[i].actions[j].name;
                         menu->Append(ID_ContextMenu_0+j,menutext,_T(""));
+                        m_contextactions[added]=j;
                         added++;
                     }
                 }

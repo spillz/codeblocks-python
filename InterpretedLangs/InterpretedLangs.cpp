@@ -153,12 +153,14 @@ void InterpretedLangs::OnSetTarget(wxCommandEvent& event)
 
 
 //TODO: Broken code - need to fix context menu items (see todo below)
+//TODO: Add macro subsitution support AND support for a working directory
 void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
 {
     int ID=event.GetId();
     wxString commandstr;
     wxString consolename;
     bool windowed=false;
+    bool console=false;
     if(ID>=ID_ContextMenu_0&&ID<=ID_ContextMenu_9)
     {
         if(!wxFileName::FileExists(m_RunTarget))
@@ -172,6 +174,7 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
         commandstr=m_ic.interps[m_interpnum].actions[actionnum].command;
         consolename=m_ic.interps[m_interpnum].name+_T(" ")+m_ic.interps[m_interpnum].actions[actionnum].name;
         windowed=(m_ic.interps[m_interpnum].actions[actionnum].windowed==_("W"));
+        console=(m_ic.interps[m_interpnum].actions[actionnum].windowed==_("C"));
         commandstr.Replace(_T("$interpreter"),wxFileName(m_ic.interps[m_interpnum].exec).GetShortPath(),false);
         commandstr.Replace(_T("$file"),wxFileName(m_RunTarget).GetShortPath(),false);
     } else
@@ -198,6 +201,7 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
         commandstr=m_ic.interps[m_interpnum].actions[actionnum].command;
         consolename=m_ic.interps[m_interpnum].name+_T(" ")+m_ic.interps[m_interpnum].actions[actionnum].name;
         windowed=(m_ic.interps[m_interpnum].actions[actionnum].windowed==_("W"));
+        console=(m_ic.interps[m_interpnum].actions[actionnum].windowed==_("C"));
         m_wildcard=m_ic.interps[m_interpnum].extensions;
         if(m_ic.interps[m_interpnum].actions[actionnum].command.Find(_T("$file"))>0)
         {
@@ -214,11 +218,17 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
         cbMessageBox(_T("WARNING: Unprocessed Interpreter Message"));
         return;
     }
+
+//    Manager::Get()->GetMacrosManager()->RecalcVars(0, 0, 0); // hack to force-update macros
+//    Manager::Get()->GetMacrosManager()->ReplaceMacros(cmd);
+//    Manager::Get()->GetMacrosManager()->ReplaceMacros(dir);
+//    wxSetWorkingDirectory(dir);
+
     if(windowed)
     {
         m_commandio->LaunchProcess(commandstr,consolename,0);
         ShowConsole();
-    } else
+    } else if (console)
     {
 #ifndef __WXMSW__
         // for non-win platforms, use m_ConsoleTerm to run the console app
@@ -236,6 +246,10 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
         cmdline<<commandstr;
 
         if(!wxExecute(cmdline))
+            cbMessageBox(_T("Command Launch Failed: ")+commandstr);
+    } else
+    {
+        if(!wxExecute(commandstr))
             cbMessageBox(_T("Command Launch Failed: ")+commandstr);
     }
 }

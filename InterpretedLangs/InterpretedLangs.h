@@ -1,5 +1,5 @@
 /***************************************************************
- * Name:      pluginxray
+ * Name:      InterpretedLangs
  * Purpose:   Code::Blocks plugin
  * Author:    Damien Moore ()
  * Created:   2006-09-28
@@ -23,10 +23,6 @@
 #include "ConfigDialog.h"
 
 #include "ShellCtrl.h"
-
-//class ConfigDialog;
-
-//class InterpreterCollection;
 
 class InterpretedLangs : public cbPlugin
 {
@@ -154,7 +150,7 @@ class InterpretedLangs : public cbPlugin
 
         wxString m_RunTarget;
 
-        // data structures used to pipe console output to a dockable window (m_commandio)
+        // data structures used to pipe console output to a dockable window (m_shellmgr)
         bool m_pipeoutput;
         wxOutputStream *m_ostream; //handle to console program output
         wxInputStream *m_istream; //handle to console program input
@@ -164,7 +160,7 @@ class InterpretedLangs : public cbPlugin
         wxString m_outbuf; //contains buffer of streamed output from console
         int m_bufpos; //search position in console output buffer (used to check whether processing is finished)
 
-        ShellManager *m_commandio;
+        ShellManager *m_shellmgr;
 
         DECLARE_EVENT_TABLE();
 };

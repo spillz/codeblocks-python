@@ -98,7 +98,7 @@ END_EVENT_TABLE()
 
 void InterpretedLangs::OnUpdateUI(wxUpdateUIEvent& event)
 {
-    m_LangMenu->Check(ID_LangMenu_ShowConsole,IsWindowReallyShown(m_commandio));
+    m_LangMenu->Check(ID_LangMenu_ShowConsole,IsWindowReallyShown(m_shellmgr));
     // allow other UpdateUI handlers to process this event
     // *very* important! don't forget it...
     event.Skip();
@@ -109,7 +109,7 @@ void InterpretedLangs::OnShowConsole(wxCommandEvent& event)
 {
     // This toggles display of the console I/O window
     CodeBlocksDockEvent evt(event.IsChecked() ? cbEVT_SHOW_DOCK_WINDOW : cbEVT_HIDE_DOCK_WINDOW);
-    evt.pWindow = m_commandio;
+    evt.pWindow = m_shellmgr;
     Manager::Get()->GetAppWindow()->ProcessEvent(evt);
 }
 
@@ -117,7 +117,7 @@ void InterpretedLangs::ShowConsole()
 {
     // This toggles display of the console I/O window
     CodeBlocksDockEvent evt(cbEVT_SHOW_DOCK_WINDOW);
-    evt.pWindow = m_commandio;
+    evt.pWindow = m_shellmgr;
     Manager::Get()->GetAppWindow()->ProcessEvent(evt);
 //    m_LangMenu->FindItem(ID_LangMenu_ShowConsole)->Check();
 }
@@ -126,7 +126,7 @@ void InterpretedLangs::HideConsole()
 {
     // This toggles display of the console I/O window
     CodeBlocksDockEvent evt(cbEVT_HIDE_DOCK_WINDOW);
-    evt.pWindow = m_commandio;
+    evt.pWindow = m_shellmgr;
     Manager::Get()->GetAppWindow()->ProcessEvent(evt);
 //    m_LangMenu->FindItem(ID_LangMenu_ShowConsole)->Check(false);
 }
@@ -238,7 +238,7 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
 
     if(windowed)
     {
-        m_commandio->LaunchProcess(commandstr,consolename,0);
+        m_shellmgr->LaunchProcess(commandstr,consolename,0);
         ShowConsole();
     } else if (console)
     {
@@ -288,7 +288,7 @@ void InterpretedLangs::OnRun(wxCommandEvent& event)
     consolename=m_ic.interps[m_interpnum].name;
 
     wxExecute(commandstr,wxEXEC_ASYNC);
-//    m_commandio->LaunchProcess(commandstr,consolename,0);
+//    m_shellmgr->LaunchProcess(commandstr,consolename,0);
 }
 
 
@@ -333,12 +333,12 @@ void InterpretedLangs::OnAttach()
 
 	m_pipeoutput=true;
 
-    m_commandio = new ShellManager(Manager::Get()->GetAppWindow());
+    m_shellmgr = new ShellManager(Manager::Get()->GetAppWindow());
 
     CodeBlocksDockEvent evt(cbEVT_ADD_DOCK_WINDOW);
     evt.name = _T("Shells");
     evt.title = _T("Shells");
-    evt.pWindow = m_commandio;
+    evt.pWindow = m_shellmgr;
     evt.dockSide = CodeBlocksDockEvent::dsFloating;
     evt.desiredSize.Set(400, 300);
     evt.floatingSize.Set(400, 300);
@@ -354,14 +354,14 @@ void InterpretedLangs::OnRelease(bool appShutDown)
 	// NOTE: after this function, the inherited member variable
 	// m_IsAttached will be FALSE...
 
-    if (m_commandio)
+    if (m_shellmgr)
     {
         CodeBlocksDockEvent evt(cbEVT_REMOVE_DOCK_WINDOW);
-        evt.pWindow = m_commandio;
+        evt.pWindow = m_shellmgr;
         Manager::Get()->GetAppWindow()->ProcessEvent(evt);
-        m_commandio->Destroy();
+        m_shellmgr->Destroy();
     }
-    m_commandio = 0;
+    m_shellmgr = 0;
 }
 
 int InterpretedLangs::Configure()

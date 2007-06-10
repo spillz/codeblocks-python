@@ -130,7 +130,10 @@ void ShellTermCtrl::ReadStream(int maxchars)
 void ShellTermCtrl::OnUserInput(wxKeyEvent& ke)
 {
     if(m_dead)
+    {
+        ke.Skip();
         return;
+    }
     char* kc1=new char[2];
     kc1[0]=ke.GetKeyCode()%256;
     kc1[1]=0;

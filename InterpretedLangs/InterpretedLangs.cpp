@@ -8,7 +8,7 @@ namespace
     PluginRegistrant<InterpretedLangs> reg(_T("InterpretedLangs"));
 }
 
-
+int ID_UpdateUI=wxNewId();
 int ID_LangMenu_Settings=wxNewId();
 int ID_LangMenu_RunPiped=wxNewId();
 int ID_LangMenu_ShowConsole=wxNewId();
@@ -91,8 +91,18 @@ BEGIN_EVENT_TABLE(InterpretedLangs, cbPlugin)
     EVT_MENU_RANGE(ID_NoTargMenu_0, ID_NoTargMenu_9, InterpretedLangs::OnRun)
     EVT_MENU_RANGE(ID_SubMenu_0, ID_SubMenu_20, InterpretedLangs::OnRunTarget)
     EVT_MENU(ID_LangMenu_ShowConsole,InterpretedLangs::OnShowConsole)
+    EVT_UPDATE_UI(ID_LangMenu_ShowConsole, InterpretedLangs::OnUpdateUI)
 
 END_EVENT_TABLE()
+
+
+void InterpretedLangs::OnUpdateUI(wxUpdateUIEvent& event)
+{
+    m_LangMenu->Check(ID_LangMenu_ShowConsole,IsWindowReallyShown(m_commandio));
+    // allow other UpdateUI handlers to process this event
+    // *very* important! don't forget it...
+    event.Skip();
+}
 
 
 void InterpretedLangs::OnShowConsole(wxCommandEvent& event)
@@ -109,6 +119,7 @@ void InterpretedLangs::ShowConsole()
     CodeBlocksDockEvent evt(cbEVT_SHOW_DOCK_WINDOW);
     evt.pWindow = m_commandio;
     Manager::Get()->GetAppWindow()->ProcessEvent(evt);
+//    m_LangMenu->FindItem(ID_LangMenu_ShowConsole)->Check();
 }
 
 void InterpretedLangs::HideConsole()
@@ -117,6 +128,7 @@ void InterpretedLangs::HideConsole()
     CodeBlocksDockEvent evt(cbEVT_HIDE_DOCK_WINDOW);
     evt.pWindow = m_commandio;
     Manager::Get()->GetAppWindow()->ProcessEvent(evt);
+//    m_LangMenu->FindItem(ID_LangMenu_ShowConsole)->Check(false);
 }
 
 

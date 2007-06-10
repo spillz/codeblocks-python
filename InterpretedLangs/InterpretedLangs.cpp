@@ -171,6 +171,7 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
     int ID=event.GetId();
     wxString commandstr;
     wxString consolename;
+    wxString workingdir;
     bool windowed=false;
     bool console=false;
     if(ID>=ID_ContextMenu_0&&ID<=ID_ContextMenu_9)
@@ -185,10 +186,9 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
         int actionnum=m_contextactions[ID-ID_ContextMenu_0];
         commandstr=m_ic.interps[m_interpnum].actions[actionnum].command;
         consolename=m_ic.interps[m_interpnum].name+_T(" ")+m_ic.interps[m_interpnum].actions[actionnum].name;
-        windowed=(m_ic.interps[m_interpnum].actions[actionnum].windowed==_("W"));
-        console=(m_ic.interps[m_interpnum].actions[actionnum].windowed==_("C"));
-        commandstr.Replace(_T("$interpreter"),wxFileName(m_ic.interps[m_interpnum].exec).GetShortPath(),false);
-        commandstr.Replace(_T("$file"),wxFileName(m_RunTarget).GetShortPath(),false);
+        windowed=(m_ic.interps[m_interpnum].actions[actionnum].mode==_("W"));
+        console=(m_ic.interps[m_interpnum].actions[actionnum].mode==_("C"));
+        workingdir=m_ic.interps[m_interpnum].actions[actionnum].wdir;
     } else
     if(ID>=ID_SubMenu_0&&ID<=ID_SubMenu_20)
     {
@@ -212,8 +212,9 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
         int actionnum=ID-m->FindItemByPosition(0)->GetId();
         commandstr=m_ic.interps[m_interpnum].actions[actionnum].command;
         consolename=m_ic.interps[m_interpnum].name+_T(" ")+m_ic.interps[m_interpnum].actions[actionnum].name;
-        windowed=(m_ic.interps[m_interpnum].actions[actionnum].windowed==_("W"));
-        console=(m_ic.interps[m_interpnum].actions[actionnum].windowed==_("C"));
+        windowed=(m_ic.interps[m_interpnum].actions[actionnum].mode==_("W"));
+        console=(m_ic.interps[m_interpnum].actions[actionnum].mode==_("C"));
+        workingdir=m_ic.interps[m_interpnum].actions[actionnum].wdir;
         m_wildcard=m_ic.interps[m_interpnum].extensions;
         if(m_ic.interps[m_interpnum].actions[actionnum].command.Find(_T("$file"))>0)
         {
@@ -221,20 +222,30 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
             wxFileName fn(m_RunTarget);
             if(!fn.FileExists(m_RunTarget))
                 return;
-            commandstr.Replace(_T("$file"),wxFileName(m_RunTarget).GetShortPath(),false);
         }
 
-        commandstr.Replace(_T("$interpreter"),wxFileName(m_ic.interps[m_interpnum].exec).GetShortPath(),false);
     } else
     {
-        cbMessageBox(_T("WARNING: Unprocessed Interpreter Message"));
+        cbMessageBox(_T("WARNING: Unprocessed Interpreter Menu Message"));
         return;
     }
 
-//    Manager::Get()->GetMacrosManager()->RecalcVars(0, 0, 0); // hack to force-update macros
-//    Manager::Get()->GetMacrosManager()->ReplaceMacros(cmd);
-//    Manager::Get()->GetMacrosManager()->ReplaceMacros(dir);
-//    wxSetWorkingDirectory(dir);
+    commandstr.Replace(_T("$file"),wxFileName(m_RunTarget).GetShortPath(),false);
+    commandstr.Replace(_T("$interpreter"),wxFileName(m_ic.interps[m_interpnum].exec).GetShortPath(),false);
+    workingdir.Replace(_T("$filedir"),wxFileName(m_RunTarget).GetPath(),false);
+
+    Manager::Get()->GetMacrosManager()->RecalcVars(0, 0, 0); // hack to force-update macros
+    Manager::Get()->GetMacrosManager()->ReplaceMacros(commandstr);
+    Manager::Get()->GetMacrosManager()->ReplaceMacros(workingdir);
+    wxString olddir=wxGetCwd();
+    if(workingdir!=_T(""))
+    {
+        if(!wxSetWorkingDirectory(workingdir))
+        {
+            cbMessageBox(_T("ERROR: Can't change to working directory: ")+workingdir);
+            return;
+        }
+    }
 
     if(windowed)
     {
@@ -264,6 +275,7 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
         if(!wxExecute(commandstr))
             cbMessageBox(_T("Command Launch Failed: ")+commandstr);
     }
+    wxSetWorkingDirectory(olddir);
 }
 
 

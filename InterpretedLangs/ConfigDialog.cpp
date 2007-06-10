@@ -132,7 +132,7 @@ ConfigDialog::ConfigDialog(wxWindow* parent, InterpretedLangs* plugin) //: cbCon
 
 	bSizer18->Add( bSizer21, 0, wxEXPAND, 5 );
 
-	m_staticText4 = new wxStaticText( this, wxID_DEFAULT, wxT("Actions (Name;Command;[W|C]) variables: $interpreter, $file"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4 = new wxStaticText( this, wxID_DEFAULT, wxT("Actions (Name;Command;[W|C];WorkDir;EnvVarSet) variables: $interpreter, $file, $filedir + MACRO SUBSTITUTION VARS"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer18->Add( m_staticText4, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 
 	m_editactions = new wxTextCtrl( this, ID_ACTIONS, wxT(""), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTAB_TRAVERSAL );
@@ -196,7 +196,9 @@ void ConfigDialog::SetDialogItems()
         m_editext->SetValue(interp.extensions);
         wxString actionstring;
         for(unsigned int i=0;i<interp.actions.size();i++)
-            actionstring+=interp.actions[i].name+_T(";")+interp.actions[i].command+_T(";")+interp.actions[i].windowed+_T("\n");
+            actionstring+=interp.actions[i].name+_T(";")+interp.actions[i].command+_T(";")
+            +interp.actions[i].mode+_T(";")+interp.actions[i].wdir+_T(";")+
+            interp.actions[i].envvarset+_T("\n");
         m_editactions->SetValue(actionstring);
     }
 }
@@ -220,7 +222,11 @@ void ConfigDialog::GetDialogItems()
         actionstring=actionstring.AfterFirst(';');
         act.command=actionstring.BeforeFirst(';');
         actionstring=actionstring.AfterFirst(';');
-        act.windowed=actionstring;
+        act.mode=actionstring.BeforeFirst(';');
+        actionstring=actionstring.AfterFirst(';');
+        act.wdir=actionstring.BeforeFirst(';');
+        actionstring=actionstring.AfterFirst(';');
+        act.envvarset=actionstring.BeforeFirst(';');
         interp.actions.push_back(act);
         actions=actions.AfterFirst('\n');
     }

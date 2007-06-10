@@ -34,7 +34,9 @@ bool InterpreterCollection::WriteConfig()
             wxString jstr=istr0(j);
             cfg->Write(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/name"), interps[i].actions[j].name);
             cfg->Write(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/command"), interps[i].actions[j].command);
-            cfg->Write(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/windowed"), interps[i].actions[j].windowed);
+            cfg->Write(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/mode"), interps[i].actions[j].mode);
+            cfg->Write(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/workingdir"), interps[i].actions[j].wdir);
+            cfg->Write(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/envvarset"), interps[i].actions[j].envvarset);
         }
     }
     return true;
@@ -65,7 +67,9 @@ bool InterpreterCollection::ReadConfig()
             wxString jstr=istr0(j);
             cfg->Read(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/name"), &interps[i].actions[j].name);
             cfg->Read(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/command"), &interps[i].actions[j].command);
-            cfg->Read(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/windowed"), &interps[i].actions[j].windowed);
+            cfg->Read(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/mode"), &interps[i].actions[j].mode);
+            cfg->Read(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/workingdir"), &interps[i].actions[j].wdir);
+            cfg->Read(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/envvarset"), &interps[i].actions[j].envvarset);
         }
     }
     return true;

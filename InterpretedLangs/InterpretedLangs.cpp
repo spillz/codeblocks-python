@@ -234,6 +234,10 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
     commandstr.Replace(_T("$interpreter"),wxFileName(m_ic.interps[m_interpnum].exec).GetShortPath(),false);
     workingdir.Replace(_T("$filedir"),wxFileName(m_RunTarget).GetPath(),false);
 
+
+    if(!(Manager::Get()->GetMacrosManager()))
+        return; // We cannot afford the Macros Manager to fail here!
+
     Manager::Get()->GetMacrosManager()->RecalcVars(0, 0, 0); // hack to force-update macros
     Manager::Get()->GetMacrosManager()->ReplaceMacros(commandstr);
     Manager::Get()->GetMacrosManager()->ReplaceMacros(workingdir);
@@ -246,6 +250,8 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
             return;
         }
     }
+
+    Manager::Get()->GetMessageManager()->Log(_("Launching '%s': %s (in %s)"), consolename.c_str(), commandstr.c_str(), workingdir.c_str());
 
     if(windowed)
     {

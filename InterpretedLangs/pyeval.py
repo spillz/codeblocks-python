@@ -1,3 +1,5 @@
+import os
+print "working in",os.getcwd()
 print "welcome"
 print ">",
 s=raw_input()

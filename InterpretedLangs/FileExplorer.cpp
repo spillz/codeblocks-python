@@ -8,8 +8,8 @@ int ID_FILELOC=wxNewId();
 BEGIN_EVENT_TABLE(FileExplorer, wxPanel)
     EVT_TREE_ITEM_EXPANDING(ID_FILETREE, FileExplorer::OnExpand)
     //EVT_TREE_ITEM_COLLAPSED(id, func) //delete the children
-    //EVT_TREE_ITEM_ACTIVATED(id, func)  //double click - open file / expand folder (the latter is a default just need event.skip)
-    //EVT_TREE_ITEM_RIGHT_CLICK(id, func) //right click open context menu -- interpreter actions, rename, delete, copy, properties, set as root etc
+    EVT_TREE_ITEM_ACTIVATED(ID_FILETREE, FileExplorer::OnActivate)  //double click - open file / expand folder (the latter is a default just need event.skip)
+    EVT_TREE_ITEM_RIGHT_CLICK(ID_FILETREE, FileExplorer::OnRightClick) //right click open context menu -- interpreter actions, rename, delete, copy, properties, set as root etc
     //EVT_COMBOBOX(ID_FILELOC, FileExplorer::OnChooseLoc) //location selected from history of combo box - set as root
     //EVT_TEXT(ID_FILELOC, FileExplorer::OnLocChanging) //provide autotext hint for dir name in combo box
     EVT_TEXT_ENTER(ID_FILELOC, FileExplorer::OnEnterLoc) //location entered in combo box - set as root
@@ -58,21 +58,9 @@ bool FileExplorer::SetRootFolder(const wxString &root)
 bool FileExplorer::AddTreeItems(wxTreeItemId ti)
 {
     m_Tree->DeleteChildren(ti);
-    wxFileName path(m_Tree->GetItemText(ti));
-    wxFileName rpath(m_root);
-    if(ti!=m_Tree->GetRootItem())
-    {
-        wxTreeItemId parent=m_Tree->GetItemParent(ti);
-        while(parent!=m_Tree->GetRootItem())
-        {
-            path=m_Tree->GetItemText(parent)+wxFileName::GetPathSeparator()+path.GetFullPath();
-            parent=m_Tree->GetItemParent(parent);
-        }
-        path=rpath.GetPathWithSep()+path.GetFullPath(); //TODO: fix bug - this path doesn't always resolve...
-    } else
-        path=m_root;
+    wxString path=GetFullPath(ti);
 
-    wxDir dir(path.GetFullPath());
+    wxDir dir(path);
 
     if (!dir.IsOpened())
     {
@@ -85,9 +73,9 @@ bool FileExplorer::AddTreeItems(wxTreeItemId ti)
     while ( cont )
     {
         int itemstate=0;
-        if(wxFileName(path.GetFullPath(),filename).DirExists())
+        if(wxFileName(path,filename).DirExists())
             itemstate=fvsFolder;
-        if(wxFileName(path.GetFullPath(),filename).FileExists())
+        if(wxFileName(path,filename).FileExists())
             itemstate=fvsNormal;
         wxTreeItemId newitem=m_Tree->AppendItem(ti,filename,itemstate);
         m_Tree->SetItemHasChildren(newitem,itemstate==fvsFolder);
@@ -151,6 +139,23 @@ void FileExplorer::SetImages()
 //    UnfreezeTree(true);
 }
 
+wxString FileExplorer::GetFullPath(wxTreeItemId ti)
+{
+    wxFileName path(m_Tree->GetItemText(ti));
+    wxFileName rpath(m_root);
+    if(ti!=m_Tree->GetRootItem())
+    {
+        wxTreeItemId parent=m_Tree->GetItemParent(ti);
+        while(parent!=m_Tree->GetRootItem())
+        {
+            path=m_Tree->GetItemText(parent)+wxFileName::GetPathSeparator()+path.GetFullPath();
+            parent=m_Tree->GetItemParent(parent);
+        }
+        path=rpath.GetPathWithSep()+path.GetFullPath(); //TODO: fix bug - this path doesn't always resolve...
+    } else
+        path=m_root;
+    return path.GetFullPath();
+}
 
 void FileExplorer::OnExpand(wxTreeEvent &event)
 {
@@ -172,3 +177,21 @@ void FileExplorer::OnChangeLoc(wxCommandEvent &event)
     m_Loc->Delete(event.GetInt());
     m_Loc->Insert(m_Loc->GetValue(),0);
 }
+
+void FileExplorer::OnActivate(wxTreeEvent &event)
+{
+    wxString file=GetFullPath(event.GetItem());
+    EditorManager *em=Manager::Get()->GetEditorManager();
+    if(!em->IsOpen(file))
+        em->Open(file);
+}
+
+void FileExplorer::OnRightClick(wxTreeEvent &event)
+{
+    if(m_Popup)
+        m_Popup->Destroy();
+    m_Popup=new wxMenu(_T("Explorer Context"));
+    m_Popup->Append(id,_T("name"));
+
+}
+

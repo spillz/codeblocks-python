@@ -21,13 +21,15 @@ public:
     ~FileExplorer() {}
     bool SetRootFolder(const wxString &folder);
     wxString GetRootFolder() {return m_root;}
-
 private:
+    void OnActivate(wxTreeEvent &event);
     void OnExpand(wxTreeEvent &event);
     void OnEnterLoc(wxCommandEvent &event);
     void OnChangeLoc(wxCommandEvent &event);
     bool AddTreeItems(wxTreeItemId ti);
+    wxString GetFullPath(wxTreeItemId ti);
     void SetImages();
+    wxMenu *m_Popup; // the popup menu that displays on right clicks in the tree (and maybe loc in future??)
     wxString m_root;
     wxTreeCtrl *m_Tree; //the widget display the file tree from root defined by m_Loc
     wxComboBox *m_Loc; // the combo box maintaining a list of useful locations and the current location

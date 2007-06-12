@@ -51,6 +51,8 @@
 		</Compiler>
 		<Unit filename="ConfigDialog.cpp" />
 		<Unit filename="ConfigDialog.h" />
+		<Unit filename="FileExplorer.cpp" />
+		<Unit filename="FileExplorer.h" />
 		<Unit filename="InterpretedLangs.cpp" />
 		<Unit filename="InterpretedLangs.h" />
 		<Unit filename="Resources/dialogs.fbp" />

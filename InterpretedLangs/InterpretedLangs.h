@@ -21,8 +21,8 @@
 #include "sdk.h"
 #include "interpreterproperties.h"
 #include "ConfigDialog.h"
-
 #include "ShellCtrl.h"
+#include "FileExplorer.h"
 
 class InterpretedLangs : public cbPlugin
 {
@@ -161,6 +161,7 @@ class InterpretedLangs : public cbPlugin
         int m_bufpos; //search position in console output buffer (used to check whether processing is finished)
 
         ShellManager *m_shellmgr;
+        FileExplorer *m_fe;
 
         DECLARE_EVENT_TABLE();
 };

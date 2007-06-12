@@ -362,6 +362,9 @@ void InterpretedLangs::OnAttach()
     evt.floatingSize.Set(400, 300);
     evt.minimumSize.Set(200, 150);
     Manager::Get()->GetAppWindow()->ProcessEvent(evt);
+
+    m_fe=new FileExplorer(Manager::Get()->GetAppWindow());
+    Manager::Get()->GetProjectManager()->GetNotebook()->AddPage(m_fe,_T("Files"));
 }
 
 void InterpretedLangs::OnRelease(bool appShutDown)
@@ -380,6 +383,14 @@ void InterpretedLangs::OnRelease(bool appShutDown)
         m_shellmgr->Destroy();
     }
     m_shellmgr = 0;
+    if (m_fe)
+    {
+        CodeBlocksDockEvent evt(cbEVT_REMOVE_DOCK_WINDOW);
+        evt.pWindow = m_fe;
+        Manager::Get()->GetAppWindow()->ProcessEvent(evt);
+        m_fe->Destroy();
+    }
+    m_fe = 0;
 }
 
 int InterpretedLangs::Configure()

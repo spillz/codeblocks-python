@@ -43,6 +43,7 @@ private:
     void OnEnterLoc(wxCommandEvent &event);
     void OnEnterWild(wxCommandEvent &event);
     void OnChangeLoc(wxCommandEvent &event);
+    void OnSetLoc(wxCommandEvent &event);
     bool AddTreeItems(wxTreeItemId ti);
     wxString GetFullPath(wxTreeItemId ti);
     void GetExpandedNodes(wxTreeItemId ti, Expansion *exp);

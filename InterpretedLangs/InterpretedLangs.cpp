@@ -532,6 +532,37 @@ void InterpretedLangs::BuildModuleMenu(const ModuleType type, wxMenu* menu, cons
                 return;
             }
 	}
+    if(type==mtUnknown)
+	    if(data)
+	    {
+            if(data->GetKind()==FileTreeData::ftdkFile)
+            {
+                wxFileName f(data->GetFolder());
+                wxString name=f.GetFullPath();
+                wxString ext=f.GetExt();
+                for(unsigned int i=0;i<m_ic.interps.size();i++)
+                    if(m_ic.interps[i].extensions.Find(ext)>=0)
+                    {
+                        m_RunTarget=name;
+                        m_interpnum=i;
+                        size_t sep_pos=menu->GetMenuItemCount();
+                        size_t added=0;
+                        for(unsigned int j=0;j<m_ic.interps[i].actions.size();j++)
+                        {
+                            if(m_ic.interps[i].actions[j].command.Find(_T("$file"))>=0)
+                            {
+                                wxString menutext=m_ic.interps[i].name+_T(" ")+m_ic.interps[i].actions[j].name;
+                                m_contextactions[added]=j;
+                                menu->Append(ID_ContextMenu_0+j,menutext,_T(""));
+                                added++;
+                            }
+                        }
+                        if(added>0)
+                            menu->InsertSeparator(sep_pos);
+                        return;
+                }
+            }
+	    }
 //	NotImplemented(_T("InterpretedLangs::BuildModuleMenu()"));
 }
 

@@ -1,6 +1,7 @@
 #include "FileExplorer.h"
 #include <wx/dir.h>
 #include <wx/filename.h>
+#include <vector>
 int ID_FILETREE=wxNewId();
 int ID_FILELOC=wxNewId();
 
@@ -141,19 +142,14 @@ void FileExplorer::SetImages()
 
 wxString FileExplorer::GetFullPath(wxTreeItemId ti)
 {
-    wxFileName path(m_Tree->GetItemText(ti));
-    wxFileName rpath(m_root);
-    if(ti!=m_Tree->GetRootItem())
-    {
-        wxTreeItemId parent=m_Tree->GetItemParent(ti);
-        while(parent!=m_Tree->GetRootItem())
-        {
-            path=m_Tree->GetItemText(parent)+wxFileName::GetPathSeparator()+path.GetFullPath();
-            parent=m_Tree->GetItemParent(parent);
-        }
-        path=rpath.GetPathWithSep()+path.GetFullPath(); //TODO: fix bug - this path doesn't always resolve...
-    } else
-        path=m_root;
+    wxFileName path(m_root);
+    std::vector<wxTreeItemId> vti;
+    vti.push_back(ti);
+    while(vti[0]!=m_Tree->GetRootItem())
+        vti.insert(vti.begin(),m_Tree->GetItemParent(vti[0]));
+    for(std::vector<wxTreeItemId>::iterator it=vti.begin()+1;it!=vti.end();it++)
+        path.Assign(path.GetFullPath(),m_Tree->GetItemText(*it));
+    wxMessageBox(path.GetFullPath());
     return path.GetFullPath();
 }
 
@@ -188,10 +184,9 @@ void FileExplorer::OnActivate(wxTreeEvent &event)
 
 void FileExplorer::OnRightClick(wxTreeEvent &event)
 {
-    if(m_Popup)
-        m_Popup->Destroy();
-    m_Popup=new wxMenu(_T("Explorer Context"));
-    m_Popup->Append(id,_T("name"));
+    wxMenu *m_Popup=new wxMenu(_T("Explorer Context"));
+    m_Popup->Append(wxID_ANY,_T("name"));
+    wxWindow::PopupMenu(m_Popup);
 
 }
 

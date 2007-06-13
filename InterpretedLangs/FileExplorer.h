@@ -22,6 +22,7 @@ public:
     bool SetRootFolder(const wxString &folder);
     wxString GetRootFolder() {return m_root;}
 private:
+    void OnRightClick(wxTreeEvent &event);
     void OnActivate(wxTreeEvent &event);
     void OnExpand(wxTreeEvent &event);
     void OnEnterLoc(wxCommandEvent &event);

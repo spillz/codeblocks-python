@@ -14,15 +14,15 @@
 
 class Expansion;
 
-typedef std::vector<Expansion> ExpList;
+typedef std::vector<Expansion*> ExpList;
 
 class Expansion
 {
 public:
-    Expansion() { name = _T(""); children=NULL;}
-    ~Expansion() {if(children) delete children;}
+    Expansion() { name = _T("");}
+    ~Expansion() {for(size_t i=0;i<children.size();i++) delete children[i];}
     wxString name;
-    ExpList *children;
+    ExpList children;
 };
 
 
@@ -46,7 +46,7 @@ private:
     bool AddTreeItems(wxTreeItemId ti);
     wxString GetFullPath(wxTreeItemId ti);
     void GetExpandedNodes(wxTreeItemId ti, Expansion *exp);
-    void RecursiveRebuild(wxTreeItemId ti,const Expansion &exp);
+    void RecursiveRebuild(wxTreeItemId ti, Expansion *exp);
     void Refresh(wxTreeItemId ti);
     void SetImages();
     wxMenu *m_Popup; // the popup menu that displays on right clicks in the tree (and maybe loc in future??)

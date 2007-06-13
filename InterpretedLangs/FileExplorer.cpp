@@ -15,7 +15,7 @@ BEGIN_EVENT_TABLE(FileExplorer, wxPanel)
     //EVT_COMBOBOX(ID_FILELOC, FileExplorer::OnChooseLoc) //location selected from history of combo box - set as root
     //EVT_TEXT(ID_FILELOC, FileExplorer::OnLocChanging) //provide autotext hint for dir name in combo box
     EVT_TEXT_ENTER(ID_FILELOC, FileExplorer::OnEnterLoc) //location entered in combo box - set as root
-//    EVT_TEXT_ENTER(ID_FILEWILD, FileExplorer::OnEnterWild) //location entered in combo box - set as root  ** BUG RIDDEN
+    EVT_TEXT_ENTER(ID_FILEWILD, FileExplorer::OnEnterWild) //location entered in combo box - set as root  ** BUG RIDDEN
 END_EVENT_TABLE()
 
 
@@ -27,8 +27,8 @@ FileExplorer::FileExplorer(wxWindow *parent,wxWindowID id,
     wxBoxSizer* bs = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer* bsh = new wxBoxSizer(wxHORIZONTAL);
     m_Tree = new wxTreeCtrl(this, ID_FILETREE);
-    m_Loc = new wxComboBox(this,ID_FILELOC);
-    m_WildCards = new wxComboBox(this,ID_FILEWILD);
+    m_Loc = new wxComboBox(this,ID_FILELOC,_T(""),wxDefaultPosition,wxDefaultSize,0,NULL,wxTE_PROCESS_ENTER);
+    m_WildCards = new wxComboBox(this,ID_FILEWILD,_T(""),wxDefaultPosition,wxDefaultSize,0,NULL,wxTE_PROCESS_ENTER);
     bs->Add(m_Loc, 0, wxEXPAND);
     bsh->Add(new wxStaticText(this,wxID_ANY,_T("Wildcard: ")),0,wxALIGN_CENTRE);
     bsh->Add(m_WildCards,1);
@@ -66,34 +66,34 @@ bool FileExplorer::SetRootFolder(const wxString &root)
 void FileExplorer::GetExpandedNodes(wxTreeItemId ti, Expansion *exp)
 {
     exp->name=m_Tree->GetItemText(ti);
-    exp->children=new ExpList();
     wxTreeItemIdValue cookie;
     wxTreeItemId ch=m_Tree->GetFirstChild(ti,cookie);
     while(ch.IsOk())
     {
         if(m_Tree->IsExpanded(ch))
         {
-            Expansion e;
-            GetExpandedNodes(ch,&e);
-            exp->children->push_back(e);
+            Expansion *e=new Expansion();
+            GetExpandedNodes(ch,e);
+            exp->children.push_back(e);
         }
         ch=m_Tree->GetNextChild(ti,cookie);
     }
 }
 
 
-void FileExplorer::RecursiveRebuild(wxTreeItemId ti,const Expansion &exp)
+void FileExplorer::RecursiveRebuild(wxTreeItemId ti,Expansion *exp)
 {
     AddTreeItems(ti);
-    if(exp.children==NULL)
+    m_Tree->Expand(ti);
+    if(exp->children.size()==0)
         return;
     wxTreeItemIdValue cookie;
     wxTreeItemId ch=m_Tree->GetFirstChild(ti,cookie);
     while(ch.IsOk())
     {
-        for(size_t i=0;i<exp.children->size();i++)
-            if(exp.children->at(i).name==m_Tree->GetItemText(ch))
-                RecursiveRebuild(ch,exp.children->at(i));
+        for(size_t i=0;i<exp->children.size();i++)
+            if(exp->children[i]->name==m_Tree->GetItemText(ch))
+                RecursiveRebuild(ch,exp->children[i]);
         ch=m_Tree->GetNextChild(ti,cookie);
     }
 }
@@ -102,7 +102,7 @@ void FileExplorer::Refresh(wxTreeItemId ti)
 {
     Expansion e;
     GetExpandedNodes(ti,&e);
-    RecursiveRebuild(ti,e);
+    RecursiveRebuild(ti,&e);
 }
 
 bool FileExplorer::AddTreeItems(wxTreeItemId ti)
@@ -259,6 +259,16 @@ void FileExplorer::OnRightClick(wxTreeEvent &event)
 {
     wxMenu *m_Popup=new wxMenu();
     m_Popup->Append(wxID_ANY,_T("name"));
+//    FileTreeData ftd;
+//        void SetKind(FileTreeDataKind kind){ m_kind = kind; }
+//        void SetProject(cbProject* project){ m_Project = project; }
+//        // only valid for file selections
+//        void SetFileIndex(int index){ m_Index = index; }
+//        void SetProjectFile(ProjectFile* file){ m_file = file; }
+//        // only valid for folder selections
+//        void SetFolder(const wxString& folder){ m_folder = folder; }
+
+//    m_plugin->BuildModuleMenu(mtProjectManager, m_Popup, const FileTreeData* data);
     wxWindow::PopupMenu(m_Popup);
 
 }

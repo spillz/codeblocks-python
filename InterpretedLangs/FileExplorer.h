@@ -12,6 +12,21 @@
 #include "sdk.h"
 
 
+class Expansion;
+
+typedef std::vector<Expansion> ExpList;
+
+class Expansion
+{
+public:
+    Expansion() { name = _T(""); children=NULL;}
+    ~Expansion() {if(children) delete children;}
+    wxString name;
+    ExpList *children;
+};
+
+
+
 class FileExplorer: public wxPanel
 {
 public:
@@ -26,14 +41,19 @@ private:
     void OnActivate(wxTreeEvent &event);
     void OnExpand(wxTreeEvent &event);
     void OnEnterLoc(wxCommandEvent &event);
+    void OnEnterWild(wxCommandEvent &event);
     void OnChangeLoc(wxCommandEvent &event);
     bool AddTreeItems(wxTreeItemId ti);
     wxString GetFullPath(wxTreeItemId ti);
+    void GetExpandedNodes(wxTreeItemId ti, Expansion *exp);
+    void RecursiveRebuild(wxTreeItemId ti,const Expansion &exp);
+    void Refresh(wxTreeItemId ti);
     void SetImages();
     wxMenu *m_Popup; // the popup menu that displays on right clicks in the tree (and maybe loc in future??)
     wxString m_root;
     wxTreeCtrl *m_Tree; //the widget display the file tree from root defined by m_Loc
     wxComboBox *m_Loc; // the combo box maintaining a list of useful locations and the current location
+    wxComboBox *m_WildCards; // the combo box maintaining a list of wildcard filters for files
     DECLARE_EVENT_TABLE()
 };
 

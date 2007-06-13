@@ -4,6 +4,7 @@
 #include <vector>
 int ID_FILETREE=wxNewId();
 int ID_FILELOC=wxNewId();
+int ID_FILEWILD=wxNewId();
 
 
 BEGIN_EVENT_TABLE(FileExplorer, wxPanel)
@@ -14,6 +15,7 @@ BEGIN_EVENT_TABLE(FileExplorer, wxPanel)
     //EVT_COMBOBOX(ID_FILELOC, FileExplorer::OnChooseLoc) //location selected from history of combo box - set as root
     //EVT_TEXT(ID_FILELOC, FileExplorer::OnLocChanging) //provide autotext hint for dir name in combo box
     EVT_TEXT_ENTER(ID_FILELOC, FileExplorer::OnEnterLoc) //location entered in combo box - set as root
+//    EVT_TEXT_ENTER(ID_FILEWILD, FileExplorer::OnEnterWild) //location entered in combo box - set as root  ** BUG RIDDEN
 END_EVENT_TABLE()
 
 
@@ -23,9 +25,14 @@ FileExplorer::FileExplorer(wxWindow *parent,wxWindowID id,
     wxPanel(parent,id,pos,size,style, name)
 {
     wxBoxSizer* bs = new wxBoxSizer(wxVERTICAL);
+    wxBoxSizer* bsh = new wxBoxSizer(wxHORIZONTAL);
     m_Tree = new wxTreeCtrl(this, ID_FILETREE);
     m_Loc = new wxComboBox(this,ID_FILELOC);
+    m_WildCards = new wxComboBox(this,ID_FILEWILD);
     bs->Add(m_Loc, 0, wxEXPAND);
+    bsh->Add(new wxStaticText(this,wxID_ANY,_T("Wildcard: ")),0,wxALIGN_CENTRE);
+    bsh->Add(m_WildCards,1);
+    bs->Add(bsh, 0, wxEXPAND);
     bs->Add(m_Tree, 1, wxEXPAND | wxALL);
     SetAutoLayout(TRUE);
 
@@ -56,6 +63,48 @@ bool FileExplorer::SetRootFolder(const wxString &root)
 
 }
 
+void FileExplorer::GetExpandedNodes(wxTreeItemId ti, Expansion *exp)
+{
+    exp->name=m_Tree->GetItemText(ti);
+    exp->children=new ExpList();
+    wxTreeItemIdValue cookie;
+    wxTreeItemId ch=m_Tree->GetFirstChild(ti,cookie);
+    while(ch.IsOk())
+    {
+        if(m_Tree->IsExpanded(ch))
+        {
+            Expansion e;
+            GetExpandedNodes(ch,&e);
+            exp->children->push_back(e);
+        }
+        ch=m_Tree->GetNextChild(ti,cookie);
+    }
+}
+
+
+void FileExplorer::RecursiveRebuild(wxTreeItemId ti,const Expansion &exp)
+{
+    AddTreeItems(ti);
+    if(exp.children==NULL)
+        return;
+    wxTreeItemIdValue cookie;
+    wxTreeItemId ch=m_Tree->GetFirstChild(ti,cookie);
+    while(ch.IsOk())
+    {
+        for(size_t i=0;i<exp.children->size();i++)
+            if(exp.children->at(i).name==m_Tree->GetItemText(ch))
+                RecursiveRebuild(ch,exp.children->at(i));
+        ch=m_Tree->GetNextChild(ti,cookie);
+    }
+}
+
+void FileExplorer::Refresh(wxTreeItemId ti)
+{
+    Expansion e;
+    GetExpandedNodes(ti,&e);
+    RecursiveRebuild(ti,e);
+}
+
 bool FileExplorer::AddTreeItems(wxTreeItemId ti)
 {
     m_Tree->DeleteChildren(ti);
@@ -66,7 +115,7 @@ bool FileExplorer::AddTreeItems(wxTreeItemId ti)
     if (!dir.IsOpened())
     {
         // deal with the error here - wxDir would already log an error message
-        // explaining the exact reason of the failure
+        // explaining the exact reason for the failure
         return false;
     }
     wxString filename;
@@ -74,15 +123,24 @@ bool FileExplorer::AddTreeItems(wxTreeItemId ti)
     while ( cont )
     {
         int itemstate=0;
+        bool match=true;
         if(wxFileName(path,filename).DirExists())
             itemstate=fvsFolder;
         if(wxFileName(path,filename).FileExists())
+        {
             itemstate=fvsNormal;
-        wxTreeItemId newitem=m_Tree->AppendItem(ti,filename,itemstate);
-        m_Tree->SetItemHasChildren(newitem,itemstate==fvsFolder);
+            wxString wildcard=m_WildCards->GetValue();
+            if(wildcard!=_T("") && !::wxMatchWild(wildcard,filename,false))
+                match=false;
+        }
+        if(match)
+        {
+            wxTreeItemId newitem=m_Tree->AppendItem(ti,filename,itemstate);
+            m_Tree->SetItemHasChildren(newitem,itemstate==fvsFolder);
+        }
         cont = dir.GetNext(&filename);
     }
-    m_Tree->SortChildren(ti);
+//    m_Tree->SortChildren(ti);
     return true;
 }
 
@@ -143,13 +201,19 @@ void FileExplorer::SetImages()
 wxString FileExplorer::GetFullPath(wxTreeItemId ti)
 {
     wxFileName path(m_root);
-    std::vector<wxTreeItemId> vti;
-    vti.push_back(ti);
-    while(vti[0]!=m_Tree->GetRootItem())
-        vti.insert(vti.begin(),m_Tree->GetItemParent(vti[0]));
-    for(std::vector<wxTreeItemId>::iterator it=vti.begin()+1;it!=vti.end();it++)
-        path.Assign(path.GetFullPath(),m_Tree->GetItemText(*it));
-    wxMessageBox(path.GetFullPath());
+    if(ti!=m_Tree->GetRootItem())
+    {
+        std::vector<wxTreeItemId> vti;
+        vti.push_back(ti);
+        wxTreeItemId pti=m_Tree->GetItemParent(vti[0]);
+        while(pti!=m_Tree->GetRootItem())
+        {
+            vti.insert(vti.begin(),pti);
+            pti=m_Tree->GetItemParent(pti);
+        }
+        for(size_t i=0;i<vti.size();i++)
+            path.Assign(path.GetFullPath(),m_Tree->GetItemText(vti[i]));
+    }
     return path.GetFullPath();
 }
 
@@ -166,6 +230,15 @@ void FileExplorer::OnEnterLoc(wxCommandEvent &event)
     if(m_Loc->GetCount()>10)
         m_Loc->Delete(10);
 }
+
+void FileExplorer::OnEnterWild(wxCommandEvent &event)
+{
+    Refresh(m_Tree->GetRootItem());
+    m_Loc->Insert(m_WildCards->GetValue(),0);
+    if(m_WildCards->GetCount()>10)
+        m_WildCards->Delete(10);
+}
+
 
 void FileExplorer::OnChangeLoc(wxCommandEvent &event)
 {
@@ -184,7 +257,7 @@ void FileExplorer::OnActivate(wxTreeEvent &event)
 
 void FileExplorer::OnRightClick(wxTreeEvent &event)
 {
-    wxMenu *m_Popup=new wxMenu(_T("Explorer Context"));
+    wxMenu *m_Popup=new wxMenu();
     m_Popup->Append(wxID_ANY,_T("name"));
     wxWindow::PopupMenu(m_Popup);
 

@@ -11,6 +11,16 @@
 #endif
 
 
+struct InterpreterMenuRef
+{
+    InterpreterMenuRef(size_t interp, size_t act) {i=interp; a=act;}
+    size_t i;
+    size_t a;
+};
+
+typedef std::vector<InterpreterMenuRef> InterpreterMenuVec;
+
+
 struct InterpreterAction
 {
    wxString name; // the action's name, e.g. "Run"

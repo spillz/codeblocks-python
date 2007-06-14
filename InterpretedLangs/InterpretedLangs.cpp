@@ -1,5 +1,6 @@
 #include <configurationpanel.h>
 #include "InterpretedLangs.h"
+#include "il_globals.h"
 
 // Register the plugin with Code::Blocks.
 // We are using an anonymous namespace so we don't litter the global one.
@@ -32,6 +33,26 @@ int ID_ContextMenu_6=wxNewId();
 int ID_ContextMenu_7=wxNewId();
 int ID_ContextMenu_8=wxNewId();
 int ID_ContextMenu_9=wxNewId();
+int ID_ContextMenu_10=wxNewId();
+int ID_ContextMenu_11=wxNewId();
+int ID_ContextMenu_12=wxNewId();
+int ID_ContextMenu_13=wxNewId();
+int ID_ContextMenu_14=wxNewId();
+int ID_ContextMenu_15=wxNewId();
+int ID_ContextMenu_16=wxNewId();
+int ID_ContextMenu_17=wxNewId();
+int ID_ContextMenu_18=wxNewId();
+int ID_ContextMenu_19=wxNewId();
+int ID_ContextMenu_20=wxNewId();
+int ID_ContextMenu_21=wxNewId();
+int ID_ContextMenu_22=wxNewId();
+int ID_ContextMenu_23=wxNewId();
+int ID_ContextMenu_24=wxNewId();
+int ID_ContextMenu_25=wxNewId();
+int ID_ContextMenu_26=wxNewId();
+int ID_ContextMenu_27=wxNewId();
+int ID_ContextMenu_28=wxNewId();
+int ID_ContextMenu_29=wxNewId();
 int ID_Menu_0=wxNewId();
 int ID_Menu_1=wxNewId();
 int ID_Menu_2=wxNewId();
@@ -174,7 +195,7 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
     wxString workingdir;
     bool windowed=false;
     bool console=false;
-    if(ID>=ID_ContextMenu_0&&ID<=ID_ContextMenu_9)
+    if(ID>=ID_ContextMenu_0&&ID<=ID_ContextMenu_29)
     {
         if(!wxFileName::FileExists(m_RunTarget))
         {
@@ -183,7 +204,8 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
             if(m_RunTarget==_T(""))
                 return;
         }
-        int actionnum=m_contextactions[ID-ID_ContextMenu_0];
+        int actionnum=m_contextvec[ID-ID_ContextMenu_0].a;
+        m_interpnum=m_contextvec[ID-ID_ContextMenu_0].i;
         commandstr=m_ic.interps[m_interpnum].actions[actionnum].command;
         consolename=m_ic.interps[m_interpnum].name+_T(" ")+m_ic.interps[m_interpnum].actions[actionnum].name;
         windowed=(m_ic.interps[m_interpnum].actions[actionnum].mode==_("W"));
@@ -468,6 +490,7 @@ void InterpretedLangs::BuildModuleMenu(const ModuleType type, wxMenu* menu, cons
 	//Check the parameter \"type\" and see which module it is
 	//and append any items you need in the menu...
 	//TIP: for consistency, add a separator as the first item...
+	m_contextvec.clear();
 	if(type==mtProjectManager)
 	{
 	    if(data)
@@ -477,29 +500,27 @@ void InterpretedLangs::BuildModuleMenu(const ModuleType type, wxMenu* menu, cons
                 ProjectFile *f=data->GetProjectFile();
                 if(f)
                 {
-                    wxString name=f->file.GetFullPath();
-                    wxString ext=f->file.GetExt();
+                    wxString filename=f->file.GetFullPath();
+                    wxString name=f->file.GetFullName();
+                    size_t sep_pos=menu->GetMenuItemCount();
+                    size_t added=0;
                     for(unsigned int i=0;i<m_ic.interps.size();i++)
-                        if(m_ic.interps[i].extensions.Find(ext)>=0)
+                        if(WildCardListMatch(m_ic.interps[i].extensions,name))
                         {
-                            m_RunTarget=name;
-                            m_interpnum=i;
-                            size_t sep_pos=menu->GetMenuItemCount();
-                            size_t added=0;
+                            m_RunTarget=filename;
                             for(unsigned int j=0;j<m_ic.interps[i].actions.size();j++)
                             {
                                 if(m_ic.interps[i].actions[j].command.Find(_T("$file"))>=0)
                                 {
                                     wxString menutext=m_ic.interps[i].name+_T(" ")+m_ic.interps[i].actions[j].name;
-                                    m_contextactions[added]=j;
-                                    menu->Append(ID_ContextMenu_0+j,menutext,_T(""));
+                                    m_contextvec.push_back(InterpreterMenuRef(i,j));
+                                    menu->Append(ID_ContextMenu_0+added,menutext,_T(""));
                                     added++;
                                 }
                             }
-                            if(added>0)
-                                menu->InsertSeparator(sep_pos);
-                            return;
                         }
+                    if(added>0)
+                        menu->InsertSeparator(sep_pos);
                 }
             }
 	    }
@@ -508,29 +529,27 @@ void InterpretedLangs::BuildModuleMenu(const ModuleType type, wxMenu* menu, cons
 	{
         EditorManager* edMan = Manager::Get()->GetEditorManager();
         wxFileName activefile(edMan->GetActiveEditor()->GetFilename());
-        wxString name=activefile.GetFullPath();
-        wxString ext=activefile.GetExt();
+        wxString filename=activefile.GetFullPath();
+        wxString name=activefile.GetFullName();
+        size_t sep_pos=menu->GetMenuItemCount();
+        size_t added=0;
         for(unsigned int i=0;i<m_ic.interps.size();i++)
-            if(m_ic.interps[i].extensions.Find(ext)>=0)
+            if(WildCardListMatch(m_ic.interps[i].extensions,name))
             {
-                m_RunTarget=name;
-                m_interpnum=i;
-                size_t sep_pos=menu->GetMenuItemCount();
-                size_t added=0;
+                m_RunTarget=filename;
                 for(unsigned int j=0;j<m_ic.interps[i].actions.size();j++)
                 {
                     if(m_ic.interps[i].actions[j].command.Find(_T("$file"))>=0)
                     {
                         wxString menutext=m_ic.interps[i].name+_T(" ")+m_ic.interps[i].actions[j].name;
-                        menu->Append(ID_ContextMenu_0+j,menutext,_T(""));
-                        m_contextactions[added]=j;
+                        m_contextvec.push_back(InterpreterMenuRef(i,j));
+                        menu->Append(ID_ContextMenu_0+added,menutext,_T(""));
                         added++;
                     }
                 }
-                if(added>0)
-                    menu->InsertSeparator(sep_pos);
-                return;
             }
+        if(added>0)
+            menu->InsertSeparator(sep_pos);
 	}
     if(type==mtUnknown)
 	    if(data)
@@ -538,29 +557,27 @@ void InterpretedLangs::BuildModuleMenu(const ModuleType type, wxMenu* menu, cons
             if(data->GetKind()==FileTreeData::ftdkFile)
             {
                 wxFileName f(data->GetFolder());
-                wxString name=f.GetFullPath();
-                wxString ext=f.GetExt();
+                wxString filename=f.GetFullPath();
+                wxString name=f.GetFullName();
+                size_t sep_pos=menu->GetMenuItemCount();
+                size_t added=0;
                 for(unsigned int i=0;i<m_ic.interps.size();i++)
-                    if(m_ic.interps[i].extensions.Find(ext)>=0)
+                    if(WildCardListMatch(m_ic.interps[i].extensions,name))
                     {
-                        m_RunTarget=name;
-                        m_interpnum=i;
-                        size_t sep_pos=menu->GetMenuItemCount();
-                        size_t added=0;
+                        m_RunTarget=filename;
                         for(unsigned int j=0;j<m_ic.interps[i].actions.size();j++)
                         {
                             if(m_ic.interps[i].actions[j].command.Find(_T("$file"))>=0)
                             {
                                 wxString menutext=m_ic.interps[i].name+_T(" ")+m_ic.interps[i].actions[j].name;
-                                m_contextactions[added]=j;
-                                menu->Append(ID_ContextMenu_0+j,menutext,_T(""));
+                                m_contextvec.push_back(InterpreterMenuRef(i,j));
+                                menu->Append(ID_ContextMenu_0+added,menutext,_T(""));
                                 added++;
                             }
                         }
-                        if(added>0)
-                            menu->InsertSeparator(sep_pos);
-                        return;
-                }
+                    }
+                if(added>0)
+                    menu->InsertSeparator(sep_pos);
             }
 	    }
 //	NotImplemented(_T("InterpretedLangs::BuildModuleMenu()"));

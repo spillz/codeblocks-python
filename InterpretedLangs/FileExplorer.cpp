@@ -2,6 +2,7 @@
 #include <wx/dir.h>
 #include <wx/filename.h>
 #include <vector>
+#include "il_globals.h"
 
 int ID_FILETREE=wxNewId();
 int ID_FILELOC=wxNewId();
@@ -14,11 +15,13 @@ BEGIN_EVENT_TABLE(FileExplorer, wxPanel)
     //EVT_TREE_ITEM_COLLAPSED(id, func) //delete the children
     EVT_TREE_ITEM_ACTIVATED(ID_FILETREE, FileExplorer::OnActivate)  //double click - open file / expand folder (the latter is a default just need event.skip)
     EVT_TREE_ITEM_RIGHT_CLICK(ID_FILETREE, FileExplorer::OnRightClick) //right click open context menu -- interpreter actions, rename, delete, copy, properties, set as root etc
-    //EVT_COMBOBOX(ID_FILELOC, FileExplorer::OnChooseLoc) //location selected from history of combo box - set as root
+    EVT_COMBOBOX(ID_FILELOC, FileExplorer::OnChooseLoc) //location selected from history of combo box - set as root
+    EVT_COMBOBOX(ID_FILEWILD, FileExplorer::OnChooseWild) //location selected from history of combo box - set as root
     //EVT_TEXT(ID_FILELOC, FileExplorer::OnLocChanging) //provide autotext hint for dir name in combo box
     EVT_TEXT_ENTER(ID_FILELOC, FileExplorer::OnEnterLoc) //location entered in combo box - set as root
     EVT_TEXT_ENTER(ID_FILEWILD, FileExplorer::OnEnterWild) //location entered in combo box - set as root  ** BUG RIDDEN
 END_EVENT_TABLE()
+
 
 
 FileExplorer::FileExplorer(wxWindow *parent,wxWindowID id,
@@ -29,7 +32,7 @@ FileExplorer::FileExplorer(wxWindow *parent,wxWindowID id,
     wxBoxSizer* bs = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer* bsh = new wxBoxSizer(wxHORIZONTAL);
     m_Tree = new wxTreeCtrl(this, ID_FILETREE);
-    m_Tree->SetIndent(2);
+    m_Tree->SetIndent(m_Tree->GetIndent()/2);
     m_Loc = new wxComboBox(this,ID_FILELOC,_T(""),wxDefaultPosition,wxDefaultSize,0,NULL,wxTE_PROCESS_ENTER);
     m_WildCards = new wxComboBox(this,ID_FILEWILD,_T(""),wxDefaultPosition,wxDefaultSize,0,NULL,wxTE_PROCESS_ENTER);
     bs->Add(m_Loc, 0, wxEXPAND);
@@ -134,7 +137,7 @@ bool FileExplorer::AddTreeItems(wxTreeItemId ti)
         {
             itemstate=fvsNormal;
             wxString wildcard=m_WildCards->GetValue();
-            if(wildcard!=_T("") && !::wxMatchWild(wildcard,filename,false))
+            if(!WildCardListMatch(wildcard,filename))
                 match=false;
         }
         if(match)
@@ -144,7 +147,7 @@ bool FileExplorer::AddTreeItems(wxTreeItemId ti)
         }
         cont = dir.GetNext(&filename);
     }
-//    m_Tree->SortChildren(ti);
+    m_Tree->SortChildren(ti);
     return true;
 }
 
@@ -229,27 +232,40 @@ void FileExplorer::OnExpand(wxTreeEvent &event)
 //TODO: Save previous paths
 void FileExplorer::OnEnterLoc(wxCommandEvent &event)
 {
-    if(!SetRootFolder(m_Loc->GetValue()))
+    wxString loc=m_Loc->GetValue();
+    if(!SetRootFolder(loc))
         return;
-    m_Loc->Insert(m_Loc->GetValue(),0);
+    m_Loc->Insert(loc,0);
     if(m_Loc->GetCount()>10)
         m_Loc->Delete(10);
 }
 
 void FileExplorer::OnEnterWild(wxCommandEvent &event)
 {
+    wxString wild=m_WildCards->GetValue();
     Refresh(m_Tree->GetRootItem());
-    m_Loc->Insert(m_WildCards->GetValue(),0);
+    m_WildCards->Insert(wild,0);
     if(m_WildCards->GetCount()>10)
         m_WildCards->Delete(10);
 }
 
-
-void FileExplorer::OnChangeLoc(wxCommandEvent &event)
+void FileExplorer::OnChooseWild(wxCommandEvent &event)
 {
-    m_Loc->Delete(event.GetInt());
-    if(SetRootFolder(m_Loc->GetValue()))
-        m_Loc->Insert(m_Loc->GetValue(),0);
+    Refresh(m_Tree->GetRootItem());
+    wxString wild=m_WildCards->GetValue();
+//    m_WildCards->Delete(event.GetInt());
+//    m_WildCards->Insert(wild,0);
+}
+
+void FileExplorer::OnChooseLoc(wxCommandEvent &event)
+{
+    wxString loc=m_Loc->GetValue();
+//    m_Loc->Delete(event.GetInt());
+    if(SetRootFolder(loc))
+    {
+//        m_Loc->Insert(loc,0);
+        return;
+    }
 }
 
 void FileExplorer::OnActivate(wxTreeEvent &event)

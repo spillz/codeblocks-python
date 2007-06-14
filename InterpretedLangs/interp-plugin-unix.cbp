@@ -50,6 +50,8 @@
 		<Unit filename="InterpretedLangs.h" />
 		<Unit filename="ShellCtrl.cpp" />
 		<Unit filename="ShellCtrl.h" />
+		<Unit filename="il_globals.cpp" />
+		<Unit filename="il_globals.h" />
 		<Unit filename="interpreterproperties.cpp" />
 		<Unit filename="interpreterproperties.h" />
 		<Unit filename="manifest.xml" />

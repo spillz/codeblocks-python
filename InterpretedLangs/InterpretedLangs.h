@@ -145,6 +145,10 @@ class InterpretedLangs : public cbPlugin
         unsigned int m_interpnum;
         unsigned int m_contextactions[10];
         wxString m_wildcard;
+
+        InterpreterMenuVec m_contextvec;
+        InterpreterMenuVec m_menuvec;
+
 //        PipedProcess *m_pp;
         wxTimer m_TimerPollDebugger; // This appears to be illegal... TODO: Fix it (maybe make it a pointer and instantiate later)
 

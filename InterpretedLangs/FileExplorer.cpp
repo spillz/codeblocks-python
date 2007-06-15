@@ -20,6 +20,42 @@ int ID_FILEEXPANDALL=wxNewId();
 int ID_FILESHOWHIDDEN=wxNewId();
 int ID_FILE_UPBUTTON=wxNewId();
 
+BEGIN_EVENT_TABLE(FileTreeCtrl, wxTreeCtrl)
+END_EVENT_TABLE()
+
+
+IMPLEMENT_DYNAMIC_CLASS(FileTreeCtrl, wxTreeCtrl)
+
+FileTreeCtrl::FileTreeCtrl(wxWindow* parent, wxWindowID id, const wxPoint& pos,
+    const wxSize& size, long style,
+    const wxValidator& validator,
+    const wxString& name)
+    : wxTreeCtrl(parent,id,pos,size,style,validator,name) {}
+
+FileTreeCtrl::FileTreeCtrl() { }
+
+FileTreeCtrl::FileTreeCtrl(wxWindow *parent): wxTreeCtrl(parent) {}
+
+FileTreeCtrl::~FileTreeCtrl()
+{
+}
+
+//void FileTreeCtrl::SortChildren(const wxTreeItemId& ti)
+//{
+//    wxTreeCtrl::SortChildren(ti);
+//}
+
+int FileTreeCtrl::OnCompareItems(const wxTreeItemId& item1, const wxTreeItemId& item2)
+{
+    if(GetItemImage(item1)>GetItemImage(item2))
+        return -1;
+    if(GetItemImage(item1)<GetItemImage(item2))
+        return 1;
+    return (GetItemText(item1).Cmp(GetItemText(item2)));
+}
+
+
+
 BEGIN_EVENT_TABLE(FileExplorer, wxPanel)
     EVT_BUTTON(ID_FILE_UPBUTTON, FileExplorer::OnUpButton)
     EVT_MENU(ID_SETLOC, FileExplorer::OnSetLoc)
@@ -45,6 +81,7 @@ END_EVENT_TABLE()
 
 
 
+
 FileExplorer::FileExplorer(wxWindow *parent,wxWindowID id,
     const wxPoint& pos, const wxSize& size,
     long style, const wxString& name):
@@ -56,8 +93,8 @@ FileExplorer::FileExplorer(wxWindow *parent,wxWindowID id,
     wxBoxSizer* bshloc = new wxBoxSizer(wxHORIZONTAL);
     m_Tree = new FileTreeCtrl(this, ID_FILETREE);
     m_Tree->SetIndent(m_Tree->GetIndent()/2);
-    m_Loc = new wxComboBox(this,ID_FILELOC,_T(""),wxDefaultPosition,wxDefaultSize,0,NULL,wxTE_PROCESS_ENTER);
-    m_WildCards = new wxComboBox(this,ID_FILEWILD,_T(""),wxDefaultPosition,wxDefaultSize,0,NULL,wxTE_PROCESS_ENTER);
+    m_Loc = new wxComboBox(this,ID_FILELOC,_T(""),wxDefaultPosition,wxDefaultSize,0,NULL,wxTE_PROCESS_ENTER|wxCB_DROPDOWN);
+    m_WildCards = new wxComboBox(this,ID_FILEWILD,_T(""),wxDefaultPosition,wxDefaultSize,0,NULL,wxTE_PROCESS_ENTER|wxCB_DROPDOWN);
     m_UpButton = new wxButton(this,ID_FILE_UPBUTTON,_("^"),wxDefaultPosition,wxDefaultSize,wxBU_EXACTFIT);
     bshloc->Add(m_Loc, 1, wxEXPAND);
     bshloc->Add(m_UpButton, 0, wxEXPAND);
@@ -315,16 +352,6 @@ void FileExplorer::WriteConfig()
     }
 }
 
-//TODO: Save previous paths
-void FileExplorer::OnEnterLoc(wxCommandEvent &event)
-{
-    wxString loc=m_Loc->GetValue();
-    if(!SetRootFolder(loc))
-        return;
-    m_Loc->Insert(loc,0);
-    if(m_Loc->GetCount()>10)
-        m_Loc->Delete(10);
-}
 
 void FileExplorer::OnEnterWild(wxCommandEvent &event)
 {
@@ -333,15 +360,29 @@ void FileExplorer::OnEnterWild(wxCommandEvent &event)
     m_WildCards->Insert(wild,0);
     if(m_WildCards->GetCount()>10)
         m_WildCards->Delete(10);
+    m_WildCards->SetSelection(0);
 }
 
 void FileExplorer::OnChooseWild(wxCommandEvent &event)
 {
     Refresh(m_Tree->GetRootItem());
     wxString wild=m_WildCards->GetValue();
-    m_WildCards->Delete(event.GetInt());
+    m_WildCards->Delete(m_WildCards->GetSelection());
     m_WildCards->Insert(wild,0);
-    m_WildCards->SetValue(wild);
+//    event.Skip(true);
+//    cbMessageBox(wild);
+    m_WildCards->SetSelection(0);
+}
+
+void FileExplorer::OnEnterLoc(wxCommandEvent &event)
+{
+    wxString loc=m_Loc->GetValue();
+    if(!SetRootFolder(loc))
+        return;
+    m_Loc->Insert(loc,0);
+    if(m_Loc->GetCount()>10)
+        m_Loc->Delete(10);
+    m_Loc->SetSelection(0);
 }
 
 void FileExplorer::OnChooseLoc(wxCommandEvent &event)
@@ -353,8 +394,7 @@ void FileExplorer::OnChooseLoc(wxCommandEvent &event)
     }
     m_Loc->Delete(event.GetInt());
     m_Loc->Insert(loc,0);
-    m_Loc->SetValue(loc);
-//    Refresh(m_Tree->GetRootItem());
+    m_Loc->SetSelection(0);
 }
 
 void FileExplorer::OnActivate(wxTreeEvent &event)

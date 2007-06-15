@@ -30,7 +30,9 @@ class FileTreeCtrl: public wxTreeCtrl
 {
 public: //wxTR_HIDE_ROOT|
     FileTreeCtrl(wxWindow* parent, wxWindowID id, const wxPoint& pos = wxDefaultPosition,
-        const wxSize& size = wxDefaultSize, long style = wxTAB_TRAVERSAL|wxTR_HAS_BUTTONS|wxTR_MULTIPLE|wxTR_NO_LINES,         const wxValidator& validator = wxDefaultValidator, const wxString& name = _T("treeCtrl"))
+        const wxSize& size = wxDefaultSize, long style = wxTAB_TRAVERSAL|wxTR_HAS_BUTTONS|/*wxTR_MULTIPLE|*/wxTR_NO_LINES,
+        const wxValidator& validator = wxDefaultValidator,
+        const wxString& name = _T("treeCtrl"))
         : wxTreeCtrl(parent,id,pos,size,style,validator,name) {}
 private:
     int OnCompareItems(const wxTreeItemId& item1, const wxTreeItemId& item2)

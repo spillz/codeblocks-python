@@ -76,7 +76,7 @@ FileExplorer::FileExplorer(wxWindow *parent,wxWindowID id,
         m_root=m_Loc->GetString(0);
     } else
     {
-        m_root=_T("/");
+        m_root=wxFileName::GetPathSeparator();
         m_Loc->Append(m_root);
         m_Loc->Select(0);
     }
@@ -426,7 +426,8 @@ void FileExplorer::OnRightClick(wxTreeEvent &event)
 
 void FileExplorer::OnSetLoc(wxCommandEvent &event)
 {
-    m_Loc->SetValue(GetFullPath(m_Tree->GetSelection()));
+    wxString loc=GetFullPath(m_Tree->GetSelection());
+    m_Loc->SetValue(loc);
     if(!SetRootFolder(m_Loc->GetValue()))
         return;
     m_Loc->Insert(m_Loc->GetValue(),0);
@@ -448,7 +449,6 @@ void FileExplorer::OnNewFolder(wxCommandEvent &event)
     wxString name=te.GetValue();
     wxFileName dir(workingdir);
     dir.Assign(dir.GetFullPath(),name);
-    cbMessageBox(dir.GetFullPath());
     if(!dir.FileExists() && !dir.DirExists())
     {
         dir.Mkdir(dir.GetFullPath());
@@ -536,6 +536,5 @@ void FileExplorer::OnUpButton(wxCommandEvent &event)
 {
     wxFileName loc(m_Loc->GetValue());
     loc.RemoveLastDir();
-    cbMessageBox(loc.GetFullPath());
     SetRootFolder(loc.GetFullPath()); //TODO: Check if this is always the root folder
 }

@@ -9,8 +9,27 @@ int ID_FILELOC=wxNewId();
 int ID_FILEWILD=wxNewId();
 int ID_SETLOC=wxNewId();
 
+int ID_FILENEWFILE=wxNewId();
+int ID_FILENEWFOLDER=wxNewId();
+int ID_FILECOPY=wxNewId();
+int ID_FILEDUP=wxNewId();
+int ID_FILEMOVE=wxNewId();
+int ID_FILEDELETE=wxNewId();
+int ID_FILERENAME=wxNewId();
+int ID_FILEEXPANDALL=wxNewId();
+int ID_FILESHOWHIDDEN=wxNewId();
+
 BEGIN_EVENT_TABLE(FileExplorer, wxPanel)
     EVT_MENU(ID_SETLOC, FileExplorer::OnSetLoc)
+    EVT_MENU(ID_FILENEWFILE, FileExplorer::OnNewFile)
+    EVT_MENU(ID_FILENEWFOLDER,FileExplorer::OnNewFolder)
+    EVT_MENU(ID_FILECOPY,FileExplorer::OnCopy)
+    EVT_MENU(ID_FILEDUP,FileExplorer::OnDuplicate)
+    EVT_MENU(ID_FILEMOVE,FileExplorer::OnMove)
+    EVT_MENU(ID_FILEDELETE,FileExplorer::OnDelete)
+    EVT_MENU(ID_FILERENAME,FileExplorer::OnRename)
+    EVT_MENU(ID_FILEEXPANDALL,FileExplorer::OnExpandAll)
+    EVT_MENU(ID_FILESHOWHIDDEN,FileExplorer::OnShowHidden)
     EVT_TREE_ITEM_EXPANDING(ID_FILETREE, FileExplorer::OnExpand)
     //EVT_TREE_ITEM_COLLAPSED(id, func) //delete the children
     EVT_TREE_ITEM_ACTIVATED(ID_FILETREE, FileExplorer::OnActivate)  //double click - open file / expand folder (the latter is a default just need event.skip)
@@ -29,9 +48,10 @@ FileExplorer::FileExplorer(wxWindow *parent,wxWindowID id,
     long style, const wxString& name):
     wxPanel(parent,id,pos,size,style, name)
 {
+    m_show_hidden=false;
     wxBoxSizer* bs = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer* bsh = new wxBoxSizer(wxHORIZONTAL);
-    m_Tree = new wxTreeCtrl(this, ID_FILETREE);
+    m_Tree = new FileTreeCtrl(this, ID_FILETREE);
     m_Tree->SetIndent(m_Tree->GetIndent()/2);
     m_Loc = new wxComboBox(this,ID_FILELOC,_T(""),wxDefaultPosition,wxDefaultSize,0,NULL,wxTE_PROCESS_ENTER);
     m_WildCards = new wxComboBox(this,ID_FILEWILD,_T(""),wxDefaultPosition,wxDefaultSize,0,NULL,wxTE_PROCESS_ENTER);
@@ -126,7 +146,11 @@ bool FileExplorer::AddTreeItems(wxTreeItemId ti)
         return false;
     }
     wxString filename;
-    bool cont = dir.GetFirst(&filename);
+    int flags=wxDIR_FILES|wxDIR_DIRS;
+    if(m_show_hidden)
+        flags|=wxDIR_HIDDEN;
+
+    bool cont = dir.GetFirst(&filename,wxEmptyString,wxDIR_FILES|wxDIR_DIRS);
     while ( cont )
     {
         int itemstate=0;
@@ -266,6 +290,7 @@ void FileExplorer::OnChooseLoc(wxCommandEvent &event)
 //        m_Loc->Insert(loc,0);
         return;
     }
+//    Refresh(m_Tree->GetRootItem());
 }
 
 void FileExplorer::OnActivate(wxTreeEvent &event)
@@ -305,15 +330,6 @@ void FileExplorer::OnActivate(wxTreeEvent &event)
 void FileExplorer::OnRightClick(wxTreeEvent &event)
 {
     wxMenu *m_Popup=new wxMenu();
-//    m_Popup->Append(wxID_ANY,_T("name"));
-//    FileTreeData ftd;
-//        void SetKind(FileTreeDataKind kind){ m_kind = kind; }
-//        void SetProject(cbProject* project){ m_Project = project; }
-//        // only valid for file selections
-//        void SetFileIndex(int index){ m_Index = index; }
-//        void SetProjectFile(ProjectFile* file){ m_file = file; }
-//        // only valid for folder selections
-//        void SetFolder(const wxString& folder){ m_folder = folder; }
     wxString filename=m_Tree->GetItemText(event.GetItem());
     wxString filepath=GetFullPath(event.GetItem());
     int img = m_Tree->GetItemImage(event.GetItem());
@@ -321,9 +337,18 @@ void FileExplorer::OnRightClick(wxTreeEvent &event)
     ftd->SetKind(FileTreeData::ftdkFile);
     if(img==fvsFolder)
     {
-        m_Popup->Append(ID_SETLOC,_T("Make root"));
         ftd->SetKind(FileTreeData::ftdkFolder);
+        m_Popup->Append(ID_SETLOC,_T("Make root"));
+        m_Popup->Append(ID_FILEEXPANDALL,_T("Expand All Children"));
+        m_Popup->Append(ID_FILENEWFILE,_T("New File..."));
+        m_Popup->Append(ID_FILENEWFOLDER,_T("Make Directory..."));
     }
+    m_Popup->Append(ID_FILEDUP,_T("Duplicate"));
+    m_Popup->Append(ID_FILECOPY,_T("Copy To..."));
+    m_Popup->Append(ID_FILEMOVE,_T("Move To..."));
+    m_Popup->Append(ID_FILERENAME,_T("Rename..."));
+    m_Popup->Append(ID_FILEDELETE,_T("Delete"));
+    m_Popup->AppendCheckItem(ID_FILESHOWHIDDEN,_T("Show Hidden Files"))->Check(m_show_hidden);
     ftd->SetFolder(filepath);
 
     Manager::Get()->GetPluginManager()->AskPluginsForModuleMenu(mtUnknown, m_Popup, ftd);
@@ -341,4 +366,100 @@ void FileExplorer::OnSetLoc(wxCommandEvent &event)
     m_Loc->Insert(m_Loc->GetValue(),0);
     if(m_Loc->GetCount()>10)
         m_Loc->Delete(10);
+}
+
+void FileExplorer::OnNewFile(wxCommandEvent &event)
+{
+    cbMessageBox(_T("Not Implemented"));
+}
+
+void FileExplorer::OnNewFolder(wxCommandEvent &event)
+{
+    wxString workingdir=GetFullPath(m_Tree->GetSelection());
+    wxTextEntryDialog te(this,_T("New Directory Name: "));
+    if(te.ShowModal()!=wxID_OK)
+        return;
+    wxString name=te.GetValue();
+    wxFileName dir(workingdir);
+    dir.Assign(dir.GetFullPath(),name);
+    cbMessageBox(dir.GetFullPath());
+    if(!dir.FileExists() && !dir.DirExists())
+    {
+        dir.Mkdir(dir.GetFullPath());
+        Refresh(m_Tree->GetSelection());
+    }
+    else
+        cbMessageBox(_T("File/Directory Already Exists"));
+}
+
+void FileExplorer::OnCopy(wxCommandEvent &event)
+{
+    cbMessageBox(_T("Not Implemented"));
+}
+
+void FileExplorer::OnDuplicate(wxCommandEvent &event)
+{
+    cbMessageBox(_T("Not Implemented"));
+}
+
+void FileExplorer::OnMove(wxCommandEvent &event)
+{
+    cbMessageBox(_T("Not Implemented"));
+}
+
+void FileExplorer::OnDelete(wxCommandEvent &event)
+{
+    wxTreeItemId parent=m_Tree->GetItemParent(m_Tree->GetSelection());
+    wxFileName path(GetFullPath(m_Tree->GetSelection()));
+    if(path.FileExists())
+    {
+        EditorManager* em = Manager::Get()->GetEditorManager();
+        if(em->IsOpen(path.GetFullPath()))
+        {
+            cbMessageBox(_T("Close file first"));
+            return;
+        }
+        if(cbMessageBox(_T("Are you sure?"),_T("Delete"),wxYES_NO)!=wxID_YES)
+            return;
+        if(!::wxRemoveFile(path.GetFullPath()))
+            cbMessageBox(_T("Delete file failed"));
+    }
+    if(path.DirExists())
+        if(!path.Rmdir())
+            cbMessageBox(_T("Remove directory failed"));
+    Refresh(parent);
+}
+
+void FileExplorer::OnRename(wxCommandEvent &event)
+{
+    wxFileName path(GetFullPath(m_Tree->GetSelection()));
+    if(path.FileExists())
+    {
+        EditorManager* em = Manager::Get()->GetEditorManager();
+        if(em->IsOpen(path.GetFullPath()))
+        {
+            cbMessageBox(_T("Close file first"));
+            return;
+        }
+        wxTextEntryDialog te(this,_T("New Directory Name: "));
+        if(te.ShowModal()==wxID_CANCEL)
+            return;
+        wxFileName destpath(path);
+        destpath.SetFullName(te.GetValue());
+        cbMessageBox(_T("Renaming ")+path.GetFullPath()+_T(" ")+destpath.GetFullPath());
+        if(!::wxRenameFile(path.GetFullPath(),destpath.GetFullPath()))
+            cbMessageBox(_T("Rename file failed"));
+    }
+    Refresh(m_Tree->GetItemParent(m_Tree->GetSelection()));
+}
+
+void FileExplorer::OnExpandAll(wxCommandEvent &event)
+{
+    m_Tree->ExpandAll(m_Tree->GetSelection());
+}
+
+void FileExplorer::OnShowHidden(wxCommandEvent &event)
+{
+    m_show_hidden=!m_show_hidden;
+    Refresh(m_Tree->GetRootItem());
 }

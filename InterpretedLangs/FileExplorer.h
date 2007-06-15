@@ -51,7 +51,7 @@ public:
         const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize,
         long style = wxTAB_TRAVERSAL|wxTE_PROCESS_ENTER, const wxString& name = _T("Files"));
     ~FileExplorer() { WriteConfig(); }
-    bool SetRootFolder(const wxString &folder);
+    bool SetRootFolder(wxString root);
     wxString GetRootFolder() {return m_root;}
 private:
     void OnRightClick(wxTreeEvent &event);
@@ -71,6 +71,7 @@ private:
     void OnRename(wxCommandEvent &event);
     void OnExpandAll(wxCommandEvent &event);
     void OnShowHidden(wxCommandEvent &event);
+    void OnUpButton(wxCommandEvent &event);
 
     void WriteConfig();
     void ReadConfig();
@@ -87,6 +88,7 @@ private:
     FileTreeCtrl *m_Tree; //the widget display the file tree from root defined by m_Loc
     wxComboBox *m_Loc; // the combo box maintaining a list of useful locations and the current location
     wxComboBox *m_WildCards; // the combo box maintaining a list of wildcard filters for files
+    wxButton *m_UpButton;
     bool m_show_hidden;
     DECLARE_EVENT_TABLE()
 };

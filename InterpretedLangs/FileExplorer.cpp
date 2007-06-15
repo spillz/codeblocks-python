@@ -18,8 +18,10 @@ int ID_FILEDELETE=wxNewId();
 int ID_FILERENAME=wxNewId();
 int ID_FILEEXPANDALL=wxNewId();
 int ID_FILESHOWHIDDEN=wxNewId();
+int ID_FILE_UPBUTTON=wxNewId();
 
 BEGIN_EVENT_TABLE(FileExplorer, wxPanel)
+    EVT_BUTTON(ID_FILE_UPBUTTON, FileExplorer::OnUpButton)
     EVT_MENU(ID_SETLOC, FileExplorer::OnSetLoc)
     EVT_MENU(ID_FILENEWFILE, FileExplorer::OnNewFile)
     EVT_MENU(ID_FILENEWFOLDER,FileExplorer::OnNewFolder)
@@ -51,11 +53,15 @@ FileExplorer::FileExplorer(wxWindow *parent,wxWindowID id,
     m_show_hidden=false;
     wxBoxSizer* bs = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer* bsh = new wxBoxSizer(wxHORIZONTAL);
+    wxBoxSizer* bshloc = new wxBoxSizer(wxHORIZONTAL);
     m_Tree = new FileTreeCtrl(this, ID_FILETREE);
     m_Tree->SetIndent(m_Tree->GetIndent()/2);
     m_Loc = new wxComboBox(this,ID_FILELOC,_T(""),wxDefaultPosition,wxDefaultSize,0,NULL,wxTE_PROCESS_ENTER);
     m_WildCards = new wxComboBox(this,ID_FILEWILD,_T(""),wxDefaultPosition,wxDefaultSize,0,NULL,wxTE_PROCESS_ENTER);
-    bs->Add(m_Loc, 0, wxEXPAND);
+    m_UpButton = new wxButton(this,ID_FILE_UPBUTTON,_("^"),wxDefaultPosition,wxDefaultSize,wxBU_EXACTFIT);
+    bshloc->Add(m_Loc, 1, wxEXPAND);
+    bshloc->Add(m_UpButton, 0, wxEXPAND);
+    bs->Add(bshloc, 0, wxEXPAND);
     bsh->Add(new wxStaticText(this,wxID_ANY,_T("Wildcard: ")),0,wxALIGN_CENTRE);
     bsh->Add(m_WildCards,1);
     bs->Add(bsh, 0, wxEXPAND);
@@ -81,16 +87,20 @@ FileExplorer::FileExplorer(wxWindow *parent,wxWindowID id,
     SetSizer(bs);
 }
 
-bool FileExplorer::SetRootFolder(const wxString &root)
+bool FileExplorer::SetRootFolder(wxString root)
 {
+    if(root[root.Len()-1]!=wxFileName::GetPathSeparator())
+        root=root+wxFileName::GetPathSeparator();
     wxDir dir(root);
     if (!dir.IsOpened())
     {
         // deal with the error here - wxDir would already log an error message
         // explaining the exact reason of the failure
+        m_Loc->SetValue(m_root);
         return false;
     }
     m_root=root;
+    m_Loc->SetValue(m_root);
     m_Tree->DeleteAllItems();
     m_Tree->AddRoot(m_root,fvsFolder);
     m_Tree->SetItemHasChildren(m_Tree->GetRootItem());
@@ -520,4 +530,12 @@ void FileExplorer::OnShowHidden(wxCommandEvent &event)
 {
     m_show_hidden=!m_show_hidden;
     Refresh(m_Tree->GetRootItem());
+}
+
+void FileExplorer::OnUpButton(wxCommandEvent &event)
+{
+    wxFileName loc(m_Loc->GetValue());
+    loc.RemoveLastDir();
+    cbMessageBox(loc.GetFullPath());
+    SetRootFolder(loc.GetFullPath()); //TODO: Check if this is always the root folder
 }

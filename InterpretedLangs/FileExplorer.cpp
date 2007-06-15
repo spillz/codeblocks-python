@@ -393,7 +393,9 @@ void FileExplorer::OnRightClick(wxTreeEvent &event)
     {
         ftd->SetKind(FileTreeData::ftdkFolder);
         m_Popup->Append(ID_SETLOC,_T("Make root"));
-        m_Popup->Append(ID_FILEEXPANDALL,_T("Expand All Children"));
+        #ifndef __WXMSW__
+        m_Popup->Append(ID_FILEEXPANDALL,_T("Expand All Children")); //not available win32 -- TODO: will have to implement manually
+        #endif
         m_Popup->Append(ID_FILENEWFILE,_T("New File..."));
         m_Popup->Append(ID_FILENEWFOLDER,_T("Make Directory..."));
     }
@@ -509,7 +511,9 @@ void FileExplorer::OnRename(wxCommandEvent &event)
 
 void FileExplorer::OnExpandAll(wxCommandEvent &event)
 {
+    #ifndef __WXMSW__
     m_Tree->ExpandAll(m_Tree->GetSelection());
+    #endif
 }
 
 void FileExplorer::OnShowHidden(wxCommandEvent &event)

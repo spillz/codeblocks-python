@@ -18,7 +18,7 @@ wxString istr0(int i)
 bool InterpreterCollection::WriteConfig()
 {
     ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("InterpretedLangs"));
-    cfg->Clear();
+    //cfg->Clear();
     int len=interps.size();
     cfg->Write(_T("InterpProps/numinterps"), len);
     for(int i=0;i<len;i++)

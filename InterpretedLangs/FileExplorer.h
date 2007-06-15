@@ -50,7 +50,7 @@ public:
     FileExplorer(wxWindow *parent,wxWindowID id = wxID_ANY,
         const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize,
         long style = wxTAB_TRAVERSAL|wxTE_PROCESS_ENTER, const wxString& name = _T("Files"));
-    ~FileExplorer() {}
+    ~FileExplorer() { WriteConfig(); }
     bool SetRootFolder(const wxString &folder);
     wxString GetRootFolder() {return m_root;}
 private:
@@ -71,6 +71,9 @@ private:
     void OnRename(wxCommandEvent &event);
     void OnExpandAll(wxCommandEvent &event);
     void OnShowHidden(wxCommandEvent &event);
+
+    void WriteConfig();
+    void ReadConfig();
 
 
     bool AddTreeItems(wxTreeItemId ti);

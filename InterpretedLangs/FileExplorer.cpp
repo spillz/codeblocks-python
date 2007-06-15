@@ -63,8 +63,19 @@ FileExplorer::FileExplorer(wxWindow *parent,wxWindowID id,
     SetAutoLayout(TRUE);
 
     SetImages();
-    m_root=_T("/");
-    m_Loc->SetValue(m_root);
+    ReadConfig();
+    if(m_Loc->GetCount()>0)
+    {
+        m_Loc->Select(0);
+        m_root=m_Loc->GetString(0);
+    } else
+    {
+        m_root=_T("/");
+        m_Loc->Append(m_root);
+        m_Loc->Select(0);
+    }
+    if(m_WildCards->GetCount()>0)
+        m_WildCards->Select(0);
     SetRootFolder(m_root);
 
     SetSizer(bs);
@@ -253,6 +264,47 @@ void FileExplorer::OnExpand(wxTreeEvent &event)
     AddTreeItems(event.GetItem());
 }
 
+void FileExplorer::ReadConfig()
+{
+    ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("InterpretedLangs"));
+    int len;
+    cfg->Read(_T("FileExplorer/RootList/Len"), &len);
+    for(int i=0;i<len;i++)
+    {
+        wxString ref=wxString::Format(_T("FileExplorer/RootList/I%i"),i);
+        wxString loc;
+        cfg->Read(ref, &loc);
+        m_Loc->Append(loc);
+    }
+    cfg->Read(_T("FileExplorer/WildMask/Len"), &len);
+    for(int i=0;i<len;i++)
+    {
+        wxString ref=wxString::Format(_T("FileExplorer/WildMask/I%i"),i);
+        wxString wild;
+        cfg->Read(ref, &wild);
+        m_WildCards->Append(wild);
+    }
+}
+
+
+void FileExplorer::WriteConfig()
+{
+    ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("InterpretedLangs"));
+    //cfg->Clear();
+    cfg->Write(_T("FileExplorer/RootList/Len"), m_Loc->GetCount());
+    for(int i=0;i<m_Loc->GetCount();i++)
+    {
+        wxString ref=wxString::Format(_T("FileExplorer/RootList/I%i"),i);
+        cfg->Write(ref, m_Loc->GetString(i));
+    }
+    cfg->Write(_T("FileExplorer/WildMask/Len"), m_Loc->GetCount());
+    for(int i=0;i<m_WildCards->GetCount();i++)
+    {
+        wxString ref=wxString::Format(_T("FileExplorer/WildMask/I%i"),i);
+        cfg->Write(ref, m_WildCards->GetString(i));
+    }
+}
+
 //TODO: Save previous paths
 void FileExplorer::OnEnterLoc(wxCommandEvent &event)
 {
@@ -277,19 +329,21 @@ void FileExplorer::OnChooseWild(wxCommandEvent &event)
 {
     Refresh(m_Tree->GetRootItem());
     wxString wild=m_WildCards->GetValue();
-//    m_WildCards->Delete(event.GetInt());
-//    m_WildCards->Insert(wild,0);
+    m_WildCards->Delete(event.GetInt());
+    m_WildCards->Insert(wild,0);
+    m_WildCards->SetValue(wild);
 }
 
 void FileExplorer::OnChooseLoc(wxCommandEvent &event)
 {
     wxString loc=m_Loc->GetValue();
-//    m_Loc->Delete(event.GetInt());
-    if(SetRootFolder(loc))
+    if(!SetRootFolder(loc))
     {
-//        m_Loc->Insert(loc,0);
         return;
     }
+    m_Loc->Delete(event.GetInt());
+    m_Loc->Insert(loc,0);
+    m_Loc->SetValue(loc);
 //    Refresh(m_Tree->GetRootItem());
 }
 

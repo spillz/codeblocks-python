@@ -37,7 +37,7 @@
 				</Compiler>
 				<Linker>
 					<Add library="codeblocks" />
-					<Add library="wxmsw26u" />
+					<Add library="wxmsw28u" />
 					<Add directory="$(#cb)\devel" />
 					<Add directory="$(#wx.lib)\gcc_dll" />
 				</Linker>

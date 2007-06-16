@@ -19,6 +19,7 @@ int ID_FILERENAME=wxNewId();
 int ID_FILEEXPANDALL=wxNewId();
 int ID_FILESHOWHIDDEN=wxNewId();
 int ID_FILE_UPBUTTON=wxNewId();
+int ID_FILEREFRESH=wxNewId();
 
 BEGIN_EVENT_TABLE(FileTreeCtrl, wxTreeCtrl)
 END_EVENT_TABLE()
@@ -68,6 +69,7 @@ BEGIN_EVENT_TABLE(FileExplorer, wxPanel)
     EVT_MENU(ID_FILERENAME,FileExplorer::OnRename)
     EVT_MENU(ID_FILEEXPANDALL,FileExplorer::OnExpandAll)
     EVT_MENU(ID_FILESHOWHIDDEN,FileExplorer::OnShowHidden)
+    EVT_MENU(ID_FILEREFRESH,FileExplorer::OnRefresh)
     EVT_TREE_ITEM_EXPANDING(ID_FILETREE, FileExplorer::OnExpand)
     //EVT_TREE_ITEM_COLLAPSED(id, func) //delete the children
     EVT_TREE_ITEM_ACTIVATED(ID_FILETREE, FileExplorer::OnActivate)  //double click - open file / expand folder (the latter is a default just need event.skip)
@@ -338,14 +340,16 @@ void FileExplorer::WriteConfig()
 {
     ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("InterpretedLangs"));
     //cfg->Clear();
-    cfg->Write(_T("FileExplorer/RootList/Len"), m_Loc->GetCount());
-    for(int i=0;i<m_Loc->GetCount();i++)
+    int count=static_cast<int>(m_Loc->GetCount());
+    cfg->Write(_T("FileExplorer/RootList/Len"), count);
+    for(int i=0;i<count;i++)
     {
         wxString ref=wxString::Format(_T("FileExplorer/RootList/I%i"),i);
         cfg->Write(ref, m_Loc->GetString(i));
     }
-    cfg->Write(_T("FileExplorer/WildMask/Len"), m_Loc->GetCount());
-    for(int i=0;i<m_WildCards->GetCount();i++)
+    count=static_cast<int>(m_Loc->GetCount());
+    cfg->Write(_T("FileExplorer/WildMask/Len"), count);
+    for(int i=0;i<count;i++)
     {
         wxString ref=wxString::Format(_T("FileExplorer/WildMask/I%i"),i);
         cfg->Write(ref, m_WildCards->GetString(i));
@@ -455,6 +459,7 @@ void FileExplorer::OnRightClick(wxTreeEvent &event)
     m_Popup->Append(ID_FILERENAME,_T("Rename..."));
     m_Popup->Append(ID_FILEDELETE,_T("Delete"));
     m_Popup->AppendCheckItem(ID_FILESHOWHIDDEN,_T("Show Hidden Files"))->Check(m_show_hidden);
+    m_Popup->Append(ID_FILEREFRESH,_T("Refresh"));
     ftd->SetFolder(filepath);
 
     Manager::Get()->GetPluginManager()->AskPluginsForModuleMenu(mtUnknown, m_Popup, ftd);
@@ -577,4 +582,12 @@ void FileExplorer::OnUpButton(wxCommandEvent &event)
     wxFileName loc(m_Loc->GetValue());
     loc.RemoveLastDir();
     SetRootFolder(loc.GetFullPath()); //TODO: Check if this is always the root folder
+}
+
+void FileExplorer::OnRefresh(wxCommandEvent &event)
+{
+    if(m_Tree->GetItemImage(m_Tree->GetSelection())==fvsFolder)
+        Refresh(m_Tree->GetSelection());
+    else
+        Refresh(m_Tree->GetRootItem());
 }

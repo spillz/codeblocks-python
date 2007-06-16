@@ -7,12 +7,12 @@
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="default">
-				<Option output="$(#cb)/devel/share/codeblocks/plugins/InterpretedLangs.so" prefix_auto="1" extension_auto="1" />
-				<Option working_dir="$(#cb)/devel" />
+				<Option output="$(#cb)\devel\share\codeblocks\plugins\InterpretedLangs.dll" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="$(#cb)\devel" />
 				<Option type="3" />
 				<Option compiler="gcc" />
 				<Option parameters="--personality=debug" />
-				<Option host_application="$(#cb)/devel/codeblocks.exe" />
+				<Option host_application="$(#cb)\devel\codeblocks.exe" />
 				<Compiler>
 					<Add option="-g" />
 					<Add option="-pipe" />
@@ -30,16 +30,16 @@
 					<Add option="-DWX_PRECOMP" />
 					<Add option="-DwxUSE_UNICODE" />
 					<Add directory="$(#cb.include)" />
-					<Add directory="$(#cb.include)/wxscintilla/include" />
-					<Add directory="$(#cb)/include/wxFlatNotebook/include" />
+					<Add directory="$(#cb.include)\wxscintilla\include" />
+					<Add directory="$(#cb)\include\wxFlatNotebook\include" />
 					<Add directory="$(#wx.include)" />
-					<Add directory="$(#wx.lib)/gcc_dll/mswu" />
+					<Add directory="$(#wx.lib)\gcc_dll\mswu" />
 				</Compiler>
 				<Linker>
 					<Add library="codeblocks" />
-					<Add library="wxmsw26u" />
-					<Add directory="$(#cb)/devel" />
-					<Add directory="$(#wx.lib)/gcc_dll" />
+					<Add library="wxmsw28u" />
+					<Add directory="$(#cb)\devel" />
+					<Add directory="$(#wx.lib)\gcc_dll" />
 				</Linker>
 				<ExtraCommands>
 					<Add after="zip -j9 $(#cb)\devel\share\codeblocks\InterpretedLangs.zip manifest.xml" />
@@ -55,7 +55,7 @@
 		<Unit filename="FileExplorer.h" />
 		<Unit filename="InterpretedLangs.cpp" />
 		<Unit filename="InterpretedLangs.h" />
-		<Unit filename="Resources/dialogs.fbp" />
+		<Unit filename="Resources\dialogs.fbp" />
 		<Unit filename="ShellCtrl.cpp" />
 		<Unit filename="ShellCtrl.h" />
 		<Unit filename="il_globals.cpp" />
@@ -66,6 +66,7 @@
 		<Unit filename="pyeval.py" />
 		<Extensions>
 			<code_completion />
+			<envvars />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

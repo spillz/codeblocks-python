@@ -72,6 +72,8 @@ private:
     void OnExpandAll(wxCommandEvent &event);
     void OnShowHidden(wxCommandEvent &event);
     void OnUpButton(wxCommandEvent &event);
+    void OnRefresh(wxCommandEvent &event);
+
 
     void WriteConfig();
     void ReadConfig();

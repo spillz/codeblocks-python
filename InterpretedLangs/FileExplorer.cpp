@@ -383,7 +383,7 @@ void FileExplorer::OnEnterLoc(wxCommandEvent &event)
     wxString loc=m_Loc->GetValue();
     if(!SetRootFolder(loc))
         return;
-    m_Loc->Insert(loc,0);
+    m_Loc->Insert(m_root,0);
     if(m_Loc->GetCount()>10)
         m_Loc->Delete(10);
     m_Loc->SetSelection(0);
@@ -397,7 +397,7 @@ void FileExplorer::OnChooseLoc(wxCommandEvent &event)
         return;
     }
     m_Loc->Delete(event.GetInt());
-    m_Loc->Insert(loc,0);
+    m_Loc->Insert(m_root,0);
     m_Loc->SetSelection(0);
 }
 
@@ -438,6 +438,7 @@ void FileExplorer::OnActivate(wxTreeEvent &event)
 void FileExplorer::OnRightClick(wxTreeEvent &event)
 {
     wxMenu *m_Popup=new wxMenu();
+    m_Tree->SelectItem(event.GetItem());
     wxString filename=m_Tree->GetItemText(event.GetItem());
     wxString filepath=GetFullPath(event.GetItem());
     int img = m_Tree->GetItemImage(event.GetItem());
@@ -472,10 +473,9 @@ void FileExplorer::OnRightClick(wxTreeEvent &event)
 void FileExplorer::OnSetLoc(wxCommandEvent &event)
 {
     wxString loc=GetFullPath(m_Tree->GetSelection());
-    m_Loc->SetValue(loc);
-    if(!SetRootFolder(m_Loc->GetValue()))
+    if(!SetRootFolder(loc))
         return;
-    m_Loc->Insert(m_Loc->GetValue(),0);
+    m_Loc->Insert(m_root,0);
     if(m_Loc->GetCount()>10)
         m_Loc->Delete(10);
 }
@@ -579,7 +579,7 @@ void FileExplorer::OnShowHidden(wxCommandEvent &event)
 
 void FileExplorer::OnUpButton(wxCommandEvent &event)
 {
-    wxFileName loc(m_Loc->GetValue());
+    wxFileName loc(m_root);
     loc.RemoveLastDir();
     SetRootFolder(loc.GetFullPath()); //TODO: Check if this is always the root folder
 }

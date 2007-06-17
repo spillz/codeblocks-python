@@ -449,7 +449,7 @@ void FileExplorer::OnRightClick(wxTreeEvent &event)
         ftd->SetKind(FileTreeData::ftdkFolder);
         m_Popup->Append(ID_SETLOC,_T("Make root"));
         #ifndef __WXMSW__
-        m_Popup->Append(ID_FILEEXPANDALL,_T("Expand All Children")); //not available win32 -- TODO: will have to implement manually
+//        m_Popup->Append(ID_FILEEXPANDALL,_T("Expand All Children")); //not available win32 -- TODO: will have to implement manually
         #endif
         m_Popup->Append(ID_FILENEWFILE,_T("New File..."));
         m_Popup->Append(ID_FILENEWFOLDER,_T("Make Directory..."));
@@ -505,17 +505,73 @@ void FileExplorer::OnNewFolder(wxCommandEvent &event)
 
 void FileExplorer::OnCopy(wxCommandEvent &event)
 {
-    cbMessageBox(_T("Not Implemented"));
+    wxFileName path(GetFullPath(m_Tree->GetSelection()));
+    if(!path.FileExists())
+        return;
+    if(!PromptSaveOpenFile(_T("File is modified, press Yes to save before duplication, No to copy unsaved file or Cancel to abort the operation"),path))
+        return;
+    wxDirDialog dd(this,_T("Select Copy Location"));
+    dd.SetPath(path.GetPath());
+    if(dd.ShowModal()==wxID_CANCEL)
+        return;
+    if(!wxFileName::DirExists(dd.GetPath()))
+        return;
+    wxFileName destpath;
+    cbMessageBox(destpath.GetFullPath());
+    if(path.GetFullPath()==destpath.GetFullPath())
+        return;
+    if(!::wxCopyFile(path.GetFullPath(),destpath.GetFullPath()))
+        cbMessageBox(_T("Copy file failed"));
+    Refresh(m_Tree->GetItemParent(m_Tree->GetSelection()));
 }
 
 void FileExplorer::OnDuplicate(wxCommandEvent &event)
 {
-    cbMessageBox(_T("Not Implemented"));
+    wxFileName path(GetFullPath(m_Tree->GetSelection()));
+    if(path.FileExists())
+    {
+        if(!PromptSaveOpenFile(_T("File is modified, press Yes to save before duplication, No to copy unsaved file or Cancel to abort the operation"),path))
+            return;
+        wxFileName destpath(path);
+        int i=0;
+        while(destpath.FileExists() || destpath.DirExists())
+        {
+            i++;
+            destpath=path.GetPathWithSep()+path.GetName()+wxString::Format(_T("(%i)."),i)+path.GetExt();
+        }
+        if(!::wxCopyFile(path.GetFullPath(),destpath.GetFullPath()))
+            cbMessageBox(_T("Duplicate file failed"));
+    }
+    Refresh(m_Tree->GetItemParent(m_Tree->GetSelection()));
 }
 
 void FileExplorer::OnMove(wxCommandEvent &event)
 {
-    cbMessageBox(_T("Not Implemented"));
+    wxFileName path(GetFullPath(m_Tree->GetSelection()));
+    if(!path.FileExists())
+        return;
+    if(!PromptSaveOpenFile(_T("File is modified, press Yes to save before move, No to move unsaved file or Cancel to abort the operation"),path))
+        return;
+    wxDirDialog dd(this,_T("Move to"));
+    dd.SetPath(path.GetPath());
+    if(dd.ShowModal()==wxID_CANCEL)
+        return;
+    if(!wxFileName::DirExists(dd.GetPath()))
+        return;
+    wxFileName destpath;
+    destpath.Assign(dd.GetPath(),path.GetFullName());
+    if(path.GetFullPath()==destpath.GetFullPath())
+        return;
+    if(!::wxCopyFile(path.GetFullPath(),destpath.GetFullPath()))
+    {
+        cbMessageBox(_T("Copy file failed"));
+        return;
+    }
+    if(!::wxRemoveFile(path.GetFullPath()))
+    {
+        cbMessageBox(_T("Removal at original location failed"));
+    }
+    Refresh(m_Tree->GetItemParent(m_Tree->GetSelection()));
 }
 
 void FileExplorer::OnDelete(wxCommandEvent &event)
@@ -552,14 +608,13 @@ void FileExplorer::OnRename(wxCommandEvent &event)
             cbMessageBox(_T("Close file first"));
             return;
         }
-        wxTextEntryDialog te(this,_T("New Directory Name: "));
+        wxTextEntryDialog te(this,_T("New Name: "));
         if(te.ShowModal()==wxID_CANCEL)
             return;
         wxFileName destpath(path);
         destpath.SetFullName(te.GetValue());
-        cbMessageBox(_T("Renaming ")+path.GetFullPath()+_T(" ")+destpath.GetFullPath());
         if(!::wxRenameFile(path.GetFullPath(),destpath.GetFullPath()))
-            cbMessageBox(_T("Rename file failed"));
+            cbMessageBox(_T("Rename failed"));
     }
     Refresh(m_Tree->GetItemParent(m_Tree->GetSelection()));
 }
@@ -567,7 +622,7 @@ void FileExplorer::OnRename(wxCommandEvent &event)
 void FileExplorer::OnExpandAll(wxCommandEvent &event)
 {
     #ifndef __WXMSW__
-    m_Tree->ExpandAll(m_Tree->GetSelection());
+//    m_Tree->ExpandAll(m_Tree->GetSelection());
     #endif
 }
 

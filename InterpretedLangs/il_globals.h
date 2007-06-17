@@ -7,7 +7,10 @@
 	#include <wx/wx.h>
 #endif
 
+#include <sdk.h>
 
 bool WildCardListMatch(wxString list, wxString name);
+
+bool PromptSaveOpenFile(wxString message, wxFileName path);
 
 #endif //IL_GLOBALS_H

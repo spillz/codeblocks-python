@@ -1,4 +1,5 @@
 #include "il_globals.h"
+//#include <wx/filename.h>
 
 bool WildCardListMatch(wxString list, wxString name)
 {
@@ -16,4 +17,23 @@ bool WildCardListMatch(wxString list, wxString name)
     return false;
 }
 
-
+bool PromptSaveOpenFile(wxString message, wxFileName path)
+{
+    EditorManager* em = Manager::Get()->GetEditorManager();
+    EditorBase *eb=em->IsOpen(path.GetFullPath());
+    if(eb)
+    {
+        if(eb->GetModified())
+            switch(cbMessageBox(message,_T("Save File?"),wxYES_NO|wxCANCEL))
+            {
+                case wxYES:
+                    if(!eb->Save())
+                        cbMessageBox(_("Save failed - proceeding with unsaved file"));
+                case wxNO:
+                    return true;
+                case wxCANCEL:
+                    return false;
+            }
+    }
+    return true;
+}

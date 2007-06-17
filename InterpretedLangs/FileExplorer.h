@@ -9,7 +9,7 @@
     #include <wx/combobox.h>
 #endif
 
-#include "sdk.h"
+#include <sdk.h>
 
 
 class Expansion;
@@ -35,6 +35,7 @@ public: //wxTR_HIDE_ROOT|
         const wxString& name = _T("treeCtrl"));
     FileTreeCtrl();
     FileTreeCtrl(wxWindow *parent);
+//    void OnActivate(wxTreeEvent &event);
     virtual ~FileTreeCtrl();
 //    void SortChildren(const wxTreeItemId& ti);
 protected:

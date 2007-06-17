@@ -1,14 +1,7 @@
-#include "interpreterproperties.h"
-#include "sdk.h" // Code::Blocks SDK
-#include <configurationpanel.h>
 #include <stdlib.h>
-//#include "InterpretedLangs.h"
+#include <sdk.h> // Code::Blocks SDK
+#include "interpreterproperties.h"
 
-/*
-virtual InterpreterCollection::~InterpreterProperties()
-{
-}
-*/
 
 wxString istr0(int i)
 {

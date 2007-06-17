@@ -1,4 +1,3 @@
-#include "sdk.h" // Code::Blocks SDK
 #include "InterpretedLangs.h"
 #include "ConfigDialog.h"
 

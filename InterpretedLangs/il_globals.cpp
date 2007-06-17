@@ -1,5 +1,4 @@
 #include "il_globals.h"
-//#include <wx/filename.h>
 
 bool WildCardListMatch(wxString list, wxString name)
 {

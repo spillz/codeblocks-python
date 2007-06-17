@@ -7,10 +7,9 @@
 	#include <wx/wx.h>
 #endif
 
-#include <cbplugin.h> // for "class cbPlugin"
+#include <sdk.h>
 #include "configurationpanel.h"
 
-//#include "InterpretedLangs.h"
 #include "interpreterproperties.h"
 
 

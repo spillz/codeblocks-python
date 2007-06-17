@@ -1,6 +1,6 @@
+#include <wx/notebook.h>
 #include "ShellCtrl.h"
 #include "globals.h"
-#include <wx/notebook.h>
 
 ////////////////////////////////////// ShellTermCtrl /////////////////////////////////////////////
 int ID_SHELLPOLLTIMER=wxNewId();

@@ -1,7 +1,6 @@
 #ifndef INTERPRETERPROPERTIES_H
 #define INTERPRETERPROPERTIES_H
 
-//#include "InterpretedLangs.h"
 #include <vector>
 
 #include <wx/wxprec.h>

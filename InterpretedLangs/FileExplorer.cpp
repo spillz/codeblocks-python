@@ -22,6 +22,7 @@ int ID_FILE_UPBUTTON=wxNewId();
 int ID_FILEREFRESH=wxNewId();
 
 BEGIN_EVENT_TABLE(FileTreeCtrl, wxTreeCtrl)
+//    EVT_TREE_ITEM_ACTIVATED(ID_FILETREE, FileTreeCtrl::OnActivate)  //double click -
 END_EVENT_TABLE()
 
 
@@ -32,6 +33,11 @@ FileTreeCtrl::FileTreeCtrl(wxWindow* parent, wxWindowID id, const wxPoint& pos,
     const wxValidator& validator,
     const wxString& name)
     : wxTreeCtrl(parent,id,pos,size,style,validator,name) {}
+
+//void FileTreeCtrl::OnActivate(wxTreeEvent &event)
+//{
+//    event.Skip(false);
+//}
 
 FileTreeCtrl::FileTreeCtrl() { }
 
@@ -293,6 +299,8 @@ void FileExplorer::SetImages()
 
 wxString FileExplorer::GetFullPath(wxTreeItemId ti)
 {
+    if(!ti.IsOk())
+        return wxEmptyString;
     wxFileName path(m_root);
     if(ti!=m_Tree->GetRootItem())
     {
@@ -406,6 +414,16 @@ void FileExplorer::OnChooseLoc(wxCommandEvent &event)
 void FileExplorer::OnActivate(wxTreeEvent &event)
 {
     wxString filename=GetFullPath(event.GetItem());
+    if(m_Tree->GetItemImage(event.GetItem())==fvsFolder)
+    {
+//        if(!SetRootFolder(filename)) // this causes crash...
+//            return;
+//        m_Loc->Insert(m_root,0);
+//        if(m_Loc->GetCount()>10)
+//            m_Loc->Delete(10);
+//        return;
+        return;
+    }
     EditorManager* em = Manager::Get()->GetEditorManager();
     EditorBase* eb = em->IsOpen(filename);
     if (eb)
@@ -496,9 +514,10 @@ void FileExplorer::OnNewFolder(wxCommandEvent &event)
     wxString name=te.GetValue();
     wxFileName dir(workingdir);
     dir.Assign(dir.GetFullPath(),name);
-    if(!dir.FileExists() && !dir.DirExists())
+    wxString mkd=dir.GetFullPath();
+    if(!wxFileName::DirExists(mkd) &&!wxFileName::DirExists(mkd))
     {
-        dir.Mkdir(dir.GetFullPath());
+        dir.Mkdir(mkd);
         Refresh(m_Tree->GetSelection());
     }
     else
@@ -519,31 +538,32 @@ void FileExplorer::OnCopy(wxCommandEvent &event)
     if(!wxFileName::DirExists(dd.GetPath()))
         return;
     wxFileName destpath;
-    cbMessageBox(destpath.GetFullPath());
+    destpath.Assign(dd.GetPath(),path.GetFullName());
     if(path.GetFullPath()==destpath.GetFullPath())
         return;
     if(!::wxCopyFile(path.GetFullPath(),destpath.GetFullPath()))
         cbMessageBox(_T("Copy file failed"));
-    Refresh(m_Tree->GetItemParent(m_Tree->GetSelection()));
+//    Refresh(m_Tree->GetItemParent(m_Tree->GetSelection()));
+    Refresh(m_Tree->GetRootItem()); //TODO: Can probably be more efficient than this
+    //TODO: select last item
 }
 
 void FileExplorer::OnDuplicate(wxCommandEvent &event)
 {
     wxFileName path(GetFullPath(m_Tree->GetSelection()));
-    if(path.FileExists())
+    if(!path.FileExists())
+        return;
+    if(!PromptSaveOpenFile(_T("File is modified, press Yes to save before duplication, No to copy unsaved file or Cancel to abort the operation"),path))
+        return;
+    wxString destpath(path.GetFullPath());
+    int i=0;
+    while(i<100 && (wxFileName::FileExists(destpath) || wxFileName::DirExists(destpath)))
     {
-        if(!PromptSaveOpenFile(_T("File is modified, press Yes to save before duplication, No to copy unsaved file or Cancel to abort the operation"),path))
-            return;
-        wxFileName destpath(path);
-        int i=0;
-        while(destpath.FileExists() || destpath.DirExists())
-        {
-            i++;
-            destpath=path.GetPathWithSep()+path.GetName()+wxString::Format(_T("(%i)."),i)+path.GetExt();
-        }
-        if(!::wxCopyFile(path.GetFullPath(),destpath.GetFullPath()))
-            cbMessageBox(_T("Duplicate file failed"));
+        i++;
+        destpath=path.GetPathWithSep()+path.GetName()+wxString::Format(_T("(%i)."),i)+path.GetExt();
     }
+    if(i==100 || !::wxCopyFile(path.GetFullPath(),destpath))
+        cbMessageBox(_T("Duplicate file failed"));
     Refresh(m_Tree->GetItemParent(m_Tree->GetSelection()));
 }
 
@@ -573,28 +593,30 @@ void FileExplorer::OnMove(wxCommandEvent &event)
     {
         cbMessageBox(_T("Removal at original location failed"));
     }
-    Refresh(m_Tree->GetItemParent(m_Tree->GetSelection()));
+    Refresh(m_Tree->GetRootItem()); //TODO: Can probably be more efficient than this
+    //TODO: Reselect item in new location?? (what it outside root scope?)
 }
 
 void FileExplorer::OnDelete(wxCommandEvent &event)
 {
     wxTreeItemId parent=m_Tree->GetItemParent(m_Tree->GetSelection());
-    wxFileName path(GetFullPath(m_Tree->GetSelection()));
-    if(path.FileExists())
+    wxString path(GetFullPath(m_Tree->GetSelection()));
+    if(wxFileName::FileExists(path))
     {
         EditorManager* em = Manager::Get()->GetEditorManager();
-        if(em->IsOpen(path.GetFullPath()))
+        if(em->IsOpen(path))
         {
             cbMessageBox(_T("Close file first"));
             return;
         }
         if(cbMessageBox(_T("Are you sure?"),_T("Delete"),wxYES_NO)!=wxID_YES)
             return;
-        if(!::wxRemoveFile(path.GetFullPath()))
+        if(!::wxRemoveFile(path))
             cbMessageBox(_T("Delete file failed"));
+        return;
     }
-    if(path.DirExists())
-        if(!path.Rmdir())
+    if(wxFileName::DirExists(path))
+        if(!wxRmdir(path))
             cbMessageBox(_T("Remove directory failed"));
     Refresh(parent);
 }

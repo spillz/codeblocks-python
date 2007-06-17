@@ -73,6 +73,8 @@ private:
     void OnShowHidden(wxCommandEvent &event);
     void OnUpButton(wxCommandEvent &event);
     void OnRefresh(wxCommandEvent &event);
+    void OnBeginDragTreeItem(wxTreeEvent &event);
+    void OnEndDragTreeItem(wxTreeEvent &event);
 
 
     void WriteConfig();
@@ -92,6 +94,7 @@ private:
     wxComboBox *m_WildCards; // the combo box maintaining a list of wildcard filters for files
     wxButton *m_UpButton;
     bool m_show_hidden;
+    wxString m_dragtest;
     DECLARE_EVENT_TABLE()
 };
 

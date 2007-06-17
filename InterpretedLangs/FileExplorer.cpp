@@ -58,6 +58,8 @@ int FileTreeCtrl::OnCompareItems(const wxTreeItemId& item1, const wxTreeItemId& 
 
 
 BEGIN_EVENT_TABLE(FileExplorer, wxPanel)
+    EVT_TREE_BEGIN_DRAG(ID_FILETREE, FileExplorer::OnBeginDragTreeItem)
+    EVT_TREE_END_DRAG(ID_FILETREE, FileExplorer::OnEndDragTreeItem)
     EVT_BUTTON(ID_FILE_UPBUTTON, FileExplorer::OnUpButton)
     EVT_MENU(ID_SETLOC, FileExplorer::OnSetLoc)
     EVT_MENU(ID_FILENEWFILE, FileExplorer::OnNewFile)
@@ -645,4 +647,40 @@ void FileExplorer::OnRefresh(wxCommandEvent &event)
         Refresh(m_Tree->GetSelection());
     else
         Refresh(m_Tree->GetRootItem());
+}
+
+void FileExplorer::OnBeginDragTreeItem(wxTreeEvent &event)
+{
+    if(m_Tree->GetItemImage(event.GetItem())!=fvsFolder)
+        event.Allow();
+    m_dragtest=GetFullPath(event.GetItem());
+}
+
+void FileExplorer::OnEndDragTreeItem(wxTreeEvent &event)
+{
+//    cbMessageBox(_T("Dragged ")+m_dragtest+_T(" to ")+m_Tree->GetItemText(event.GetItem()));
+    wxFileName path(m_dragtest);
+    wxFileName destpath;
+    if(!event.GetItem().IsOk())
+        return;
+    if(m_Tree->GetItemImage(event.GetItem())!=fvsFolder)
+        return;
+    destpath.Assign(GetFullPath(event.GetItem()),path.GetFullName());
+    if(!path.FileExists())
+        return;
+    if(!PromptSaveOpenFile(_T("File is modified, press Yes to save before move, No to move unsaved file or Cancel to abort the operation"),path))
+        return;
+    if(path.GetFullPath()==destpath.GetFullPath())
+        return;
+    if(!::wxCopyFile(path.GetFullPath(),destpath.GetFullPath()))
+    {
+        cbMessageBox(_T("Copy file failed"));
+        return;
+    }
+    if(!::wxGetKeyState(WXK_CONTROL))
+    if(!::wxRemoveFile(path.GetFullPath()))
+    {
+        cbMessageBox(_T("Removal at original location failed"));
+    }
+    Refresh(m_Tree->GetRootItem());
 }

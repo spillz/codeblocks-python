@@ -668,7 +668,7 @@ void FileExplorer::OnEndDragTreeItem(wxTreeEvent &event)
     destpath.Assign(GetFullPath(event.GetItem()),path.GetFullName());
     if(!path.FileExists())
         return;
-    if(!PromptSaveOpenFile(_T("File is modified, press Yes to save before move, No to move unsaved file or Cancel to abort the operation"),path))
+    if(!PromptSaveOpenFile(_T("File is modified, press \"Yes\" to save before move/copy, \"No\" to move/copy unsaved file or \"Cancel\" to abort the operation"),path)) //TODO: specify move or copy depending on whether CTRL held down
         return;
     if(path.GetFullPath()==destpath.GetFullPath())
         return;

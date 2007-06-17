@@ -197,7 +197,7 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
     bool console=false;
     if(ID>=ID_ContextMenu_0&&ID<=ID_ContextMenu_29)
     {
-        if(!wxFileName::FileExists(m_RunTarget))
+        if(!wxFileName::FileExists(m_RunTarget)&&!wxFileName::DirExists(m_RunTarget))
         {
             cbMessageBox(_T("Target ")+m_RunTarget+_T(" does not exist, please select another or Cancel"));
             OnSetTarget(event);
@@ -253,8 +253,12 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
     }
 
     commandstr.Replace(_T("$file"),wxFileName(m_RunTarget).GetShortPath(),false);
+    commandstr.Replace(_T("$files"),m_RunTarget,false);
+    commandstr.Replace(_T("$dir"),wxFileName(m_RunTarget).GetShortPath(),false);
+    commandstr.Replace(_T("$path"),wxFileName(m_RunTarget).GetShortPath(),false);
+    commandstr.Replace(_T("$paths"),m_RunTarget,false);
     commandstr.Replace(_T("$interpreter"),wxFileName(m_ic.interps[m_interpnum].exec).GetShortPath(),false);
-    workingdir.Replace(_T("$filedir"),wxFileName(m_RunTarget).GetPath(),false);
+    workingdir.Replace(_T("$parentdir"),wxFileName(m_RunTarget).GetPath(),false);
 
 
     if(!(Manager::Get()->GetMacrosManager()))
@@ -551,23 +555,25 @@ void InterpretedLangs::BuildModuleMenu(const ModuleType type, wxMenu* menu, cons
         if(added>0)
             menu->InsertSeparator(sep_pos);
 	}
-    if(type==mtUnknown)
+    if(type==mtUnknown) //Assuming file explorer -- fileexplorer fills the filetreedata with ftdkFile or ftdkFolder as "kind", the folder is the full path of the entry
 	    if(data)
 	    {
-            if(data->GetKind()==FileTreeData::ftdkFile)
+            size_t sep_pos=menu->GetMenuItemCount();
+            size_t added=0;
+            if(data->GetKind()==FileTreeData::ftdkFile)  //right clicked on folder in file explorer
             {
                 wxFileName f(data->GetFolder());
                 wxString filename=f.GetFullPath();
                 wxString name=f.GetFullName();
-                size_t sep_pos=menu->GetMenuItemCount();
-                size_t added=0;
                 for(unsigned int i=0;i<m_ic.interps.size();i++)
                     if(WildCardListMatch(m_ic.interps[i].extensions,name))
                     {
                         m_RunTarget=filename;
                         for(unsigned int j=0;j<m_ic.interps[i].actions.size();j++)
                         {
-                            if(m_ic.interps[i].actions[j].command.Find(_T("$file"))>=0)
+                            if(m_ic.interps[i].actions[j].command.Find(_T("$file"))>=0 ||
+                                m_ic.interps[i].actions[j].command.Find(_T("$path"))>=0 ||
+                                m_ic.interps[i].actions[j].command.Find(_T("$paths"))>=0)
                             {
                                 wxString menutext=m_ic.interps[i].name+_T(" ")+m_ic.interps[i].actions[j].name;
                                 m_contextvec.push_back(InterpreterMenuRef(i,j));
@@ -576,9 +582,65 @@ void InterpretedLangs::BuildModuleMenu(const ModuleType type, wxMenu* menu, cons
                             }
                         }
                     }
-                if(added>0)
-                    menu->InsertSeparator(sep_pos);
             }
+            if(data->GetKind()==FileTreeData::ftdkFolder) //right clicked on folder in file explorer
+            {
+                wxFileName f(data->GetFolder());
+                wxString filename=f.GetFullPath();
+                wxString name=f.GetFullName();
+                for(unsigned int i=0;i<m_ic.interps.size();i++)
+                    if(WildCardListMatch(m_ic.interps[i].extensions,name))
+                    {
+                        m_RunTarget=filename;
+                        for(unsigned int j=0;j<m_ic.interps[i].actions.size();j++)
+                        {
+                            if(m_ic.interps[i].actions[j].command.Find(_T("$dir"))>=0 ||
+                                m_ic.interps[i].actions[j].command.Find(_T("$path"))>=0 ||
+                                m_ic.interps[i].actions[j].command.Find(_T("$paths"))>=0)
+                            {
+                                wxString menutext=m_ic.interps[i].name+_T(" ")+m_ic.interps[i].actions[j].name;
+                                m_contextvec.push_back(InterpreterMenuRef(i,j));
+                                menu->Append(ID_ContextMenu_0+added,menutext,_T(""));
+                                added++;
+                            }
+                        }
+                    }
+            }
+            if(data->GetKind()==FileTreeData::ftdkVirtualGroup) //right clicked on multiple selections in file explorer
+            {
+                wxString paths=data->GetFolder(); //get folder contains a space separated list of the files/directories selected
+                for(unsigned int i=0;i<m_ic.interps.size();i++)
+                {
+                    bool match=true; // all selected items must have names that match the wildcard for this grouping
+                    wxString pathlist=paths;
+                    wxString ipath=paths.BeforeFirst(' '); //space separated list -- TODO: what if spaces in path?? (currently assuming Short Paths were passed in)
+                    while(!match && pathlist!=_T(""))
+                    {
+                        wxString name=wxFileName(ipath).GetFullName();
+                        if(ipath!=_T("") && !WildCardListMatch(m_ic.interps[i].extensions,ipath))
+                            match=false;
+                        pathlist=pathlist.AfterFirst(' ');
+                        ipath=pathlist.BeforeFirst(' ');
+                    }
+                    if(match)
+                    {
+                        m_RunTarget=paths;
+                        //TODO: need a m_TargetParent to allow the FileExplorer to define the parent of a selection (usually the root of the fileexplorer view?)
+                        for(unsigned int j=0;j<m_ic.interps[i].actions.size();j++)
+                        {
+                            if(m_ic.interps[i].actions[j].command.Find(_T("$paths"))>=0)
+                            {
+                                wxString menutext=m_ic.interps[i].name+_T(" ")+m_ic.interps[i].actions[j].name;
+                                m_contextvec.push_back(InterpreterMenuRef(i,j));
+                                menu->Append(ID_ContextMenu_0+added,menutext,_T(""));
+                                added++;
+                            }
+                        }
+                    }
+                }
+            }
+            if(added>0)
+                menu->InsertSeparator(sep_pos);
 	    }
 //	NotImplemented(_T("InterpretedLangs::BuildModuleMenu()"));
 }

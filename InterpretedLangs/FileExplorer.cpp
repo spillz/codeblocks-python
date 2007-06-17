@@ -613,8 +613,7 @@ void FileExplorer::OnDelete(wxCommandEvent &event)
             return;
         if(!::wxRemoveFile(path))
             cbMessageBox(_T("Delete file failed"));
-        return;
-    }
+    } else
     if(wxFileName::DirExists(path))
         if(!wxRmdir(path))
             cbMessageBox(_T("Remove directory failed"));

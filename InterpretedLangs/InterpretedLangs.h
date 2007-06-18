@@ -134,6 +134,8 @@ class InterpretedLangs : public cbPlugin
         void OnSettings(wxCommandEvent& event);
         void OnSubMenuSelect(wxUpdateUIEvent& event);
         void OnSetTarget(wxCommandEvent& event);
+        void OnSetDirTarget(wxCommandEvent& event);
+        void OnSetMultiTarget(wxCommandEvent& event);
         void OnRunTarget(wxCommandEvent& event);
         void OnRun(wxCommandEvent& event);
         void OnRunPiped(wxCommandEvent &event);

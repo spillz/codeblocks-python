@@ -1,6 +1,11 @@
-#include <configurationpanel.h>
 #include "InterpretedLangs.h"
 #include "il_globals.h"
+//#include <configurationpanel.h>
+
+
+//#include <wx/dirdlg.h>
+//#include <wx/filedlg.h>
+
 
 // Register the plugin with Code::Blocks.
 // We are using an anonymous namespace so we don't litter the global one.
@@ -184,6 +189,33 @@ void InterpretedLangs::OnSetTarget(wxCommandEvent& event)
     delete fd;
 }
 
+void InterpretedLangs::OnSetMultiTarget(wxCommandEvent& event)
+{
+    wxFileDialog *fd=new wxFileDialog(NULL,_T("Choose the interpreter Target"),_T(""),_T(""),m_wildcard,wxOPEN|wxFILE_MUST_EXIST|wxMULTIPLE);
+    if(fd->ShowModal()==wxID_OK)
+    {
+        wxArrayString paths;
+        fd->GetPaths(paths);
+        m_RunTarget=paths[0];
+        for(size_t i=1;i<paths.GetCount();i++)
+            m_RunTarget+=_T(" ")+paths[i];
+    } else
+        m_RunTarget=_T("");
+    delete fd;
+}
+
+
+void InterpretedLangs::OnSetDirTarget(wxCommandEvent& event)
+{
+    wxDirDialog *dd=new wxDirDialog(NULL,_T("Choose the Target Directory"),_T(""));
+    if(dd->ShowModal()==wxID_OK)
+    {
+        m_RunTarget=dd->GetPath();
+    } else
+        m_RunTarget=_T("");
+    delete dd;
+}
+
 
 //TODO: Broken code - need to fix context menu items (see todo below)
 //TODO: Add macro subsitution support AND support for a working directory
@@ -197,13 +229,6 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
     bool console=false;
     if(ID>=ID_ContextMenu_0&&ID<=ID_ContextMenu_29)
     {
-        if(!wxFileName::FileExists(m_RunTarget)&&!wxFileName::DirExists(m_RunTarget))
-        {
-            cbMessageBox(_T("Target ")+m_RunTarget+_T(" does not exist, please select another or Cancel"));
-            OnSetTarget(event);
-            if(m_RunTarget==_T(""))
-                return;
-        }
         int actionnum=m_contextvec[ID-ID_ContextMenu_0].a;
         m_interpnum=m_contextvec[ID-ID_ContextMenu_0].i;
         commandstr=m_ic.interps[m_interpnum].actions[actionnum].command;
@@ -238,46 +263,66 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
         console=(m_ic.interps[m_interpnum].actions[actionnum].mode==_("C"));
         workingdir=m_ic.interps[m_interpnum].actions[actionnum].wdir;
         m_wildcard=m_ic.interps[m_interpnum].extensions;
-        if(m_ic.interps[m_interpnum].actions[actionnum].command.Find(_T("$file"))>0)
+        if(m_ic.interps[m_interpnum].actions[actionnum].command.Find(_T("$file"))>0 ||
+            m_ic.interps[m_interpnum].actions[actionnum].command.Find(_T("$path"))>0)
         {
             OnSetTarget(event);
-            wxFileName fn(m_RunTarget);
-            if(!fn.FileExists(m_RunTarget))
+            if(!wxFileName::FileExists(m_RunTarget))
+            {
+                LogMessage(_("InterpretedLangs: ")+m_RunTarget+_(" not found"));
+                return;
+            }
+        }
+        if(m_ic.interps[m_interpnum].actions[actionnum].command.Find(_T("$dir"))>0)
+        {
+            OnSetDirTarget(event);
+            if(!wxFileName::DirExists(m_RunTarget))
+            {
+                LogMessage(_("InterpretedLangs: ")+m_RunTarget+_(" not found"));
+                return;
+            }
+            if(m_RunTarget==_T(""))
                 return;
         }
-
-    } else
+        if(m_ic.interps[m_interpnum].actions[actionnum].command.Find(_T("$mpaths"))>0)
+        {
+            OnSetMultiTarget(event);
+            if(m_RunTarget==_T(""))
+                return;
+        }
+    }
+    else
     {
-        cbMessageBox(_T("WARNING: Unprocessed Interpreter Menu Message"));
+        LogMessage(_T("WARNING: Unprocessed Interpreter Menu Message"));
         return;
     }
 
     commandstr.Replace(_T("$file"),wxFileName(m_RunTarget).GetShortPath(),false);
-    commandstr.Replace(_T("$files"),m_RunTarget,false);
     commandstr.Replace(_T("$dir"),wxFileName(m_RunTarget).GetShortPath(),false);
     commandstr.Replace(_T("$path"),wxFileName(m_RunTarget).GetShortPath(),false);
-    commandstr.Replace(_T("$paths"),m_RunTarget,false);
+    commandstr.Replace(_T("$mpaths"),m_RunTarget,false);
     commandstr.Replace(_T("$interpreter"),wxFileName(m_ic.interps[m_interpnum].exec).GetShortPath(),false);
     workingdir.Replace(_T("$parentdir"),wxFileName(m_RunTarget).GetPath(),false);
+    workingdir.Replace(_T("$dir"),wxFileName(m_RunTarget).GetPath(),false);
 
 
-    if(!(Manager::Get()->GetMacrosManager()))
-        return; // We cannot afford the Macros Manager to fail here!
-
-    Manager::Get()->GetMacrosManager()->RecalcVars(0, 0, 0); // hack to force-update macros
-    Manager::Get()->GetMacrosManager()->ReplaceMacros(commandstr);
-    Manager::Get()->GetMacrosManager()->ReplaceMacros(workingdir);
+    if(Manager::Get()->GetMacrosManager())
+    {
+        Manager::Get()->GetMacrosManager()->RecalcVars(0, 0, 0); // hack to force-update macros
+        Manager::Get()->GetMacrosManager()->ReplaceMacros(commandstr);
+        Manager::Get()->GetMacrosManager()->ReplaceMacros(workingdir);
+    }
     wxString olddir=wxGetCwd();
     if(workingdir!=_T(""))
     {
         if(!wxSetWorkingDirectory(workingdir))
         {
-            cbMessageBox(_T("ERROR: Can't change to working directory: ")+workingdir);
+            LogMessage(_T("IntepretedLangs: Can't change to working directory to ")+workingdir);
             return;
         }
     }
 
-    Manager::Get()->GetMessageManager()->Log(_("Launching '%s': %s (in %s)"), consolename.c_str(), commandstr.c_str(), workingdir.c_str());
+    LogMessage(wxString::Format(_("Launching '%s': %s (in %s)"), consolename.c_str(), commandstr.c_str(), workingdir.c_str()));
 
     if(windowed)
     {
@@ -446,7 +491,10 @@ void InterpretedLangs::CreateMenu()
         for(;j<maxj;j++)
         {
             wxString tail;
-            if(m_ic.interps[i].actions[j-jstart].command.Find(_T("$file"))>0)
+            if(m_ic.interps[i].actions[j-jstart].command.Find(_T("$file"))>0||
+                m_ic.interps[i].actions[j-jstart].command.Find(_T("$dir"))>0||
+                m_ic.interps[i].actions[j-jstart].command.Find(_T("$path"))>0||
+                m_ic.interps[i].actions[j-jstart].command.Find(_T("$mpaths"))>0)
                 tail=_T("...");
             submenu->Append(ID_SubMenu_0+j,m_ic.interps[i].actions[j-jstart].name+tail,_T(""));
         }
@@ -479,7 +527,7 @@ void InterpretedLangs::BuildMenu(wxMenuBar* menuBar)
 	CreateMenu();
 	int pos = menuBar->FindMenu(_T("Plugins"));
 	if(pos!=wxNOT_FOUND)
-        menuBar->Insert(pos, m_LangMenu, _T("Interpreters"));
+        menuBar->Insert(pos, m_LangMenu, _T("&Interpreters"));
     else
     {
         delete m_LangMenu;
@@ -573,7 +621,7 @@ void InterpretedLangs::BuildModuleMenu(const ModuleType type, wxMenu* menu, cons
                         {
                             if(m_ic.interps[i].actions[j].command.Find(_T("$file"))>=0 ||
                                 m_ic.interps[i].actions[j].command.Find(_T("$path"))>=0 ||
-                                m_ic.interps[i].actions[j].command.Find(_T("$paths"))>=0)
+                                m_ic.interps[i].actions[j].command.Find(_T("$mpaths"))>=0)
                             {
                                 wxString menutext=m_ic.interps[i].name+_T(" ")+m_ic.interps[i].actions[j].name;
                                 m_contextvec.push_back(InterpreterMenuRef(i,j));
@@ -596,7 +644,7 @@ void InterpretedLangs::BuildModuleMenu(const ModuleType type, wxMenu* menu, cons
                         {
                             if(m_ic.interps[i].actions[j].command.Find(_T("$dir"))>=0 ||
                                 m_ic.interps[i].actions[j].command.Find(_T("$path"))>=0 ||
-                                m_ic.interps[i].actions[j].command.Find(_T("$paths"))>=0)
+                                m_ic.interps[i].actions[j].command.Find(_T("$mpaths"))>=0)
                             {
                                 wxString menutext=m_ic.interps[i].name+_T(" ")+m_ic.interps[i].actions[j].name;
                                 m_contextvec.push_back(InterpreterMenuRef(i,j));
@@ -628,7 +676,7 @@ void InterpretedLangs::BuildModuleMenu(const ModuleType type, wxMenu* menu, cons
                         //TODO: need a m_TargetParent to allow the FileExplorer to define the parent of a selection (usually the root of the fileexplorer view?)
                         for(unsigned int j=0;j<m_ic.interps[i].actions.size();j++)
                         {
-                            if(m_ic.interps[i].actions[j].command.Find(_T("$paths"))>=0)
+                            if(m_ic.interps[i].actions[j].command.Find(_T("$mpaths"))>=0)
                             {
                                 wxString menutext=m_ic.interps[i].name+_T(" ")+m_ic.interps[i].actions[j].name;
                                 m_contextvec.push_back(InterpreterMenuRef(i,j));

@@ -13,4 +13,8 @@ bool WildCardListMatch(wxString list, wxString name);
 
 bool PromptSaveOpenFile(wxString message, wxFileName path);
 
+inline void LogMessage(const wxString &msg)
+{ Manager::Get()->GetMessageManager()->Log(_T("WARNING: Unprocessed Interpreter Menu Message")); }
+
+
 #endif //IL_GLOBALS_H

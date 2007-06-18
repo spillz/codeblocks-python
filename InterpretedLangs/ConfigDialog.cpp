@@ -131,7 +131,7 @@ ConfigDialog::ConfigDialog(wxWindow* parent, InterpretedLangs* plugin) //: cbCon
 
 	bSizer18->Add( bSizer21, 0, wxEXPAND, 5 );
 
-	m_staticText4 = new wxStaticText( this, wxID_DEFAULT, wxT("Actions string format: Name;Command;[W|C];WorkDir;EnvVarSet \nCommand line variables: $interpreter, $file, $dir, $path, $paths\nworking dir variable: $parentdir\nYou may also use global and project variables"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4 = new wxStaticText( this, wxID_DEFAULT, wxT("Actions string format: Name;Command;[W|C];WorkDir;EnvVarSet \nCommand line variables: $interpreter, $file, $dir, $path, $mpaths\nWorking directory variables: $dir, $parentdir\nYou may also use global and project variables"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer18->Add( m_staticText4, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 
 	m_editactions = new wxTextCtrl( this, ID_ACTIONS, wxT(""), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTAB_TRAVERSAL );

@@ -81,7 +81,7 @@ BEGIN_EVENT_TABLE(FileExplorer, wxPanel)
     EVT_TREE_ITEM_EXPANDING(ID_FILETREE, FileExplorer::OnExpand)
     //EVT_TREE_ITEM_COLLAPSED(id, func) //delete the children
     EVT_TREE_ITEM_ACTIVATED(ID_FILETREE, FileExplorer::OnActivate)  //double click - open file / expand folder (the latter is a default just need event.skip)
-    EVT_TREE_ITEM_RIGHT_CLICK(ID_FILETREE, FileExplorer::OnRightClick) //right click open context menu -- interpreter actions, rename, delete, copy, properties, set as root etc
+    EVT_TREE_ITEM_MENU(ID_FILETREE, FileExplorer::OnRightClick) //right click open context menu -- interpreter actions, rename, delete, copy, properties, set as root etc
     EVT_COMBOBOX(ID_FILELOC, FileExplorer::OnChooseLoc) //location selected from history of combo box - set as root
     EVT_COMBOBOX(ID_FILEWILD, FileExplorer::OnChooseWild) //location selected from history of combo box - set as root
     //EVT_TEXT(ID_FILELOC, FileExplorer::OnLocChanging) //provide autotext hint for dir name in combo box

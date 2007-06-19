@@ -276,14 +276,16 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
     }
     else
     {
-        LogMessage(_T("WARNING: Unprocessed Interpreter Menu Message"));
+        LogMessage(wxString::Format(_T("WARNING: Unprocessed Interpreter Menu Message: ID %i, IDbase %i, IDend %i, num items on menu %i"),ID,ID_ContextMenu_0,ID_ContextMenu_29,(int)m_contextvec.size()));
         return;
     }
 
+    bool setdir=true;
     commandstr.Replace(_T("$file"),wxFileName(m_RunTarget).GetShortPath(),false);
     commandstr.Replace(_T("$dir"),wxFileName(m_RunTarget).GetShortPath(),false);
     commandstr.Replace(_T("$path"),wxFileName(m_RunTarget).GetShortPath(),false);
-    commandstr.Replace(_T("$mpaths"),m_RunTarget,false);
+    if(commandstr.Replace(_T("$mpaths"),m_RunTarget,false)>0)
+        setdir=false;
     commandstr.Replace(_T("$interpreter"),wxFileName(m_ic.interps[m_interpnum].exec).GetShortPath(),false);
     workingdir.Replace(_T("$parentdir"),wxFileName(m_RunTarget).GetPath(),false);
     workingdir.Replace(_T("$dir"),wxFileName(m_RunTarget).GetPath(),false);
@@ -295,7 +297,7 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
         Manager::Get()->GetMacrosManager()->ReplaceMacros(workingdir);
     }
     wxString olddir=wxGetCwd();
-    if(workingdir!=_T(""))
+    if(setdir && workingdir!=_T(""))
     {
         if(!wxSetWorkingDirectory(workingdir))
         {
@@ -638,14 +640,15 @@ void InterpretedLangs::BuildModuleMenu(const ModuleType type, wxMenu* menu, cons
                     bool match=true; // all selected items must have names that match the wildcard for this grouping
                     wxString pathlist=paths;
                     wxString ipath=paths.BeforeFirst(' '); //space separated list -- TODO: what if spaces in path?? (currently assuming Short Paths were passed in)
-                    while(!match && pathlist!=_T(""))
-                    {
-                        wxString name=wxFileName(ipath).GetFullName();
-                        if(ipath!=_T("") && !WildCardListMatch(m_ic.interps[i].extensions,ipath))
-                            match=false;
-                        pathlist=pathlist.AfterFirst(' ');
-                        ipath=pathlist.BeforeFirst(' ');
-                    }
+                    if(m_ic.interps[i].extensions!=_T(""));
+                        while(match && pathlist!=_T(""))
+                        {
+                            wxString name=wxFileName(ipath).GetFullName();
+                            if(ipath!=_T("") && !WildCardListMatch(m_ic.interps[i].extensions,ipath))
+                                match=false;
+                            pathlist=pathlist.AfterFirst(' ');
+                            ipath=pathlist.BeforeFirst(' ');
+                        }
                     if(match)
                     {
                         m_RunTarget=paths;

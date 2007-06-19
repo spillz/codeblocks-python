@@ -1,4 +1,5 @@
 #include <wx/notebook.h>
+#include <wx/textctrl.h>
 #include "ShellCtrl.h"
 #include "globals.h"
 

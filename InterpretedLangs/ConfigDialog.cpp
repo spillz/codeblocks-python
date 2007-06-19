@@ -273,7 +273,7 @@ void ConfigDialog::Copy(wxCommandEvent &event)
 void ConfigDialog::Delete(wxCommandEvent &event)
 {
   if(m_ic.interps.size()>0)
-      if (cbMessageBox(_("Are you sure you want to remove this interpreter?"), _("Remove"), wxICON_QUESTION | wxYES_NO) == wxYES)
+      if (cbMessageBox(_("Are you sure you want to remove this interpreter?"), _("Remove"), wxICON_QUESTION | wxYES_NO, this) == wxID_YES)
       {
           GetDialogItems();
           m_ic.interps.erase(m_ic.interps.begin()+m_activeinterp);

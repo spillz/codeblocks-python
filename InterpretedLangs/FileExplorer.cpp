@@ -463,6 +463,18 @@ void FileExplorer::OnRightClick(wxTreeEvent &event)
 {
     wxMenu *m_Popup=new wxMenu();
     m_ticount=m_Tree->GetSelections(m_selectti);
+    bool isselection=false;
+    for(int i=0;!isselection&&i<m_ticount;i++)
+        if(event.GetItem()==m_selectti[i])
+            isselection=true;
+    if(!isselection) //replace the selection with right clicked item if right clicked item isn't in the selection
+    {
+        for(int i=0;i<m_ticount;i++)
+            m_Tree->SelectItem(m_selectti[i],false);
+        m_Tree->SelectItem(event.GetItem());
+        m_ticount=m_Tree->GetSelections(m_selectti);
+        m_Tree->Update();
+    }
     wxString filename=m_Tree->GetItemText(m_selectti[0]);
     wxString filepath=GetFullPath(m_selectti[0]);
     int img = m_Tree->GetItemImage(m_selectti[0]);

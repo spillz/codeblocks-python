@@ -7,13 +7,12 @@
 	#include <wx/wx.h>
 #endif
 
-#include <cbplugin.h> // for "class cbPlugin"
-#include "configurationpanel.h"
+#include <sdk.h> // for "class cbPlugin"
+#include <configurationpanel.h>
 
 
 class PyPlugin;
 class InterpreterCollection;
-
 
 class ConfigDialog : public cbConfigurationPanel
 {

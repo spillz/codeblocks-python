@@ -7,8 +7,7 @@
 	#include <wx/wx.h>
 #endif
 
-#include <cbplugin.h> // for "class cbPlugin"
-#include "configurationpanel.h"
+#include <sdk.h>
 
 class PyPlugin;
 

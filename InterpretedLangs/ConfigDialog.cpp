@@ -1,6 +1,5 @@
 #include "InterpretedLangs.h"
 #include "ConfigDialog.h"
-
 #include <vector>
 
 int ID_NEW=wxNewId();

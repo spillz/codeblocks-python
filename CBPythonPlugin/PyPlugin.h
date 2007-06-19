@@ -17,8 +17,8 @@
 	#include <wx/wx.h>
 #endif
 
+#include <sdk.h>
 #include <cbplugin.h> // for "class cbPlugin"
-#include "sdk.h"
 #include "ConfigDialog.h"
 #include "dialogs.h"
 

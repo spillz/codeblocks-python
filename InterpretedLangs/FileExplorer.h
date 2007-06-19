@@ -30,7 +30,7 @@ class FileTreeCtrl: public wxTreeCtrl
 {
 public: //wxTR_HIDE_ROOT|
     FileTreeCtrl(wxWindow* parent, wxWindowID id, const wxPoint& pos = wxDefaultPosition,
-        const wxSize& size = wxDefaultSize, long style = /*wxTAB_TRAVERSAL|*/wxTR_HAS_BUTTONS|/*wxTR_MULTIPLE|*/wxTR_NO_LINES,
+        const wxSize& size = wxDefaultSize, long style = wxTR_HAS_BUTTONS|wxTR_MULTIPLE|wxTR_NO_LINES,
         const wxValidator& validator = wxDefaultValidator,
         const wxString& name = _T("treeCtrl"));
     FileTreeCtrl();
@@ -95,6 +95,8 @@ private:
     wxComboBox *m_WildCards; // the combo box maintaining a list of wildcard filters for files
     wxButton *m_UpButton;
     bool m_show_hidden;
+    wxArrayTreeItemIds m_selectti; //contains selections after context menu is called up
+    int m_ticount; //number of selections
     wxString m_dragtest;
     DECLARE_EVENT_TABLE()
 };

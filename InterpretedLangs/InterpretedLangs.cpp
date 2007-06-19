@@ -1,11 +1,5 @@
 #include "InterpretedLangs.h"
 #include "il_globals.h"
-//#include <configurationpanel.h>
-
-
-//#include <wx/dirdlg.h>
-//#include <wx/filedlg.h>
-
 
 // Register the plugin with Code::Blocks.
 // We are using an anonymous namespace so we don't litter the global one.
@@ -19,13 +13,6 @@ int ID_LangMenu_Settings=wxNewId();
 int ID_LangMenu_RunPiped=wxNewId();
 int ID_LangMenu_ShowConsole=wxNewId();
 int ID_PipedProcess=wxNewId();
-//int ID_LangMenu_SetTarget=wxNewId();
-//int ID_LangMenu_RunTarget=wxNewId();
-//int ID_LangMenu_Run=wxNewId();
-//int ID_LangMenu_SetInterp=wxNewId();
-//int ID_LangMenu_RunTargetFileTree=wxNewId();
-
-
 
 // Ugly ugly hack to handle dynamic menus
 int ID_ContextMenu_0=wxNewId();
@@ -100,25 +87,13 @@ int ID_SubMenu_18=wxNewId();
 int ID_SubMenu_19=wxNewId();
 int ID_SubMenu_20=wxNewId();
 
-
-
 // events handling
 BEGIN_EVENT_TABLE(InterpretedLangs, cbPlugin)
-	// add any events you want to handle here
-//    EVT_MENU(ID_LangMenu_Settings,InterpretedLangs::OnSettings)
-//    EVT_MENU(ID_LangMenu_SetTarget,InterpretedLangs::OnSetTarget)
-//    EVT_MENU(ID_LangMenu_SetInterp,InterpretedLangs::OnSetTarget)
-//    EVT_MENU(ID_LangMenu_Run,InterpretedLangs::OnRun)
-//    EVT_MENU(ID_LangMenu_RunTarget,InterpretedLangs::OnRunTarget)
-//    EVT_MENU(ID_LangMenu_RunTargetFileTree,InterpretedLangs::OnRunTarget)
-
-//    EVT_MENU(ID_LangMenu_RunPiped,InterpretedLangs::OnRunPiped)
     EVT_MENU_RANGE(ID_ContextMenu_0,ID_ContextMenu_9,InterpretedLangs::OnRunTarget)
     EVT_MENU_RANGE(ID_NoTargMenu_0, ID_NoTargMenu_9, InterpretedLangs::OnRun)
     EVT_MENU_RANGE(ID_SubMenu_0, ID_SubMenu_20, InterpretedLangs::OnRunTarget)
     EVT_MENU(ID_LangMenu_ShowConsole,InterpretedLangs::OnShowConsole)
     EVT_UPDATE_UI(ID_LangMenu_ShowConsole, InterpretedLangs::OnUpdateUI)
-
 END_EVENT_TABLE()
 
 
@@ -141,22 +116,19 @@ void InterpretedLangs::OnShowConsole(wxCommandEvent& event)
 
 void InterpretedLangs::ShowConsole()
 {
-    // This toggles display of the console I/O window
+    // This shows the console I/O window
     CodeBlocksDockEvent evt(cbEVT_SHOW_DOCK_WINDOW);
     evt.pWindow = m_shellmgr;
     Manager::Get()->GetAppWindow()->ProcessEvent(evt);
-//    m_LangMenu->FindItem(ID_LangMenu_ShowConsole)->Check();
 }
 
 void InterpretedLangs::HideConsole()
 {
-    // This toggles display of the console I/O window
+    // This hides display of the console I/O window
     CodeBlocksDockEvent evt(cbEVT_HIDE_DOCK_WINDOW);
     evt.pWindow = m_shellmgr;
     Manager::Get()->GetAppWindow()->ProcessEvent(evt);
-//    m_LangMenu->FindItem(ID_LangMenu_ShowConsole)->Check(false);
 }
-
 
 void InterpretedLangs::OnSettings(wxCommandEvent& event)
 {
@@ -180,7 +152,14 @@ void InterpretedLangs::OnSubMenuSelect(wxUpdateUIEvent& event)
 
 void InterpretedLangs::OnSetTarget(wxCommandEvent& event)
 {
-    wxFileDialog *fd=new wxFileDialog(NULL,_T("Choose the interpreter Target"),_T(""),_T(""),m_wildcard,wxOPEN|wxFILE_MUST_EXIST);
+    wxString wild(m_wildcard);
+    if(wild==_T(""))
+#ifdef __WXMSW__
+        wild=_T("*.*");
+#else
+        wild=_T("*");
+#endif
+    wxFileDialog *fd=new wxFileDialog(NULL,_T("Choose the Interpreter Target"),_T(""),_T(""),wild,wxOPEN|wxFILE_MUST_EXIST);
     if(fd->ShowModal()==wxID_OK)
     {
         m_RunTarget=fd->GetPath();
@@ -191,7 +170,14 @@ void InterpretedLangs::OnSetTarget(wxCommandEvent& event)
 
 void InterpretedLangs::OnSetMultiTarget(wxCommandEvent& event)
 {
-    wxFileDialog *fd=new wxFileDialog(NULL,_T("Choose the interpreter Target"),_T(""),_T(""),m_wildcard,wxOPEN|wxFILE_MUST_EXIST|wxMULTIPLE);
+    wxString wild(m_wildcard);
+    if(wild==_T(""))
+#ifdef __WXMSW__
+        wild=_T("*.*");
+#else
+        wild=_T("*");
+#endif
+    wxFileDialog *fd=new wxFileDialog(NULL,_T("Choose the Interpreter Targets"),_T(""),_T(""),wild,wxOPEN|wxFILE_MUST_EXIST|wxMULTIPLE);
     if(fd->ShowModal()==wxID_OK)
     {
         wxArrayString paths;
@@ -216,9 +202,6 @@ void InterpretedLangs::OnSetDirTarget(wxCommandEvent& event)
     delete dd;
 }
 
-
-//TODO: Broken code - need to fix context menu items (see todo below)
-//TODO: Add macro subsitution support AND support for a working directory
 void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
 {
     int ID=event.GetId();
@@ -305,7 +288,6 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
     workingdir.Replace(_T("$parentdir"),wxFileName(m_RunTarget).GetPath(),false);
     workingdir.Replace(_T("$dir"),wxFileName(m_RunTarget).GetPath(),false);
 
-
     if(Manager::Get()->GetMacrosManager())
     {
         Manager::Get()->GetMacrosManager()->RecalcVars(0, 0, 0); // hack to force-update macros
@@ -355,7 +337,6 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
     wxSetWorkingDirectory(olddir);
 }
 
-
 // DEPRECATED - NO LONGER REQUIRED
 void InterpretedLangs::OnRun(wxCommandEvent& event)
 {
@@ -379,9 +360,6 @@ void InterpretedLangs::OnRun(wxCommandEvent& event)
     wxExecute(commandstr,wxEXEC_ASYNC);
 //    m_shellmgr->LaunchProcess(commandstr,consolename,0);
 }
-
-
-
 
 // constructor
 InterpretedLangs::InterpretedLangs()
@@ -503,7 +481,6 @@ void InterpretedLangs::CreateMenu()
     m_LangMenu->Append(ID_LangMenu_ShowConsole,_T("Toggle I/O console"),_T(""),wxITEM_CHECK);
 }
 
-
 void InterpretedLangs::UpdateMenu()
 {
     //delete the old menu items
@@ -515,7 +492,6 @@ void InterpretedLangs::UpdateMenu()
         CreateMenu();
     }
 }
-
 
 void InterpretedLangs::BuildMenu(wxMenuBar* menuBar)
 {

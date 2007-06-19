@@ -8,7 +8,7 @@
 #endif
 
 #include <sdk.h>
-#include "configurationpanel.h"
+#include <configurationpanel.h>
 
 #include "interpreterproperties.h"
 

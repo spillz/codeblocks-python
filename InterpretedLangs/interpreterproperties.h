@@ -2,12 +2,15 @@
 #define INTERPRETERPROPERTIES_H
 
 #include <vector>
+#include <stdlib.h>
 
 #include <wx/wxprec.h>
 
 #ifndef WX_PRECOMP
 	#include <wx/wx.h>
 #endif
+
+#include <sdk.h> // Code::Blocks SDK
 
 
 struct InterpreterMenuRef

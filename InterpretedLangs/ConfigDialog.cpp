@@ -1,16 +1,12 @@
 #include "InterpretedLangs.h"
 #include "ConfigDialog.h"
-#include <vector>
 
 int ID_NEW=wxNewId();
 int ID_COPY=wxNewId();
-//int ID_EDIT=wxNewId();
 int ID_DELETE=wxNewId();
 int ID_UP=wxNewId();
 int ID_DOWN=wxNewId();
 int ID_INTERP_LIST=wxNewId();
-
-
 int ID_NAME=wxNewId();
 int ID_EXEC=wxNewId();
 int ID_BROWSE_EXEC=wxNewId();
@@ -19,11 +15,6 @@ int ID_ACTIONS=wxNewId();
 int ID_OK=wxNewId();
 int ID_CANCEL=wxNewId();
 
-
-
-//  EVT_UPDATE_UI( -1, ConfigDialog::UpdateUI)
-//  EVT_LISTBOX(XRCID("lstHelp"), ConfigDialog::ListChange)
-//  EVT_BUTTON(ID_EDIT, ConfigDialog::Edit)
 
 BEGIN_EVENT_TABLE(ConfigDialog, wxPanel)
   EVT_BUTTON(ID_NEW, ConfigDialog::New)
@@ -187,7 +178,7 @@ void ConfigDialog::SetDialogItems()
 {
     if(m_ic.interps.size()>0)
     {
-        m_interplist->Select(m_activeinterp);
+//        m_interplist->Select(m_activeinterp); //Caused crash on linux
         Interpreter &interp=m_ic.interps[m_activeinterp];
         m_editname->SetValue(interp.name);
         m_editexec->SetValue(interp.exec);
@@ -273,7 +264,7 @@ void ConfigDialog::Copy(wxCommandEvent &event)
 void ConfigDialog::Delete(wxCommandEvent &event)
 {
   if(m_ic.interps.size()>0)
-      if (cbMessageBox(_("Are you sure you want to remove this interpreter?"), _("Remove"), wxICON_QUESTION | wxYES_NO, this) == wxID_YES)
+      if (cbMessageBox(_("Are you sure you want to remove this interpreter?"), _("Remove"), wxICON_QUESTION | wxYES_NO) == wxID_YES)
       {
           GetDialogItems();
           m_ic.interps.erase(m_ic.interps.begin()+m_activeinterp);

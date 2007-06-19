@@ -1,5 +1,3 @@
-#include <stdlib.h>
-#include <sdk.h> // Code::Blocks SDK
 #include "interpreterproperties.h"
 
 

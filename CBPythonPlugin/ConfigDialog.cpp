@@ -2,28 +2,6 @@
 #include "PyPlugin.h"
 
 #include <vector>
-//#include <wx/xrc/xmlres.h>
-
-/*
-#include <manager.h>
-#include <editormanager.h>
-#include <messagemanager.h>
-#include <projectmanager.h>
-
-#include <wx/filedlg.h>
-#include <wx/textdlg.h>
-#include <wx/msgdlg.h>
-#include <wx/listbox.h>
-#include <wx/textctrl.h>
-#include <wx/checkbox.h>
-#include <wx/button.h>
-
-#include <algorithm>
-*/
-
-//using std::find;
-//using std::make_pair;
-//using std::swap;
 
 int ID_NEW=wxNewId();
 int ID_COPY=wxNewId();
@@ -44,20 +22,11 @@ int ID_CANCEL=wxNewId();
 int ID_DEBUGCMDLINE=wxNewId();
 
 
-
-
-
-
-//  EVT_UPDATE_UI( -1, ConfigDialog::UpdateUI)
-//  EVT_LISTBOX(XRCID("lstHelp"), ConfigDialog::ListChange)
-//  EVT_BUTTON(ID_EDIT, ConfigDialog::Edit)
-
 BEGIN_EVENT_TABLE(ConfigDialog, wxPanel)
 //  EVT_BUTTON(ID_OK, ConfigDialog::OnApply)
 //  EVT_BUTTON(ID_CANCEL, ConfigDialog::OnEditCancel)
 END_EVENT_TABLE()
 
-//ConfigDialog::ConfigDialog( wxWindow* parent, int id, wxPoint pos, wxSize size, int style ) : wxPanel( parent, id, pos, size, style )
 ConfigDialog::ConfigDialog(wxWindow* parent, PyPlugin* plugin) //: cbConfigurationPanel()
 {
     m_plugin=plugin;
@@ -166,7 +135,7 @@ void ConfigDialog::ReadDialogItems()
 {
     ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("PyPlugin"));
     m_debugcmdline->SetValue(cfg->Read(_T("debug_cmd_line"),_T(" -u -m pdb ")));
-    m_editexec->SetValue(cfg->Read(_T("python_executable"),_T("python.exe"))); //TODO: make default command platform specific
+    m_editexec->SetValue(cfg->Read(_T("python_executable"),_T("python"))); //TODO: make default command platform specific
     m_editext->SetValue(cfg->Read(_T("python_file_extensions"),_T("*.py;*.pyc")));
 }
 

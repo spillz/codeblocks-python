@@ -64,6 +64,7 @@ private:
     void OnChooseWild(wxCommandEvent &event);
     void OnSetLoc(wxCommandEvent &event);
     void OnNewFile(wxCommandEvent &event);
+    void OnOpenInEditor(wxCommandEvent &event);
     void OnNewFolder(wxCommandEvent &event);
     void OnCopy(wxCommandEvent &event);
     void OnDuplicate(wxCommandEvent &event);

@@ -493,10 +493,16 @@ int PyPlugin::Debug()
     m_pp=new wxProcess(this,ID_PipedProcess);
     m_pp->Redirect();
     wxString target=m_RunTarget;
+    wxString olddir=wxGetCwd();
+    wxSetWorkingDirectory(wxFileName(m_RunTarget).GetPath());
     target.Replace(_T("\\"),_T("/"),true);
     wxString commandln=wxFileName(m_DefaultInterpreter).GetShortPath()+m_DefaultDebugCmdLine+target;
     if(!wxExecute(commandln,wxEXEC_ASYNC,m_pp))
+    {
+        wxSetWorkingDirectory(olddir);
         return -1;
+    }
+    wxSetWorkingDirectory(olddir);
     m_ostream=m_pp->GetOutputStream();
     m_istream=m_pp->GetInputStream();
 
@@ -759,9 +765,12 @@ void PyPlugin::OnRun(wxCommandEvent& event)
     }
     ReadPluginConfig();
     wxString target=m_RunTarget;
+    wxString olddir=wxGetCwd();
+    wxSetWorkingDirectory(wxFileName(m_RunTarget).GetPath());
     target.Replace(_T("\\"),_T("/"),true);
     wxString commandln=wxFileName(m_DefaultInterpreter).GetShortPath()+_T(" ")+target;
     wxExecute(commandln,wxEXEC_ASYNC,NULL);
+    wxSetWorkingDirectory(olddir);
 }
 
 
@@ -943,7 +952,7 @@ void PyPlugin::BuildMenu(wxMenuBar* menuBar)
 	CreateMenu();
 	int pos = menuBar->FindMenu(_T("Plugins"));
 	if(pos!=wxNOT_FOUND)
-        menuBar->Insert(pos, LangMenu, _T("P&ython"));
+        menuBar->Insert(pos, LangMenu, _T("P&yDebug"));
     else
     {
         delete LangMenu;
@@ -974,7 +983,7 @@ void PyPlugin::BuildModuleMenu(const ModuleType type, wxMenu* menu, const FileTr
                         m_RunTarget=name;
                         m_RunTargetSelected=true;
                         menu->AppendSeparator();
-                        menu->Append(ID_LangMenu_Run,_T("Python Run"),_T(""));
+//                        menu->Append(ID_LangMenu_Run,_T("Python Run"),_T(""));
                         menu->Append(ID_LangMenu_RunPiped,_T("Python Debug"),_T(""));
                     }
                 }
@@ -991,7 +1000,7 @@ void PyPlugin::BuildModuleMenu(const ModuleType type, wxMenu* menu, const FileTr
             m_RunTarget=name;
             m_RunTargetSelected=true;
             menu->AppendSeparator();
-            menu->Append(ID_LangMenu_Run,_T("Python Run"),_T(""));
+//            menu->Append(ID_LangMenu_Run,_T("Python Run"),_T(""));
             menu->Append(ID_LangMenu_RunPiped,_T("Python Debug"),_T(""));
 
         }

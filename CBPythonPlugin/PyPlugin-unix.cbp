@@ -11,6 +11,7 @@
 				<Option working_dir="$(#cb)/devel" />
 				<Option type="3" />
 				<Option compiler="gcc" />
+				<Option parameters="--personality=debug" />
 				<Option host_application="$(#cb)/devel/codeblocks" />
 				<Compiler>
 					<Add option="-g" />
@@ -21,7 +22,7 @@
 					<Add library="libpython2.5" />
 				</Linker>
 				<ExtraCommands>
-					<Add after="zip -j9 $(#cb)/devel/share/codeblocks/PyPlugin.zip manifest.xml resources/*.xrc resources/images/*.png resources/images/16x16/*.png" />
+					<Add after="zip -j9 $(#cb)/devel/share/codeblocks/PyPlugin.zip manifest.xml Resources/*.xrc Resources/images/*.png Resources/images/16x16/*.png" />
 				</ExtraCommands>
 			</Target>
 			<Environment>
@@ -64,6 +65,7 @@
 		<Unit filename="py_embedder.h" />
 		<Extensions>
 			<code_completion />
+			<envvars />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

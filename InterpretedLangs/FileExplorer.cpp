@@ -9,6 +9,7 @@ int ID_FILELOC=wxNewId();
 int ID_FILEWILD=wxNewId();
 int ID_SETLOC=wxNewId();
 
+int ID_OPENINED=wxNewId();
 int ID_FILENEWFILE=wxNewId();
 int ID_FILENEWFOLDER=wxNewId();
 int ID_FILECOPY=wxNewId();
@@ -25,7 +26,6 @@ BEGIN_EVENT_TABLE(FileTreeCtrl, wxTreeCtrl)
 //    EVT_TREE_ITEM_ACTIVATED(ID_FILETREE, FileTreeCtrl::OnActivate)  //double click -
 END_EVENT_TABLE()
 
-
 IMPLEMENT_DYNAMIC_CLASS(FileTreeCtrl, wxTreeCtrl)
 
 FileTreeCtrl::FileTreeCtrl(wxWindow* parent, wxWindowID id, const wxPoint& pos,
@@ -34,11 +34,6 @@ FileTreeCtrl::FileTreeCtrl(wxWindow* parent, wxWindowID id, const wxPoint& pos,
     const wxString& name)
     : wxTreeCtrl(parent,id,pos,size,style,validator,name) {}
 
-//void FileTreeCtrl::OnActivate(wxTreeEvent &event)
-//{
-//    event.Skip(false);
-//}
-
 FileTreeCtrl::FileTreeCtrl() { }
 
 FileTreeCtrl::FileTreeCtrl(wxWindow *parent): wxTreeCtrl(parent) {}
@@ -46,11 +41,6 @@ FileTreeCtrl::FileTreeCtrl(wxWindow *parent): wxTreeCtrl(parent) {}
 FileTreeCtrl::~FileTreeCtrl()
 {
 }
-
-//void FileTreeCtrl::SortChildren(const wxTreeItemId& ti)
-//{
-//    wxTreeCtrl::SortChildren(ti);
-//}
 
 int FileTreeCtrl::OnCompareItems(const wxTreeItemId& item1, const wxTreeItemId& item2)
 {
@@ -61,13 +51,12 @@ int FileTreeCtrl::OnCompareItems(const wxTreeItemId& item1, const wxTreeItemId& 
     return (GetItemText(item1).CmpNoCase(GetItemText(item2)));
 }
 
-
-
 BEGIN_EVENT_TABLE(FileExplorer, wxPanel)
     EVT_TREE_BEGIN_DRAG(ID_FILETREE, FileExplorer::OnBeginDragTreeItem)
     EVT_TREE_END_DRAG(ID_FILETREE, FileExplorer::OnEndDragTreeItem)
     EVT_BUTTON(ID_FILE_UPBUTTON, FileExplorer::OnUpButton)
     EVT_MENU(ID_SETLOC, FileExplorer::OnSetLoc)
+    EVT_MENU(ID_OPENINED, FileExplorer::OnOpenInEditor)
     EVT_MENU(ID_FILENEWFILE, FileExplorer::OnNewFile)
     EVT_MENU(ID_FILENEWFOLDER,FileExplorer::OnNewFolder)
     EVT_MENU(ID_FILECOPY,FileExplorer::OnCopy)
@@ -88,9 +77,6 @@ BEGIN_EVENT_TABLE(FileExplorer, wxPanel)
     EVT_TEXT_ENTER(ID_FILELOC, FileExplorer::OnEnterLoc) //location entered in combo box - set as root
     EVT_TEXT_ENTER(ID_FILEWILD, FileExplorer::OnEnterWild) //location entered in combo box - set as root  ** BUG RIDDEN
 END_EVENT_TABLE()
-
-
-
 
 FileExplorer::FileExplorer(wxWindow *parent,wxWindowID id,
     const wxPoint& pos, const wxSize& size,
@@ -174,7 +160,6 @@ void FileExplorer::GetExpandedNodes(wxTreeItemId ti, Expansion *exp)
         ch=m_Tree->GetNextChild(ti,cookie);
     }
 }
-
 
 void FileExplorer::RecursiveRebuild(wxTreeItemId ti,Expansion *exp)
 {
@@ -349,7 +334,6 @@ void FileExplorer::ReadConfig()
     }
 }
 
-
 void FileExplorer::WriteConfig()
 {
     ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("InterpretedLangs"));
@@ -369,7 +353,6 @@ void FileExplorer::WriteConfig()
         cfg->Write(ref, m_WildCards->GetString(i));
     }
 }
-
 
 void FileExplorer::OnEnterWild(wxCommandEvent &event)
 {
@@ -413,6 +396,24 @@ void FileExplorer::OnChooseLoc(wxCommandEvent &event)
     m_Loc->Delete(event.GetInt());
     m_Loc->Insert(m_root,0);
     m_Loc->SetSelection(0);
+}
+
+void FileExplorer::OnOpenInEditor(wxCommandEvent &event)
+{
+    wxFileName path(GetFullPath(m_selectti[0])); //SINGLE: m_Tree->GetSelection()
+    wxString filename=path.GetFullPath();
+    if(!path.FileExists())
+        return;
+    EditorManager* em = Manager::Get()->GetEditorManager();
+    EditorBase* eb = em->IsOpen(filename);
+    if (eb)
+    {
+        // open files just get activated
+        eb->Activate();
+        return;
+    } else
+    em->Open(filename);
+
 }
 
 void FileExplorer::OnActivate(wxTreeEvent &event)
@@ -482,23 +483,25 @@ void FileExplorer::OnRightClick(wxTreeEvent &event)
     ftd->SetKind(FileTreeData::ftdkFile);
     if(m_ticount>0)
     {
-        if(img==fvsFolder && m_ticount==1)
-        {
-            ftd->SetKind(FileTreeData::ftdkFolder);
-            m_Popup->Append(ID_SETLOC,_T("Make root"));
-            #ifndef __WXMSW__
-    //        m_Popup->Append(ID_FILEEXPANDALL,_T("Expand All Children")); //TODO: check availability in wx2.8 for win32 (not avail wx2.6)
-            #endif
-            m_Popup->Append(ID_FILENEWFILE,_T("New File..."));
-            m_Popup->Append(ID_FILENEWFOLDER,_T("Make Directory..."));
-        }
         if(m_ticount==1)
-            m_Popup->Append(ID_FILEDUP,_T("Duplicate"));
-        if(m_ticount==1)
-            m_Popup->Append(ID_FILERENAME,_T("Rename..."));
-        m_Popup->Append(ID_FILECOPY,_T("Copy To..."));
-        m_Popup->Append(ID_FILEMOVE,_T("Move To..."));
-        m_Popup->Append(ID_FILEDELETE,_T("Delete"));
+            if(img==fvsFolder && m_ticount==1)
+            {
+                ftd->SetKind(FileTreeData::ftdkFolder);
+                m_Popup->Append(ID_SETLOC,_T("Make root"));
+                #ifndef __WXMSW__
+        //        m_Popup->Append(ID_FILEEXPANDALL,_T("Expand All Children")); //TODO: check availability in wx2.8 for win32 (not avail wx2.6)
+                #endif
+                m_Popup->Append(ID_FILENEWFILE,_T("New File..."));
+                m_Popup->Append(ID_FILENEWFOLDER,_T("Make Directory..."));
+            } else
+            {
+                m_Popup->Append(ID_OPENINED,_T("Open in CB Editor"));
+                m_Popup->Append(ID_FILEDUP,_T("Duplicate"));
+                m_Popup->Append(ID_FILERENAME,_T("Rename..."));
+                m_Popup->Append(ID_FILECOPY,_T("Copy To..."));
+                m_Popup->Append(ID_FILEMOVE,_T("Move To..."));
+                m_Popup->Append(ID_FILEDELETE,_T("Delete"));
+            }
     }
     m_Popup->AppendCheckItem(ID_FILESHOWHIDDEN,_T("Show Hidden Files"))->Check(m_show_hidden);
     m_Popup->Append(ID_FILEREFRESH,_T("Refresh"));
@@ -515,7 +518,6 @@ void FileExplorer::OnRightClick(wxTreeEvent &event)
     if(m_ticount>0)
         Manager::Get()->GetPluginManager()->AskPluginsForModuleMenu(mtUnknown, m_Popup, ftd);
     delete ftd;
-//    m_plugin->BuildModuleMenu(mtProjectManager, m_Popup, const FileTreeData* data);
     wxWindow::PopupMenu(m_Popup);
 
 }

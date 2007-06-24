@@ -464,11 +464,7 @@ void FileExplorer::OnRightClick(wxTreeEvent &event)
 {
     wxMenu *m_Popup=new wxMenu();
     m_ticount=m_Tree->GetSelections(m_selectti);
-    bool isselection=false;
-    for(int i=0;!isselection&&i<m_ticount;i++)
-        if(event.GetItem()==m_selectti[i])
-            isselection=true;
-    if(!isselection) //replace the selection with right clicked item if right clicked item isn't in the selection
+    if(!IsInSelection(event.GetItem())) //replace the selection with right clicked item if right clicked item isn't in the selection
     {
         for(int i=0;i<m_ticount;i++)
             m_Tree->SelectItem(m_selectti[i],false);
@@ -709,9 +705,20 @@ void FileExplorer::OnRefresh(wxCommandEvent &event)
 void FileExplorer::OnBeginDragTreeItem(wxTreeEvent &event)
 {
 //    SetCursor(wxCROSS_CURSOR);
-    if(m_Tree->GetItemImage(event.GetItem())!=fvsFolder)
+    if(m_Tree->GetItemImage(event.GetItem())==fvsNormal)
         event.Allow();
     m_dragtest=GetFullPath(event.GetItem());
+    if(IsInSelection(event.GetItem()))
+        return; // can't drag objects onto themselves as a meaningful op
+    m_ticount=m_Tree->GetSelections(m_selectti);
+}
+
+bool FileExplorer::IsInSelection(const wxTreeItemId &ti)
+{
+    for(int i=0;i<m_ticount;i++)
+        if(ti==m_selectti[i])
+            return true;
+    return false;
 }
 
 //TODO: End copy cursor state if necessary
@@ -719,28 +726,35 @@ void FileExplorer::OnEndDragTreeItem(wxTreeEvent &event)
 {
 //    SetCursor(wxCursor(wxCROSS_CURSOR));
 //    cbMessageBox(_T("Dragged ")+m_dragtest+_T(" to ")+m_Tree->GetItemText(event.GetItem()));
-    wxFileName path(m_dragtest);
-    wxFileName destpath;
-    if(!event.GetItem().IsOk())
+    if(m_Tree->GetItemImage(event.GetItem())!=fvsFolder) //can only copy to folders
         return;
-    if(m_Tree->GetItemImage(event.GetItem())!=fvsFolder)
-        return;
-    destpath.Assign(GetFullPath(event.GetItem()),path.GetFullName());
-    if(!path.FileExists())
-        return;
-    if(!PromptSaveOpenFile(_T("File is modified, press \"Yes\" to save before move/copy, \"No\" to move/copy unsaved file or \"Cancel\" to abort the operation"),path)) //TODO: specify move or copy depending on whether CTRL held down
-        return;
-    if(path.GetFullPath()==destpath.GetFullPath())
-        return;
-    if(!::wxCopyFile(path.GetFullPath(),destpath.GetFullPath()))
+    for(int i=0;i<m_ticount;i++)
     {
-        cbMessageBox(_T("Copy file failed"));
-        return;
-    }
-    if(!::wxGetKeyState(WXK_CONTROL))
-    if(!::wxRemoveFile(path.GetFullPath()))
-    {
-        cbMessageBox(_T("Removal at original location failed"));
+        wxFileName path(GetFullPath(m_selectti[i]));
+        wxFileName destpath;
+        if(!event.GetItem().IsOk())
+            return;
+        destpath.Assign(GetFullPath(event.GetItem()),path.GetFullName());
+        if(!path.FileExists())
+        {
+            cbMessageBox(_T("File not found: ")+path.GetFullPath());
+            continue;
+        }
+        if(path.GetFullPath()==destpath.GetFullPath())
+            continue;
+//        if(!PromptSaveOpenFile(_T("File is modified, press \"Yes\" to save before move/copy, \"No\" to move/copy unsaved file or \"Cancel\" to abort the operation"),path)) //TODO: specify move or copy depending on whether CTRL held down
+//            return;
+        if(!::wxCopyFile(path.GetFullPath(),destpath.GetFullPath()))
+        {
+            cbMessageBox(_T("Copy file failed"));
+            return;
+        }
+        if(!::wxGetKeyState(WXK_CONTROL))
+        if(!::wxRemoveFile(path.GetFullPath()))
+        {
+            cbMessageBox(_T("Removal at original location failed"));
+        }
     }
     Refresh(m_Tree->GetRootItem());
+
 }

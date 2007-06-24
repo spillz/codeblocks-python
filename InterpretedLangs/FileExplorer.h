@@ -82,7 +82,7 @@ private:
     void WriteConfig();
     void ReadConfig();
 
-
+    bool IsInSelection(const wxTreeItemId &ti);
     bool AddTreeItems(wxTreeItemId ti);
     wxString GetFullPath(wxTreeItemId ti);
     void GetExpandedNodes(wxTreeItemId ti, Expansion *exp);

@@ -78,10 +78,13 @@ private:
     void OnRefresh(wxCommandEvent &event);
     void OnBeginDragTreeItem(wxTreeEvent &event);
     void OnEndDragTreeItem(wxTreeEvent &event);
+    void OnAddToProject(wxCommandEvent &event);
+
 
     void WriteConfig();
     void ReadConfig();
 
+    bool IsFilesOnly(wxArrayTreeItemIds tis);
     void FindFile(const wxString &findfilename, const wxTreeItemId &ti);
     void FocusFile(const wxTreeItemId &ti);
     bool IsInSelection(const wxTreeItemId &ti);

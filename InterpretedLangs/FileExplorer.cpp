@@ -21,7 +21,7 @@ int ID_FILEEXPANDALL=wxNewId();
 int ID_FILESHOWHIDDEN=wxNewId();
 int ID_FILE_UPBUTTON=wxNewId();
 int ID_FILEREFRESH=wxNewId();
-
+int ID_FILEADDTOPROJECT=wxNewId();
 
 class DirTraverseFind : public wxDirTraverser     {
 public:
@@ -89,6 +89,7 @@ BEGIN_EVENT_TABLE(FileExplorer, wxPanel)
     EVT_MENU(ID_FILEEXPANDALL,FileExplorer::OnExpandAll)
     EVT_MENU(ID_FILESHOWHIDDEN,FileExplorer::OnShowHidden)
     EVT_MENU(ID_FILEREFRESH,FileExplorer::OnRefresh)
+    EVT_MENU(ID_FILEADDTOPROJECT,FileExplorer::OnAddToProject)
     EVT_TREE_ITEM_EXPANDING(ID_FILETREE, FileExplorer::OnExpand)
     //EVT_TREE_ITEM_COLLAPSED(id, func) //delete the children
     EVT_TREE_ITEM_ACTIVATED(ID_FILETREE, FileExplorer::OnActivate)  //double click - open file / expand folder (the latter is a default just need event.skip)
@@ -541,24 +542,26 @@ void FileExplorer::OnRightClick(wxTreeEvent &event)
             if(img==fvsFolder)
             {
                 ftd->SetKind(FileTreeData::ftdkFolder);
-                m_Popup->Append(ID_SETLOC,_T("Make root"));
+                m_Popup->Append(ID_SETLOC,_T("Make roo&t"));
                 #ifndef __WXMSW__
         //        m_Popup->Append(ID_FILEEXPANDALL,_T("Expand All Children")); //TODO: check availability in wx2.8 for win32 (not avail wx2.6)
                 #endif
                 m_Popup->Append(ID_FILENEWFILE,_T("New File..."));
-                m_Popup->Append(ID_FILENEWFOLDER,_T("Make Directory..."));
+                m_Popup->Append(ID_FILENEWFOLDER,_T("Ma&ke Directory..."));
             } else
             {
-                m_Popup->Append(ID_OPENINED,_T("Open in CB Editor"));
-                m_Popup->Append(ID_FILERENAME,_T("Rename..."));
+                m_Popup->Append(ID_OPENINED,_T("&Open in CB Editor"));
+                m_Popup->Append(ID_FILERENAME,_T("&Rename..."));
             }
-        m_Popup->Append(ID_FILEDUP,_T("Duplicate"));
-        m_Popup->Append(ID_FILECOPY,_T("Copy To..."));
-        m_Popup->Append(ID_FILEMOVE,_T("Move To..."));
-        m_Popup->Append(ID_FILEDELETE,_T("Delete"));
+        if(IsFilesOnly(m_selectti)&&Manager::Get()->GetProjectManager()->GetActiveProject())
+            m_Popup->Append(ID_FILEADDTOPROJECT,_T("&Add to Active Project..."));
+        m_Popup->Append(ID_FILEDUP,_T("&Duplicate"));
+        m_Popup->Append(ID_FILECOPY,_T("&Copy To..."));
+        m_Popup->Append(ID_FILEMOVE,_T("&Move To..."));
+        m_Popup->Append(ID_FILEDELETE,_T("D&elete"));
     }
-    m_Popup->AppendCheckItem(ID_FILESHOWHIDDEN,_T("Show Hidden Files"))->Check(m_show_hidden);
-    m_Popup->Append(ID_FILEREFRESH,_T("Refresh"));
+    m_Popup->AppendCheckItem(ID_FILESHOWHIDDEN,_T("Show &Hidden Files"))->Check(m_show_hidden);
+    m_Popup->Append(ID_FILEREFRESH,_T("Re&fresh"));
     if(m_ticount>1)
     {
         ftd->SetKind(FileTreeData::ftdkVirtualGroup);
@@ -638,12 +641,18 @@ void FileExplorer::OnDuplicate(wxCommandEvent &event)
 
 #ifdef __WXMSW__
             wxArrayString output;
-            int hresult=::wxExecute(_T("cmd /c xcopy /S/E/Y/H/I \"")+path.GetFullPath()+_T("\" \"")+destpath+_T("\""),output,wxEXEC_SYNC);
+            wxString cmdline;
+            if(wxFileName::FileExists(path.GetFullPath()))
+                cmdline=_T("cmd /c copy /Y \"")+path.GetFullPath()+_T("\" \"")+destpath+_T("\"");
+            else
+                cmdline=_T("cmd /c xcopy /S/E/Y/H/I \"")+path.GetFullPath()+_T("\" \"")+destpath+_T("\"");
+            int hresult=::wxExecute(cmdline,output,wxEXEC_SYNC);
 #else
-            int hresult=::wxExecute(_T("/bin/cp -r -b \"")+path.GetFullPath()+_T("\" \"")+destpath+_T("\""),wxEXEC_SYNC);
+            wxString cmdline=_T("/bin/cp -r -b \"")+path.GetFullPath()+_T("\" \"")+destpath+_T("\"")
+            int hresult=::wxExecute(cmdline,wxEXEC_SYNC);
 #endif
             if(hresult)
-                MessageBox(m_Tree,_T("Copying '")+path.GetFullPath()+_T("' failed with error ")+wxString::Format(_T("%i"),hresult));
+                MessageBox(m_Tree,_T("Command '")+cmdline+_T("' failed with error ")+wxString::Format(_T("%i"),hresult));
         }
     }
     Refresh(m_Tree->GetRootItem()); //TODO: Can probably be more efficient than this
@@ -669,7 +678,12 @@ void FileExplorer::OnCopy(wxCommandEvent &event)
                 continue;
 #ifdef __WXMSW__
             wxArrayString output;
-            int hresult=::wxExecute(_T("cmd /c xcopy /S/E/Y/H/I \"")+path+_T("\" \"")+destpath.GetFullPath()+_T("\""),output,wxEXEC_SYNC);
+            wxString cmdline;
+            if(wxFileName::FileExists(path))
+                cmdline=_T("cmd /c copy /Y \"")+path+_T("\" \"")+destpath.GetFullPath()+_T("\"");
+            else
+                cmdline=_T("cmd /c xcopy /S/E/Y/H/I \"")+path+_T("\" \"")+destpath.GetFullPath()+_T("\"");
+            int hresult=::wxExecute(cmdline,output,wxEXEC_SYNC);
 #else
             int hresult=::wxExecute(_T("/bin/cp -r -b \"")+path+_T("\" \"")+destpath.GetFullPath()+_T("\""),wxEXEC_SYNC);
 #endif
@@ -851,7 +865,12 @@ void FileExplorer::OnEndDragTreeItem(wxTreeEvent &event)
                         continue;
 #ifdef __WXMSW__
                 wxArrayString output;
-                int hresult=::wxExecute(_T("cmd /c xcopy /S/E/Y/H/I \"")+path+_T("\" \"")+destpath.GetFullPath()+_T("\""),output,wxEXEC_SYNC);
+                wxString cmdline;
+                if(wxFileName::FileExists(path))
+                    cmdline=_T("cmd /c copy /Y \"")+path+_T("\" \"")+destpath.GetFullPath()+_T("\"");
+                else
+                    cmdline=_T("cmd /c xcopy /S/E/Y/H/I \"")+path+_T("\" \"")+destpath.GetFullPath()+_T("\"");
+                int hresult=::wxExecute(cmdline,output,wxEXEC_SYNC);
 #else
                 int hresult=::wxExecute(_T("/bin/cp -r -b \"")+path+_T("\" \"")+destpath.GetFullPath()+_T("\""),wxEXEC_SYNC);
 #endif
@@ -863,4 +882,28 @@ void FileExplorer::OnEndDragTreeItem(wxTreeEvent &event)
 //            return;
     }
     Refresh(m_Tree->GetRootItem());
+}
+
+
+void FileExplorer::OnAddToProject(wxCommandEvent &event)
+{
+    wxArrayString files;
+    wxString file;
+    for(int i=0;i<m_ticount;i++)
+    {
+        file=GetFullPath(m_selectti[i]);
+        if(wxFileName::FileExists(file))
+            files.Add(file);
+    }
+    wxArrayInt prompt;
+    Manager::Get()->GetProjectManager()->AddMultipleFilesToProject(files, NULL, prompt);
+    Manager::Get()->GetProjectManager()->RebuildTree();
+}
+
+bool FileExplorer::IsFilesOnly(wxArrayTreeItemIds tis)
+{
+    for(size_t i=0;i<tis.GetCount();i++)
+        if(m_Tree->GetItemImage(tis[i])==fvsFolder)
+            return false;
+    return true;
 }

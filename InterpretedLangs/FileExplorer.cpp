@@ -22,6 +22,28 @@ int ID_FILESHOWHIDDEN=wxNewId();
 int ID_FILE_UPBUTTON=wxNewId();
 int ID_FILEREFRESH=wxNewId();
 
+
+class DirTraverseFind : public wxDirTraverser     {
+public:
+    DirTraverseFind(const wxString& wildcard) : m_files(), m_wildcard(wildcard) { }
+    virtual wxDirTraverseResult OnFile(const wxString& filename)
+    {
+        if(WildCardListMatch(m_wildcard,filename))
+            m_files.Add(filename);
+        return wxDIR_CONTINUE;
+    }
+    virtual wxDirTraverseResult OnDir(const wxString& dirname)
+    {
+        if(WildCardListMatch(m_wildcard,dirname))
+            m_files.Add(dirname);
+        return wxDIR_CONTINUE;
+    }
+    wxArrayString& GetMatches() {return m_files;}
+private:
+    wxArrayString m_files;
+    wxString m_wildcard;
+};
+
 BEGIN_EVENT_TABLE(FileTreeCtrl, wxTreeCtrl)
 //    EVT_TREE_ITEM_ACTIVATED(ID_FILETREE, FileTreeCtrl::OnActivate)  //double click -
 END_EVENT_TABLE()
@@ -144,7 +166,39 @@ bool FileExplorer::SetRootFolder(wxString root)
 
 }
 
-void FileExplorer::GetExpandedNodes(wxTreeItemId ti, Expansion *exp)
+// find a file in the filesystem below a selected root
+void FileExplorer::FindFile(const wxString &findfilename, const wxTreeItemId &ti)
+{
+    wxString path=GetFullPath(ti);
+
+    wxDir dir(path);
+
+    if (!dir.IsOpened())
+    {
+        // deal with the error here - wxDir would already log an error message
+        // explaining the exact reason for the failure
+        return;
+    }
+    wxString filename;
+    int flags=wxDIR_FILES|wxDIR_DIRS;
+    if(m_show_hidden)
+        flags|=wxDIR_HIDDEN;
+
+    DirTraverseFind dtf(findfilename);
+    m_findmatchcount=dir.Traverse(dtf,wxEmptyString,flags);
+    m_findmatch=dtf.GetMatches();
+}
+
+// focus the item in the tree.
+void FileExplorer::FocusFile(const wxTreeItemId &ti)
+{
+    m_Tree->SetFocus();
+    m_Tree->UnselectAll();
+    m_Tree->SelectItem(ti);
+    m_Tree->EnsureVisible(ti);
+}
+
+void FileExplorer::GetExpandedNodes(const wxTreeItemId &ti, Expansion *exp)
 {
     exp->name=m_Tree->GetItemText(ti);
     wxTreeItemIdValue cookie;
@@ -161,7 +215,7 @@ void FileExplorer::GetExpandedNodes(wxTreeItemId ti, Expansion *exp)
     }
 }
 
-void FileExplorer::RecursiveRebuild(wxTreeItemId ti,Expansion *exp)
+void FileExplorer::RecursiveRebuild(const wxTreeItemId &ti,Expansion *exp)
 {
     AddTreeItems(ti);
     m_Tree->Expand(ti);
@@ -178,14 +232,14 @@ void FileExplorer::RecursiveRebuild(wxTreeItemId ti,Expansion *exp)
     }
 }
 
-void FileExplorer::Refresh(wxTreeItemId ti)
+void FileExplorer::Refresh(const wxTreeItemId &ti)
 {
     Expansion e;
     GetExpandedNodes(ti,&e);
     RecursiveRebuild(ti,&e);
 }
 
-bool FileExplorer::AddTreeItems(wxTreeItemId ti)
+bool FileExplorer::AddTreeItems(const wxTreeItemId &ti)
 {
     m_Tree->DeleteChildren(ti);
     wxString path=GetFullPath(ti);
@@ -203,7 +257,7 @@ bool FileExplorer::AddTreeItems(wxTreeItemId ti)
     if(m_show_hidden)
         flags|=wxDIR_HIDDEN;
 
-    bool cont = dir.GetFirst(&filename,wxEmptyString,wxDIR_FILES|wxDIR_DIRS);
+    bool cont = dir.GetFirst(&filename,wxEmptyString,flags);
     while ( cont )
     {
         int itemstate=0;
@@ -213,10 +267,14 @@ bool FileExplorer::AddTreeItems(wxTreeItemId ti)
         if(wxFileName(path,filename).FileExists())
         {
             wxFileName fn(path,filename);
+#if wxCHECK_VERSION(2,8,0)
             if(fn.IsFileWritable())
                 itemstate=fvsNormal;
             else
                 itemstate=fvsReadOnly;
+#else
+            itemstate=fvsNormal; //file writeable only available from wx2.8 -- TODO: create win32/linux API calls for early versions?
+#endif
             wxString wildcard=m_WildCards->GetValue();
             if(!WildCardListMatch(wildcard,filename))
                 match=false;
@@ -286,7 +344,7 @@ void FileExplorer::SetImages()
 //    UnfreezeTree(true);
 }
 
-wxString FileExplorer::GetFullPath(wxTreeItemId ti)
+wxString FileExplorer::GetFullPath(const wxTreeItemId &ti)
 {
     if(!ti.IsOk())
         return wxEmptyString;
@@ -480,7 +538,7 @@ void FileExplorer::OnRightClick(wxTreeEvent &event)
     if(m_ticount>0)
     {
         if(m_ticount==1)
-            if(img==fvsFolder && m_ticount==1)
+            if(img==fvsFolder)
             {
                 ftd->SetKind(FileTreeData::ftdkFolder);
                 m_Popup->Append(ID_SETLOC,_T("Make root"));
@@ -492,12 +550,12 @@ void FileExplorer::OnRightClick(wxTreeEvent &event)
             } else
             {
                 m_Popup->Append(ID_OPENINED,_T("Open in CB Editor"));
-                m_Popup->Append(ID_FILEDUP,_T("Duplicate"));
                 m_Popup->Append(ID_FILERENAME,_T("Rename..."));
-                m_Popup->Append(ID_FILECOPY,_T("Copy To..."));
-                m_Popup->Append(ID_FILEMOVE,_T("Move To..."));
-                m_Popup->Append(ID_FILEDELETE,_T("Delete"));
             }
+        m_Popup->Append(ID_FILEDUP,_T("Duplicate"));
+        m_Popup->Append(ID_FILECOPY,_T("Copy To..."));
+        m_Popup->Append(ID_FILEMOVE,_T("Move To..."));
+        m_Popup->Append(ID_FILEDELETE,_T("Delete"));
     }
     m_Popup->AppendCheckItem(ID_FILESHOWHIDDEN,_T("Show Hidden Files"))->Check(m_show_hidden);
     m_Popup->Append(ID_FILEREFRESH,_T("Refresh"));
@@ -530,7 +588,7 @@ void FileExplorer::OnSetLoc(wxCommandEvent &event)
 
 void FileExplorer::OnNewFile(wxCommandEvent &event)
 {
-    cbMessageBox(_T("Not Implemented"));
+//    cbMessageBox(_T("Not Implemented"));
 }
 
 void FileExplorer::OnNewFolder(wxCommandEvent &event)
@@ -549,106 +607,136 @@ void FileExplorer::OnNewFolder(wxCommandEvent &event)
         Refresh(m_selectti[0]); //SINGLE: m_Tree->GetSelection()
     }
     else
-        cbMessageBox(_T("File/Directory Already Exists"));
-}
-
-//TODO: handle multiple selections and directory selections
-void FileExplorer::OnCopy(wxCommandEvent &event)
-{
-    wxFileName path(GetFullPath(m_selectti[0])); //SINGLE: m_Tree->GetSelection()
-    if(!path.FileExists())
-        return;
-    if(!PromptSaveOpenFile(_T("File is modified, press Yes to save before duplication, No to copy unsaved file or Cancel to abort the operation"),path))
-        return;
-    wxDirDialog dd(this,_T("Select Copy Location"));
-    dd.SetPath(path.GetPath());
-    if(dd.ShowModal()==wxID_CANCEL)
-        return;
-    if(!wxFileName::DirExists(dd.GetPath()))
-        return;
-    wxFileName destpath;
-    destpath.Assign(dd.GetPath(),path.GetFullName());
-    if(path.GetFullPath()==destpath.GetFullPath())
-        return;
-    if(!::wxCopyFile(path.GetFullPath(),destpath.GetFullPath()))
-        cbMessageBox(_T("Copy file failed"));
-//    Refresh(m_Tree->GetItemParent(m_Tree->GetSelection()));
-    Refresh(m_Tree->GetRootItem()); //TODO: Can probably be more efficient than this
-    //TODO: select last item
+        cbMessageBox(_T("File/Directory Already Exists with Name ")+name);
 }
 
 void FileExplorer::OnDuplicate(wxCommandEvent &event)
 {
-    wxFileName path(GetFullPath(m_selectti[0])); //SINGLE: m_Tree->GetSelection()
-    if(!path.FileExists())
-        return;
-    if(!PromptSaveOpenFile(_T("File is modified, press Yes to save before duplication, No to copy unsaved file or Cancel to abort the operation"),path))
-        return;
-    wxString destpath(path.GetFullPath());
-    int i=0;
-    while(i<100 && (wxFileName::FileExists(destpath) || wxFileName::DirExists(destpath)))
+    for(int i=0;i<m_ticount;i++)
     {
-        i++;
-        destpath=path.GetPathWithSep()+path.GetName()+wxString::Format(_T("(%i)."),i)+path.GetExt();
-    }
-    if(i==100 || !::wxCopyFile(path.GetFullPath(),destpath))
-        cbMessageBox(_T("Duplicate file failed"));
-    Refresh(m_Tree->GetItemParent(m_selectti[0])); //SINGLE: m_Tree->GetSelection()
-}
+        wxFileName path(GetFullPath(m_selectti[i]));  //SINGLE: m_Tree->GetSelection()
+        if(wxFileName::FileExists(path.GetFullPath())||wxFileName::DirExists(path.GetFullPath()))
+        {
+            if(!PromptSaveOpenFile(_T("File is modified, press Yes to save before duplication, No to copy unsaved file or Cancel to skip file"),wxFileName(path)))
+                continue;
+            int j=1;
+            wxString destpath(path.GetPathWithSep()+path.GetName()+wxString::Format(_T("(%i)"),j));
+            if(path.GetExt()!=wxEmptyString)
+                destpath+=_T(".")+path.GetExt();
+            while(j<100 && (wxFileName::FileExists(destpath) || wxFileName::DirExists(destpath)))
+            {
+                j++;
+                destpath=path.GetPathWithSep()+path.GetName()+wxString::Format(_T("(%i)"),j);
+                if(path.GetExt()!=wxEmptyString)
+                    destpath+=_T(".")+path.GetExt();
+            }
+            if(j==100)
+            {
+                cbMessageBox(_T("Too many copies of file or directory"));
+                continue;
+            }
 
-//TODO: handle multiple selections and directory selections
-void FileExplorer::OnMove(wxCommandEvent &event)
-{
-    wxFileName path(GetFullPath(m_selectti[0])); //SINGLE: m_Tree->GetSelection()
-    if(!path.FileExists())
-        return;
-    if(!PromptSaveOpenFile(_T("File is modified, press Yes to save before move, No to move unsaved file or Cancel to abort the operation"),path))
-        return;
-    wxDirDialog dd(this,_T("Move to"));
-    dd.SetPath(path.GetPath());
-    if(dd.ShowModal()==wxID_CANCEL)
-        return;
-    if(!wxFileName::DirExists(dd.GetPath()))
-        return;
-    wxFileName destpath;
-    destpath.Assign(dd.GetPath(),path.GetFullName());
-    if(path.GetFullPath()==destpath.GetFullPath())
-        return;
-    if(!::wxCopyFile(path.GetFullPath(),destpath.GetFullPath()))
-    {
-        cbMessageBox(_T("Copy file failed"));
-        return;
-    }
-    if(!::wxRemoveFile(path.GetFullPath()))
-    {
-        cbMessageBox(_T("Removal at original location failed"));
+#ifdef __WXMSW__
+            int hresult=::wxExecute(_T("cmd /c xcopy /S/E/Y/H \"")+path.GetFullPath()+_T("\" \"")+destpath+_T("\""),wxEXEC_SYNC);
+#else
+            int hresult=::wxExecute(_T("/bin/cp -r -b \"")+path.GetFullPath()+_T("\" \"")+destpath+_T("\""),wxEXEC_SYNC);
+#endif
+            if(hresult)
+                MessageBox(m_Tree,_T("Copying '")+path.GetFullPath()+_T("' failed with error ")+wxString::Format(_T("%i"),hresult));
+        }
     }
     Refresh(m_Tree->GetRootItem()); //TODO: Can probably be more efficient than this
     //TODO: Reselect item in new location?? (what it outside root scope?)
 }
 
-//TODO: handle multiple selections and directory selections
+void FileExplorer::OnCopy(wxCommandEvent &event)
+{
+    wxDirDialog dd(this,_T("Copy to"));
+    dd.SetPath(GetFullPath(m_Tree->GetRootItem()));
+    if(dd.ShowModal()==wxID_CANCEL)
+        return;
+    for(int i=0;i<m_ticount;i++)
+    {
+        wxString path(GetFullPath(m_selectti[i]));  //SINGLE: m_Tree->GetSelection()
+        wxFileName destpath;
+        destpath.Assign(dd.GetPath(),wxFileName(path).GetFullName());
+        if(destpath.SameAs(path))
+            continue;
+        if(wxFileName::FileExists(path)||wxFileName::DirExists(path))
+        {
+            if(!PromptSaveOpenFile(_T("File is modified, press Yes to save before duplication, No to copy unsaved file or Cancel to skip file"),wxFileName(path)))
+                continue;
+#ifdef __WXMSW__
+            int hresult=::wxExecute(_T("cmd /c xcopy /S/E/Y/H \"")+path+_T("\" \"")+destpath.GetFullPath()+_T("\""),wxEXEC_SYNC);
+#else
+            int hresult=::wxExecute(_T("/bin/cp -r -b \"")+path+_T("\" \"")+destpath.GetFullPath()+_T("\""),wxEXEC_SYNC);
+#endif
+            if(hresult)
+                MessageBox(m_Tree,_T("Copying '")+path+_T("' failed with error ")+wxString::Format(_T("%i"),hresult));
+        }
+    }
+    Refresh(m_Tree->GetRootItem()); //TODO: Can probably be more efficient than this
+    //TODO: Reselect item in new location?? (what it outside root scope?)
+}
+
+void FileExplorer::OnMove(wxCommandEvent &event)
+{
+    wxDirDialog dd(this,_T("Move to"));
+    dd.SetPath(GetFullPath(m_Tree->GetRootItem()));
+    if(dd.ShowModal()==wxID_CANCEL)
+        return;
+    for(int i=0;i<m_ticount;i++)
+    {
+        wxString path(GetFullPath(m_selectti[i]));  //SINGLE: m_Tree->GetSelection()
+        wxFileName destpath;
+        destpath.Assign(dd.GetPath(),wxFileName(path).GetFullName());
+        if(destpath.SameAs(path))
+            continue;
+        if(wxFileName::FileExists(path)||wxFileName::DirExists(path))
+        {
+#ifdef __WXMSW__
+            int hresult=::wxExecute(_T("cmd /c move /Y \"")+path+_T("\" \"")+destpath.GetFullPath()+_T("\""),wxEXEC_SYNC);
+#else
+            int hresult=::wxExecute(_T("/bin/mv -b \"")+path+_T("\" \"")+destpath.GetFullPath()+_T("\""),wxEXEC_SYNC);
+#endif
+            if(hresult)
+                MessageBox(m_Tree,_T("Moving '")+path+_T("' failed with error ")+wxString::Format(_T("%i"),hresult));
+        }
+    }
+    Refresh(m_Tree->GetRootItem()); //TODO: Can probably be more efficient than this
+    //TODO: Reselect item in new location?? (what if outside root scope?)
+}
+
 void FileExplorer::OnDelete(wxCommandEvent &event)
 {
-    wxTreeItemId parent=m_Tree->GetItemParent(m_selectti[0]); //SINGLE: m_Tree->GetSelection()
-    wxString path(GetFullPath(m_selectti[0]));  //SINGLE: m_Tree->GetSelection()
-    if(wxFileName::FileExists(path))
+    if(MessageBox(m_Tree,_T("Are you sure?"),_T("Delete"),wxYES_NO)!=wxID_YES)
+        return;
+    for(int i=0;i<m_ticount;i++)
     {
-        EditorManager* em = Manager::Get()->GetEditorManager();
-        if(em->IsOpen(path))
+        wxString path(GetFullPath(m_selectti[i]));  //SINGLE: m_Tree->GetSelection()
+        if(wxFileName::FileExists(path))
         {
-            cbMessageBox(_T("Close file first"));
-            return;
+            //        EditorManager* em = Manager::Get()->GetEditorManager();
+            //        if(em->IsOpen(path))
+            //        {
+            //            cbMessageBox(_T("Close file ")+path.GetFullPath()+_T(" first"));
+            //            return;
+            //        }
+            if(!::wxRemoveFile(path))
+                MessageBox(m_Tree,_T("Delete file '")+path+_T("' failed"));
+        } else
+        if(wxFileName::DirExists(path))
+        {
+#ifdef __WXMSW__
+            int hresult=::wxExecute(_T("cmd /c rmdir /S/Q '")+path+_T("'"),wxEXEC_SYNC);
+#else
+            int hresult=::wxExecute(_T("/bin/rm -r -f \"")+path+_T("\""),wxEXEC_SYNC);
+#endif
+            if(hresult)
+                MessageBox(m_Tree,_T("Delete directory '")+path+_T("' failed with error ")+wxString::Format(_T("%i"),hresult));
         }
-        if(cbMessageBox(_T("Are you sure?"),_T("Delete"),wxYES_NO)!=wxID_YES)
-            return;
-        if(!::wxRemoveFile(path))
-            cbMessageBox(_T("Delete file failed"));
-    } else
-    if(wxFileName::DirExists(path))
-        if(!wxRmdir(path))
-            cbMessageBox(_T("Remove directory failed"));
-    Refresh(parent);
+    }
+    Refresh(m_Tree->GetRootItem());
 }
 
 void FileExplorer::OnRename(wxCommandEvent &event)
@@ -675,9 +763,9 @@ void FileExplorer::OnRename(wxCommandEvent &event)
 
 void FileExplorer::OnExpandAll(wxCommandEvent &event)
 {
-    #ifndef __WXMSW__
-//    m_Tree->ExpandAll(m_Tree->GetSelection());
-    #endif
+//    #ifndef __WXMSW__
+////    m_Tree->ExpandAll(m_Tree->GetSelection());
+//    #endif
 }
 
 void FileExplorer::OnShowHidden(wxCommandEvent &event)
@@ -705,11 +793,11 @@ void FileExplorer::OnRefresh(wxCommandEvent &event)
 void FileExplorer::OnBeginDragTreeItem(wxTreeEvent &event)
 {
 //    SetCursor(wxCROSS_CURSOR);
-    if(m_Tree->GetItemImage(event.GetItem())==fvsNormal)
+//    if(IsInSelection(event.GetItem()))
+//        return; // don't start a drag for an unselected item
+    if(m_Tree->GetItemImage(event.GetItem())==fvsNormal||m_Tree->GetItemImage(event.GetItem())==fvsFolder)
         event.Allow();
-    m_dragtest=GetFullPath(event.GetItem());
-    if(IsInSelection(event.GetItem()))
-        return; // can't drag objects onto themselves as a meaningful op
+//    m_dragtest=GetFullPath(event.GetItem());
     m_ticount=m_Tree->GetSelections(m_selectti);
 }
 
@@ -730,31 +818,43 @@ void FileExplorer::OnEndDragTreeItem(wxTreeEvent &event)
         return;
     for(int i=0;i<m_ticount;i++)
     {
-        wxFileName path(GetFullPath(m_selectti[i]));
+        wxString path(GetFullPath(m_selectti[i]));
         wxFileName destpath;
         if(!event.GetItem().IsOk())
             return;
-        destpath.Assign(GetFullPath(event.GetItem()),path.GetFullName());
-        if(!path.FileExists())
+        destpath.Assign(GetFullPath(event.GetItem()),wxFileName(path).GetFullName());
+        if(destpath.SameAs(path))
+            continue;
+        if(wxFileName::DirExists(path)||wxFileName::FileExists(path))
         {
-            cbMessageBox(_T("File not found: ")+path.GetFullPath());
-            continue;
+            if(!::wxGetKeyState(WXK_CONTROL))
+            {
+                if(wxFileName::FileExists(path))
+                    if(!PromptSaveOpenFile(_T("File is modified, press Yes to save before move, No to move unsaved file or Cancel to skip file"),wxFileName(path)))
+                        continue;
+#ifdef __WXMSW__
+                int hresult=::wxExecute(_T("cmd /c move /Y \"")+path+_T("\" \"")+destpath.GetFullPath()+_T("\""),wxEXEC_SYNC);
+#else
+                int hresult=::wxExecute(_T("/bin/mv -b \"")+path+_T("\" \"")+destpath.GetFullPath()+_T("\""),wxEXEC_SYNC);
+#endif
+                if(hresult)
+                    MessageBox(m_Tree,_T("Move directory '")+path+_T("' failed with error ")+wxString::Format(_T("%i"),hresult));
+            } else
+            {
+                if(wxFileName::FileExists(path))
+                    if(!PromptSaveOpenFile(_T("File is modified, press Yes to save before copy, No to copy unsaved file or Cancel to skip file"),wxFileName(path)))
+                        continue;
+#ifdef __WXMSW__
+                int hresult=::wxExecute(_T("cmd /c xcopy /S/E/Y/H \"")+path+_T("\" \"")+destpath.GetFullPath()+_T("\""),wxEXEC_SYNC);
+#else
+                int hresult=::wxExecute(_T("/bin/cp -r -b \"")+path+_T("\" \"")+destpath.GetFullPath()+_T("\""),wxEXEC_SYNC);
+                if(hresult)
+                    MessageBox(m_Tree,_T("Copy directory '")+path+_T("' failed with error ")+wxString::Format(_T("%i"),hresult));
+#endif
+            }
         }
-        if(path.GetFullPath()==destpath.GetFullPath())
-            continue;
 //        if(!PromptSaveOpenFile(_T("File is modified, press \"Yes\" to save before move/copy, \"No\" to move/copy unsaved file or \"Cancel\" to abort the operation"),path)) //TODO: specify move or copy depending on whether CTRL held down
 //            return;
-        if(!::wxCopyFile(path.GetFullPath(),destpath.GetFullPath()))
-        {
-            cbMessageBox(_T("Copy file failed"));
-            return;
-        }
-        if(!::wxGetKeyState(WXK_CONTROL))
-        if(!::wxRemoveFile(path.GetFullPath()))
-        {
-            cbMessageBox(_T("Removal at original location failed"));
-        }
     }
     Refresh(m_Tree->GetRootItem());
-
 }

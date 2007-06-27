@@ -14,6 +14,7 @@ BEGIN_EVENT_TABLE(ShellTermCtrl, wxTextCtrl)
     EVT_END_PROCESS(ID_PROC, ShellTermCtrl::OnEndProcess)
 END_EVENT_TABLE()
 
+IMPLEMENT_DYNAMIC_CLASS(ShellTermCtrl, wxTextCtrl)
 
 ShellTermCtrl::ShellTermCtrl(wxWindow* parent,wxWindowID id, ShellManager *shellmgr,
     const wxString& name,const wxString& value,const wxPoint& pos,const wxSize& size,long style)

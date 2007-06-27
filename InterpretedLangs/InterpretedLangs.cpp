@@ -434,6 +434,7 @@ void InterpretedLangs::OnRelease(bool appShutDown)
         m_shellmgr->Destroy();
     }
     m_shellmgr = 0;
+    //TODO: m_fe is not a dockable -- this code is incorrect
     if (m_fe)
     {
         CodeBlocksDockEvent evt(cbEVT_REMOVE_DOCK_WINDOW);

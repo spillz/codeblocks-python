@@ -29,6 +29,7 @@ bool PromptSaveOpenFile(wxString message, wxFileName path)
                     if(!eb->Save())
                         cbMessageBox(_("Save failed - proceeding with unsaved file"));
                 case wxNO:
+                    eb->Close();
                     return true;
                 case wxCANCEL:
                     return false;

@@ -54,6 +54,7 @@ public:
     ~FileExplorer() { WriteConfig(); }
     bool SetRootFolder(wxString root);
     wxString GetRootFolder() {return m_root;}
+    void FindFile(const wxString &file) {}
 private:
     void OnRightClick(wxTreeEvent &event);
     void OnActivate(wxTreeEvent &event);
@@ -78,16 +79,17 @@ private:
     void OnBeginDragTreeItem(wxTreeEvent &event);
     void OnEndDragTreeItem(wxTreeEvent &event);
 
-
     void WriteConfig();
     void ReadConfig();
 
+    void FindFile(const wxString &findfilename, const wxTreeItemId &ti);
+    void FocusFile(const wxTreeItemId &ti);
     bool IsInSelection(const wxTreeItemId &ti);
-    bool AddTreeItems(wxTreeItemId ti);
-    wxString GetFullPath(wxTreeItemId ti);
-    void GetExpandedNodes(wxTreeItemId ti, Expansion *exp);
-    void RecursiveRebuild(wxTreeItemId ti, Expansion *exp);
-    void Refresh(wxTreeItemId ti);
+    bool AddTreeItems(const wxTreeItemId &ti);
+    wxString GetFullPath(const wxTreeItemId &ti);
+    void GetExpandedNodes(const wxTreeItemId &ti, Expansion *exp);
+    void RecursiveRebuild(const wxTreeItemId &ti, Expansion *exp);
+    void Refresh(const wxTreeItemId &ti);
     void SetImages();
     wxMenu *m_Popup; // the popup menu that displays on right clicks in the tree (and maybe loc in future??)
     wxString m_root;
@@ -99,6 +101,8 @@ private:
     wxArrayTreeItemIds m_selectti; //contains selections after context menu is called up
     int m_ticount; //number of selections
     wxString m_dragtest;
+    size_t m_findmatchcount;
+    wxArrayString m_findmatch;
     DECLARE_EVENT_TABLE()
 };
 

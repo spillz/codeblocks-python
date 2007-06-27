@@ -474,7 +474,6 @@ int PyPlugin::Debug()
 //
 
 // TODO: figure out why debug watch and breakpoints fail after the first debug session - not erasing the command list with clear()???
-
     if(m_DebuggerActive)
         return 0;
     m_changeposition=false;
@@ -497,14 +496,24 @@ int PyPlugin::Debug()
     wxSetWorkingDirectory(wxFileName(m_RunTarget).GetPath());
     target.Replace(_T("\\"),_T("/"),true);
     wxString commandln=wxFileName(m_DefaultInterpreter).GetShortPath()+m_DefaultDebugCmdLine+target;
+    #ifdef EXPERIMENTAL_PYTHON_DEBUG
+//    LogMessage(wxString::Format(_("Launching '%s': %s (in %s)"), consolename.c_str(), commandstr.c_str(), workingdir.c_str()));
+//    InterpretedLangs* plugin = Manager::Get()->GetPluginManager()->LoadPlugin(_T("InterpretedLangs"));
+//    m_ilplugin->m_shellmgr->LaunchProcess(commandln,_(T"PyDEBUG"),0);
+//    m_ilplugin->ShowConsole();
+    ilShellTermEvent e;
+    ProcessEvent(e);
+    #else
     if(!wxExecute(commandln,wxEXEC_ASYNC,m_pp))
     {
         wxSetWorkingDirectory(olddir);
         return -1;
     }
-    wxSetWorkingDirectory(olddir);
     m_ostream=m_pp->GetOutputStream();
     m_istream=m_pp->GetInputStream();
+    #endif
+
+    wxSetWorkingDirectory(olddir);
 
 //Send initial stream of commands
     PythonCmdDispatchData dd;
@@ -670,17 +679,6 @@ void PyPlugin::OnSettings(wxCommandEvent& event)
 
 void PyPlugin::OnSubMenuSelect(wxUpdateUIEvent& event)
 {
-//    int num=event.GetId()-ID_Menu_0;
-//    if(num>=0 && num<=9)
-//    {
-//        m_interpnum=num;
-//        if(num==1)
-//        {
-//        wxString a;
-//        a<<_T("Sub menu")<<m_interpnum<<_T(" opened");
-//        wxMessageBox(a);
-//        }
-//    }
 }
 
 void PyPlugin::OnSetTarget(wxCommandEvent& event)
@@ -697,58 +695,6 @@ void PyPlugin::OnSetTarget(wxCommandEvent& event)
 
 void PyPlugin::OnRunTarget(wxCommandEvent& event)
 {
-//    int ID=event.GetId();
-//    wxString commandstr;
-//    if(ID>=ID_ContextMenu_0&&ID<=ID_ContextMenu_9)
-//    {
-//        if(!wxFileName::FileExists(m_RunTarget))
-//        {
-//            wxMessageBox(_T("Target ")+m_RunTarget+_T(" does not exist, please select another or Cancel"));
-//            OnSetTarget(event);
-//            if(m_RunTarget==_T(""))
-//                return;
-//        }
-//        int actionnum=ID-ID_ContextMenu_0;
-//        commandstr=m_ic.interps[m_interpnum].actions[actionnum].command;
-//        commandstr.Replace(_T("$interpreter"),m_ic.interps[m_interpnum].exec,false);
-//        commandstr.Replace(_T("$file"),m_RunTarget,false);
-//    } else
-//    if(ID>=ID_SubMenu_0&&ID<=ID_SubMenu_20)
-//    {
-//        wxMenu *m=LangMenu->FindItem(ID)->GetMenu(); // get pointer object to selected item in submenu
-//        if(m==NULL)
-//        {
-//            wxMessageBox(_T("WARNING: Sub menu not found - cancelling command"));
-//            return;
-//        }
-//        // need to figure out which interpeter we're using by matching the pointer to the parent of the selected item with pointers to our menus
-//        for(m_interpnum=0;m_interpnum<m_ic.interps.size()&&m_interpnum<10;m_interpnum++)
-//        {
-//            if(LangMenu->FindItem(ID_Menu_0+m_interpnum)->GetSubMenu()==m) //compare pointer to submenu with known submenus and break out of loop if matched
-//                break;
-//        }
-//        if(m_interpnum>=m_ic.interps.size()||m_interpnum>=10)
-//        {
-//            wxMessageBox(_T("WARNING: Sub menu not found - cancelling command"));
-//            return;
-//        }
-//        int actionnum=ID-m->FindItemByPosition(0)->GetId();
-//        commandstr=m_ic.interps[m_interpnum].actions[actionnum].command;
-//
-//        m_wildcard=m_ic.interps[m_interpnum].extensions;
-//        OnSetTarget(event);
-//        wxFileName fn(m_RunTarget);
-//        if(!fn.FileExists(m_RunTarget))
-//            return;
-//
-//        commandstr.Replace(_T("$interpreter"),m_ic.interps[m_interpnum].exec,false);
-//        commandstr.Replace(_T("$file"),fn.GetFullPath(),false);
-//    } else
-//    {
-//        wxMessageBox(_T("WARNING: Unprocessed Interpreter Message"));
-//        return;
-//    }
-//    wxExecute(commandstr,wxEXEC_ASYNC,NULL);
 }
 
 void PyPlugin::OnRun(wxCommandEvent& event)
@@ -903,19 +849,6 @@ int PyPlugin::Configure()
 
 void PyPlugin::CreateMenu()
 {
-//    int j=0; //index to actions
-//    for(int i=0;i<m_ic.interps.size()&&i<10;i++) //create at most 10 interpreter submenus
-//    {
-//        wxMenu *submenu=new wxMenu();
-//        int maxj=j+m_ic.interps[i].actions.size();
-//        if(maxj>20)
-//            maxj=20;
-//        int jstart=j;
-//        for(;j<maxj;j++)
-//            submenu->Append(ID_SubMenu_0+j,m_ic.interps[i].actions[j-jstart].name+_T("..."),_T(""));
-//        submenu->Append(ID_NoTargMenu_0+i,_T("Run Without Target"),_T(""));
-//        LangMenu->Append(ID_Menu_0+i,m_ic.interps[i].name,submenu);
-//    }
     LangMenu->Append(ID_LangMenu_Run,_T("Python &Run..."),_T(""));
     LangMenu->AppendSeparator();
     LangMenu->Append(ID_LangMenu_RunPiped,_T("Start &Debug..."),_T(""));
@@ -932,13 +865,6 @@ void PyPlugin::CreateMenu()
 
 void PyPlugin::UpdateMenu()
 {
-    //delete the old menu items
-//    if(LangMenu)
-//    {
-//        for(int i=0;i<m_ic.interps.size();i++)
-//            LangMenu->Destroy(ID_Menu_0+i);
-//        CreateMenu();
-//    }
 }
 
 
@@ -958,7 +884,6 @@ void PyPlugin::BuildMenu(wxMenuBar* menuBar)
         delete LangMenu;
         LangMenu=0;
     }
-//	NotImplemented(_T("PyPlugin::BuildMenu()"));
 }
 
 void PyPlugin::BuildModuleMenu(const ModuleType type, wxMenu* menu, const FileTreeData* data)
@@ -1003,6 +928,24 @@ void PyPlugin::BuildModuleMenu(const ModuleType type, wxMenu* menu, const FileTr
 //            menu->Append(ID_LangMenu_Run,_T("Python Run"),_T(""));
             menu->Append(ID_LangMenu_RunPiped,_T("Python Debug"),_T(""));
 
+        }
+	}
+	if(type==mtUnknown) // also type==mtOpenFilesList - not sure how to find out which file has been right clicked.
+	{
+        if(data->GetKind()==FileTreeData::ftdkFile)  //right clicked on folder in file explorer
+        {
+            wxFileName f(data->GetFolder());
+            wxString filename=f.GetFullPath();
+            wxString name=f.GetFullName();
+            if(IsPythonFile(name))
+            {
+                m_RunTarget=name;
+                m_RunTargetSelected=true;
+                menu->AppendSeparator();
+//            menu->Append(ID_LangMenu_Run,_T("Python Run"),_T(""));
+                menu->Append(ID_LangMenu_RunPiped,_T("Python Debug"),_T(""));
+
+            }
         }
 	}
 }

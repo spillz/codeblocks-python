@@ -21,6 +21,36 @@
 					<Add after="zip -j9 $(#cb)/devel/share/codeblocks/InterpretedLangs.zip manifest.xml" />
 				</ExtraCommands>
 			</Target>
+			<Target title="il-library">
+				<Option output="$(#cb)/devel/il-common.so" prefix_auto="0" extension_auto="0" />
+				<Option working_dir="$(#cb)/devel" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Option parameters="--personality=debug" />
+				<Option host_application="$(#cb)/devel/codeblocks" />
+				<Compiler>
+					<Add option="-Wall" />
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="il-plugin">
+				<Option output="$(#cb)/devel/share/codeblocks/plugins/libInterpretedLangs.so" prefix_auto="0" extension_auto="0" />
+				<Option working_dir="$(#cb)/devel" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Option parameters="--personality=debug" />
+				<Option host_application="$(#cb)/devel/codeblocks" />
+				<Compiler>
+					<Add option="-Wall" />
+					<Add option="-g" />
+				</Compiler>
+				<Linker>
+					<Add library="$(#cb)/devel/il-common.so" />
+				</Linker>
+				<ExtraCommands>
+					<Add after="zip -j9 $(#cb)/devel/share/codeblocks/InterpretedLangs.zip manifest.xml" />
+				</ExtraCommands>
+			</Target>
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
@@ -42,19 +72,58 @@
 			<Add option="`wx-config --libs`" />
 			<Add directory="$(#cb)/devel" />
 		</Linker>
-		<Unit filename="ConfigDialog.cpp" />
-		<Unit filename="ConfigDialog.h" />
-		<Unit filename="FileExplorer.cpp" />
-		<Unit filename="FileExplorer.h" />
-		<Unit filename="InterpretedLangs.cpp" />
-		<Unit filename="InterpretedLangs.h" />
-		<Unit filename="ShellCtrl.cpp" />
-		<Unit filename="ShellCtrl.h" />
-		<Unit filename="il_globals.cpp" />
-		<Unit filename="il_globals.h" />
-		<Unit filename="interpreterproperties.cpp" />
-		<Unit filename="interpreterproperties.h" />
-		<Unit filename="manifest.xml" />
+		<Unit filename="ConfigDialog.cpp">
+			<Option target="default" />
+			<Option target="il-plugin" />
+		</Unit>
+		<Unit filename="ConfigDialog.h">
+			<Option target="default" />
+			<Option target="il-plugin" />
+		</Unit>
+		<Unit filename="FileExplorer.cpp">
+			<Option target="il-library" />
+			<Option target="default" />
+		</Unit>
+		<Unit filename="FileExplorer.h">
+			<Option target="il-library" />
+			<Option target="default" />
+		</Unit>
+		<Unit filename="InterpretedLangs.cpp">
+			<Option target="default" />
+			<Option target="il-plugin" />
+		</Unit>
+		<Unit filename="InterpretedLangs.h">
+			<Option target="default" />
+			<Option target="il-plugin" />
+		</Unit>
+		<Unit filename="ShellCtrl.cpp">
+			<Option target="default" />
+			<Option target="il-library" />
+		</Unit>
+		<Unit filename="ShellCtrl.h">
+			<Option target="default" />
+			<Option target="il-library" />
+		</Unit>
+		<Unit filename="il_globals.cpp">
+			<Option target="default" />
+			<Option target="il-library" />
+		</Unit>
+		<Unit filename="il_globals.h">
+			<Option target="default" />
+			<Option target="il-library" />
+		</Unit>
+		<Unit filename="interpreterproperties.cpp">
+			<Option target="default" />
+			<Option target="il-plugin" />
+		</Unit>
+		<Unit filename="interpreterproperties.h">
+			<Option target="default" />
+			<Option target="il-plugin" />
+		</Unit>
+		<Unit filename="manifest.xml">
+			<Option target="default" />
+			<Option target="il-plugin" />
+		</Unit>
 		<Extensions>
 			<code_completion />
 			<envvars />

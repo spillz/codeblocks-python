@@ -10,6 +10,19 @@
 #include <wx/process.h>
 #include <wx/wxFlatNotebook/wxFlatNotebook.h>
 
+//// in the header of the source file BEGIN_DECLARE_EVENT_TYPES()
+//DECLARE_EVENT_TYPE(EVTSHELLTERM, value)
+//END_DECLARE_EVENT_TYPES()
+//// in the implementation
+//DEFINE_EVENT_TYPE(EVTSHELLTERM)
+//
+//class ilShellTermEvent: public wxEvent
+//{
+//public:
+//    wxString &newdata;
+//    wxString &newerrdata;
+//}
+
 
 class ShellManager;
 
@@ -20,6 +33,7 @@ class ShellManager;
 class ShellTermCtrl : public wxTextCtrl
 {
     public:
+        ShellTermCtrl() {}
         ShellTermCtrl(wxWindow* parent,
                     wxWindowID id, ShellManager *shellmgr=NULL,
                     const wxString& name = wxEmptyString,
@@ -27,7 +41,7 @@ class ShellTermCtrl : public wxTextCtrl
                     const wxPoint& pos = wxDefaultPosition,
                     const wxSize& size = wxDefaultSize,
                     long style = wxTE_RICH|wxTE_MULTILINE|wxTE_READONLY|wxTE_PROCESS_ENTER|wxEXPAND);
-        ~ShellTermCtrl() {if (m_proc) {if (!m_dead) {m_proc->Detach();} } }
+        virtual ~ShellTermCtrl() {if (m_proc) {if (!m_dead) {m_proc->Detach();} } }
         long LaunchProcess(wxString processcmd, int stderrmode);
         void KillProcess();
         void KillWindow();
@@ -37,6 +51,9 @@ class ShellTermCtrl : public wxTextCtrl
         wxString GetName() {return m_name;}
         void SetName(const wxString &name) {m_name=name;}
         bool IsDead() {return m_dead;}
+// Overrideables
+//        virtual void PostReadStream(const wxString &latestdata) {}
+//        virtual void PostEndProcess() {}
     private:
         wxProcess *m_proc;
         long m_procid;
@@ -45,10 +62,13 @@ class ShellTermCtrl : public wxTextCtrl
         wxInputStream *m_estream;
         void OnEndProcess(wxProcessEvent &event);
         bool m_dead;
+        wxString m_lateststreamdata;
+        wxString m_latesterrstreamdata;
         int m_killlevel;
         int m_exitcode;
         wxString m_name;
         ShellManager *m_shellmgr;
+    DECLARE_DYNAMIC_CLASS(wxTextCtrl)
     DECLARE_EVENT_TABLE()
 };
 

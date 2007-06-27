@@ -87,9 +87,9 @@ private:
     bool IsInSelection(const wxTreeItemId &ti);
     bool AddTreeItems(const wxTreeItemId &ti);
     wxString GetFullPath(const wxTreeItemId &ti);
-    void GetExpandedNodes(const wxTreeItemId &ti, Expansion *exp);
-    void RecursiveRebuild(const wxTreeItemId &ti, Expansion *exp);
-    void Refresh(const wxTreeItemId &ti);
+    void GetExpandedNodes(wxTreeItemId ti, Expansion *exp);
+    void RecursiveRebuild(wxTreeItemId ti, Expansion *exp);
+    void Refresh(wxTreeItemId ti);
     void SetImages();
     wxMenu *m_Popup; // the popup menu that displays on right clicks in the tree (and maybe loc in future??)
     wxString m_root;

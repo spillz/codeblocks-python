@@ -198,7 +198,7 @@ void FileExplorer::FocusFile(const wxTreeItemId &ti)
     m_Tree->EnsureVisible(ti);
 }
 
-void FileExplorer::GetExpandedNodes(const wxTreeItemId &ti, Expansion *exp)
+void FileExplorer::GetExpandedNodes(wxTreeItemId ti, Expansion *exp)
 {
     exp->name=m_Tree->GetItemText(ti);
     wxTreeItemIdValue cookie;
@@ -215,7 +215,7 @@ void FileExplorer::GetExpandedNodes(const wxTreeItemId &ti, Expansion *exp)
     }
 }
 
-void FileExplorer::RecursiveRebuild(const wxTreeItemId &ti,Expansion *exp)
+void FileExplorer::RecursiveRebuild(wxTreeItemId ti,Expansion *exp)
 {
     AddTreeItems(ti);
     m_Tree->Expand(ti);
@@ -232,7 +232,7 @@ void FileExplorer::RecursiveRebuild(const wxTreeItemId &ti,Expansion *exp)
     }
 }
 
-void FileExplorer::Refresh(const wxTreeItemId &ti)
+void FileExplorer::Refresh(wxTreeItemId ti)
 {
     Expansion e;
     GetExpandedNodes(ti,&e);
@@ -637,7 +637,8 @@ void FileExplorer::OnDuplicate(wxCommandEvent &event)
             }
 
 #ifdef __WXMSW__
-            int hresult=::wxExecute(_T("cmd /c xcopy /S/E/Y/H \"")+path.GetFullPath()+_T("\" \"")+destpath+_T("\""),wxEXEC_SYNC);
+            wxArrayString output;
+            int hresult=::wxExecute(_T("cmd /c xcopy /S/E/Y/H/I \"")+path.GetFullPath()+_T("\" \"")+destpath+_T("\""),output,wxEXEC_SYNC);
 #else
             int hresult=::wxExecute(_T("/bin/cp -r -b \"")+path.GetFullPath()+_T("\" \"")+destpath+_T("\""),wxEXEC_SYNC);
 #endif
@@ -667,7 +668,8 @@ void FileExplorer::OnCopy(wxCommandEvent &event)
             if(!PromptSaveOpenFile(_T("File is modified, press Yes to save before duplication, No to copy unsaved file or Cancel to skip file"),wxFileName(path)))
                 continue;
 #ifdef __WXMSW__
-            int hresult=::wxExecute(_T("cmd /c xcopy /S/E/Y/H \"")+path+_T("\" \"")+destpath.GetFullPath()+_T("\""),wxEXEC_SYNC);
+            wxArrayString output;
+            int hresult=::wxExecute(_T("cmd /c xcopy /S/E/Y/H/I \"")+path+_T("\" \"")+destpath.GetFullPath()+_T("\""),output,wxEXEC_SYNC);
 #else
             int hresult=::wxExecute(_T("/bin/cp -r -b \"")+path+_T("\" \"")+destpath.GetFullPath()+_T("\""),wxEXEC_SYNC);
 #endif
@@ -695,7 +697,8 @@ void FileExplorer::OnMove(wxCommandEvent &event)
         if(wxFileName::FileExists(path)||wxFileName::DirExists(path))
         {
 #ifdef __WXMSW__
-            int hresult=::wxExecute(_T("cmd /c move /Y \"")+path+_T("\" \"")+destpath.GetFullPath()+_T("\""),wxEXEC_SYNC);
+            wxArrayString output;
+            int hresult=::wxExecute(_T("cmd /c move /Y \"")+path+_T("\" \"")+destpath.GetFullPath()+_T("\""),output,wxEXEC_SYNC);
 #else
             int hresult=::wxExecute(_T("/bin/mv -b \"")+path+_T("\" \"")+destpath.GetFullPath()+_T("\""),wxEXEC_SYNC);
 #endif
@@ -728,7 +731,8 @@ void FileExplorer::OnDelete(wxCommandEvent &event)
         if(wxFileName::DirExists(path))
         {
 #ifdef __WXMSW__
-            int hresult=::wxExecute(_T("cmd /c rmdir /S/Q '")+path+_T("'"),wxEXEC_SYNC);
+            wxArrayString output;
+            int hresult=::wxExecute(_T("cmd /c rmdir /S/Q \"")+path+_T("\""),output,wxEXEC_SYNC);
 #else
             int hresult=::wxExecute(_T("/bin/rm -r -f \"")+path+_T("\""),wxEXEC_SYNC);
 #endif
@@ -833,7 +837,8 @@ void FileExplorer::OnEndDragTreeItem(wxTreeEvent &event)
                     if(!PromptSaveOpenFile(_T("File is modified, press Yes to save before move, No to move unsaved file or Cancel to skip file"),wxFileName(path)))
                         continue;
 #ifdef __WXMSW__
-                int hresult=::wxExecute(_T("cmd /c move /Y \"")+path+_T("\" \"")+destpath.GetFullPath()+_T("\""),wxEXEC_SYNC);
+                wxArrayString output;
+                int hresult=::wxExecute(_T("cmd /c move /Y \"")+path+_T("\" \"")+destpath.GetFullPath()+_T("\""),output,wxEXEC_SYNC);
 #else
                 int hresult=::wxExecute(_T("/bin/mv -b \"")+path+_T("\" \"")+destpath.GetFullPath()+_T("\""),wxEXEC_SYNC);
 #endif
@@ -845,12 +850,13 @@ void FileExplorer::OnEndDragTreeItem(wxTreeEvent &event)
                     if(!PromptSaveOpenFile(_T("File is modified, press Yes to save before copy, No to copy unsaved file or Cancel to skip file"),wxFileName(path)))
                         continue;
 #ifdef __WXMSW__
-                int hresult=::wxExecute(_T("cmd /c xcopy /S/E/Y/H \"")+path+_T("\" \"")+destpath.GetFullPath()+_T("\""),wxEXEC_SYNC);
+                wxArrayString output;
+                int hresult=::wxExecute(_T("cmd /c xcopy /S/E/Y/H/I \"")+path+_T("\" \"")+destpath.GetFullPath()+_T("\""),output,wxEXEC_SYNC);
 #else
                 int hresult=::wxExecute(_T("/bin/cp -r -b \"")+path+_T("\" \"")+destpath.GetFullPath()+_T("\""),wxEXEC_SYNC);
+#endif
                 if(hresult)
                     MessageBox(m_Tree,_T("Copy directory '")+path+_T("' failed with error ")+wxString::Format(_T("%i"),hresult));
-#endif
             }
         }
 //        if(!PromptSaveOpenFile(_T("File is modified, press \"Yes\" to save before move/copy, \"No\" to move/copy unsaved file or \"Cancel\" to abort the operation"),path)) //TODO: specify move or copy depending on whether CTRL held down

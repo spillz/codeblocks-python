@@ -33,19 +33,26 @@
 					<Add directory="$(#cb.include)\wxscintilla\include" />
 					<Add directory="$(#cb)\include\wxFlatNotebook\include" />
 					<Add directory="$(#wx.include)" />
-					<Add directory="$(#wx.lib)\gcc_dll\mswu" />
+					<Add directory="$(#wx.lib)\gcc_dll$(WX_CFG)\msw$(WX_SUFFIX)" />
 				</Compiler>
 				<Linker>
 					<Add library="codeblocks" />
-					<Add library="wxmsw28u" />
+					<Add library="wxmsw28$(WX_SUFFIX)" />
 					<Add directory="$(#cb)\devel" />
-					<Add directory="$(#wx.lib)\gcc_dll" />
+					<Add directory="$(#wx.lib)\gcc_dll$(WX_CFG)" />
 				</Linker>
 				<ExtraCommands>
 					<Add after="zip -j9 $(#cb)\devel\share\codeblocks\InterpretedLangs.zip manifest.xml" />
 				</ExtraCommands>
+				<Environment>
+					<Variable name="WX_SUFFIX" value="u" />
+					<Variable name="WX_CFG" value="" />
+				</Environment>
 			</Target>
 		</Build>
+		<VirtualTargets>
+			<Add alias="All" targets="default;" />
+		</VirtualTargets>
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>

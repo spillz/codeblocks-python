@@ -218,9 +218,9 @@ void ShellTermCtrl::OnDClick(wxMouseEvent &e)
             return;
         size_t start,len;
         re.GetMatch(&start,&len,0);
-        if(x<start)
+        if(static_cast<size_t>(x)<start)
             return;
-        if(x>start+len)
+        if(static_cast<size_t>(x)>start+len)
         {
             text=text.Mid(start+len);
             x-=start+len;

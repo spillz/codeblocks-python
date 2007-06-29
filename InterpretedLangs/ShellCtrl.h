@@ -10,6 +10,8 @@
 #include <wx/process.h>
 #include <wx/wxFlatNotebook/wxFlatNotebook.h>
 
+#include <sdk.h>
+
 //// in the header of the source file BEGIN_DECLARE_EVENT_TYPES()
 //DECLARE_EVENT_TYPE(EVTSHELLTERM, value)
 //END_DECLARE_EVENT_TYPES()
@@ -48,6 +50,7 @@ class ShellTermCtrl : public wxTextCtrl
         long GetPid() {if(m_proc) return m_procid; else return -1;}
         void ReadStream(int maxchars=1000);
         void OnUserInput(wxKeyEvent& ke);
+        void OnDClick(wxMouseEvent &e);
         wxString GetName() {return m_name;}
         void SetName(const wxString &name) {m_name=name;}
         bool IsDead() {return m_dead;}

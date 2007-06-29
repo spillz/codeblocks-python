@@ -648,7 +648,7 @@ void FileExplorer::OnDuplicate(wxCommandEvent &event)
                 cmdline=_T("cmd /c xcopy /S/E/Y/H/I \"")+path.GetFullPath()+_T("\" \"")+destpath+_T("\"");
             int hresult=::wxExecute(cmdline,output,wxEXEC_SYNC);
 #else
-            wxString cmdline=_T("/bin/cp -r -b \"")+path.GetFullPath()+_T("\" \"")+destpath+_T("\"")
+            wxString cmdline=_T("/bin/cp -r -b \"")+path.GetFullPath()+_T("\" \"")+destpath+_T("\"");
             int hresult=::wxExecute(cmdline,wxEXEC_SYNC);
 #endif
             if(hresult)

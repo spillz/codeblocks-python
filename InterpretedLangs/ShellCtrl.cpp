@@ -1,5 +1,6 @@
 #include <wx/notebook.h>
 #include <wx/textctrl.h>
+#include <wx/regex.h>
 #include "ShellCtrl.h"
 #include "globals.h"
 
@@ -12,6 +13,7 @@ int ID_SHELLMGR=wxNewId();
 BEGIN_EVENT_TABLE(ShellTermCtrl, wxTextCtrl)
     EVT_CHAR(ShellTermCtrl::OnUserInput)
     EVT_END_PROCESS(ID_PROC, ShellTermCtrl::OnEndProcess)
+    EVT_LEFT_DCLICK(ShellTermCtrl::OnDClick)
 END_EVENT_TABLE()
 
 IMPLEMENT_DYNAMIC_CLASS(ShellTermCtrl, wxTextCtrl)
@@ -88,6 +90,9 @@ void ShellTermCtrl::KillProcess()
     }
 }
 
+static wxString linkregex=_T("[\"']?([^'\",\\s:;*?]+?)[\"']?[\\s]*(\\:|\\(|\\[|\\,?\\s*[Ll]ine)?\\s*(\\d*)");
+static wxString linkregex2=_T("(\\d*)\\s*(\\:|\\)|\\]|of|in)\\s*[^:;*?\\r\\n\\s]*");
+
 
 void ShellTermCtrl::ReadStream(int maxchars)
 {
@@ -99,6 +104,8 @@ void ShellTermCtrl::ReadStream(int maxchars)
         maxchars=20000;
         oneshot=false;
     }
+    int lineno=GetNumberOfLines()-1;
+    if(lineno<0) lineno=0;
     while(m_proc->IsInputAvailable())
     {
         char buf0[maxchars+1];
@@ -128,6 +135,39 @@ void ShellTermCtrl::ReadStream(int maxchars)
         }
         SetDefaultStyle(oldta);
     }
+
+
+    wxTextAttr ta(wxColour(0,180,0));
+    wxTextAttr oldta=GetDefaultStyle();
+    SetDefaultStyle(ta);
+    int lastline=GetNumberOfLines();
+    wxRegEx re(linkregex,wxRE_ADVANCED|wxRE_NEWLINE);
+    while(lineno<lastline)
+    {
+        int col=0;
+        wxString text=GetLineText(lineno);
+        wxString file;
+        while(re.Matches(text))
+        {
+            size_t start,len;
+            if(re.GetMatch(&start,&len,0))
+            {
+                size_t fstart, flen;
+                if(re.GetMatch(&fstart,&flen,1))
+                    file=text.Mid(fstart,flen);
+                wxFileName f(file);
+                if(f.FileExists())
+                {
+                    int changepos=XYToPosition(col+start,lineno);
+                    SetStyle(changepos,changepos+len,ta);
+                }
+            }
+            col+=start+len;
+            text=text.Mid(start+len);
+        }
+        lineno++;
+    }
+    SetDefaultStyle(oldta);
 }
 
 void ShellTermCtrl::OnUserInput(wxKeyEvent& ke)
@@ -155,6 +195,70 @@ void ShellTermCtrl::OnUserInput(wxKeyEvent& ke)
     AppendText(kc2);
     SetInsertionPointEnd();
 }
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////// HyperLinking ////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+void ShellTermCtrl::OnDClick(wxMouseEvent &e)
+{
+    wxTextCoord x,y;
+    HitTest(e.GetPosition(),&x,&y);
+    wxRegEx re(linkregex,wxRE_ADVANCED|wxRE_NEWLINE);
+    wxString text=GetLineText(y);
+    wxString file;
+    long line;
+    while(1)
+    {
+        if(!re.Matches(text))
+            return;
+        size_t start,len;
+        re.GetMatch(&start,&len,0);
+        if(x<start)
+            return;
+        if(x>start+len)
+        {
+            text=text.Mid(start+len);
+            x-=start+len;
+            continue;
+        }
+        if(re.GetMatch(&start,&len,1))
+            file=text.Mid(start,len);
+        else
+            file=wxEmptyString;
+        if(re.GetMatch(&start,&len,3))
+            text.Mid(start,len).ToLong(&line);
+        else
+            line=0;
+        break;
+//        re.GetMatch(&start,&len,0);
+//        cbMessageBox(wxString::Format(_T("match '%s'\nfile '%s'\nline '%i'"), text.Mid(start,len).c_str(), file.c_str(), line));
+    }
+    wxFileName f(file);
+    if(f.FileExists())
+    {
+        cbEditor* ed = Manager::Get()->GetEditorManager()->Open(f.GetFullPath());
+        if (ed)
+        {
+            ed->Show(true);
+//            if (!ed->GetProjectFile())
+//                ed->SetProjectFile(f.GetFullPath());
+            ed->GotoLine(line - 1, false);
+            if(line>0)
+                if(!ed->HasBookmark(line - 1))
+                    ed->ToggleBookmark(line -1);
+        }
+    }
+
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 
 ////////////////////////////////////// ShellManager /////////////////////////////////////////////

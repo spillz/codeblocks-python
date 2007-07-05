@@ -567,7 +567,7 @@ void FileExplorer::OnRightClick(wxTreeEvent &event)
         ftd->SetKind(FileTreeData::ftdkVirtualGroup);
         wxString pathlist=GetFullPath(m_selectti[0]);
         for(int i=1;i<m_ticount;i++)
-            pathlist+=_T(" ")+GetFullPath(m_selectti[i]);
+            pathlist+=_T("*")+GetFullPath(m_selectti[i]); //passing a '*' separated list of files/directories to any plugin takers
         ftd->SetFolder(pathlist);
     }
     else

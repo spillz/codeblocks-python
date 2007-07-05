@@ -639,15 +639,15 @@ void InterpretedLangs::BuildModuleMenu(const ModuleType type, wxMenu* menu, cons
                 {
                     bool match=true; // all selected items must have names that match the wildcard for this grouping
                     wxString pathlist=paths;
-                    wxString ipath=paths.BeforeFirst(' '); //space separated list -- TODO: what if spaces in path?? (currently assuming Short Paths were passed in)
+                    wxString ipath=paths.BeforeFirst('*'); // '*' separated list
                     if(m_ic.interps[i].extensions!=_T(""));
                         while(match && pathlist!=_T(""))
                         {
                             wxString name=wxFileName(ipath).GetFullName();
                             if(ipath!=_T("") && !WildCardListMatch(m_ic.interps[i].extensions,ipath))
                                 match=false;
-                            pathlist=pathlist.AfterFirst(' ');
-                            ipath=pathlist.BeforeFirst(' ');
+                            pathlist=pathlist.AfterFirst('*');
+                            ipath=pathlist.BeforeFirst('*');
                         }
                     if(match)
                     {

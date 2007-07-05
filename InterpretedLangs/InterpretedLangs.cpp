@@ -426,7 +426,7 @@ void InterpretedLangs::OnRelease(bool appShutDown)
 	// NOTE: after this function, the inherited member variable
 	// m_IsAttached will be FALSE...
 
-    if (m_shellmgr)
+    if (m_shellmgr) //remove the Shell Terminals Notebook from its dockable window and delete it
     {
         CodeBlocksDockEvent evt(cbEVT_REMOVE_DOCK_WINDOW);
         evt.pWindow = m_shellmgr;
@@ -434,12 +434,11 @@ void InterpretedLangs::OnRelease(bool appShutDown)
         m_shellmgr->Destroy();
     }
     m_shellmgr = 0;
-    //TODO: m_fe is not a dockable -- this code is incorrect
-    if (m_fe)
+    if (m_fe) //remove the File Explorer from the Managment pane and delete it.
     {
-        CodeBlocksDockEvent evt(cbEVT_REMOVE_DOCK_WINDOW);
-        evt.pWindow = m_fe;
-        Manager::Get()->GetAppWindow()->ProcessEvent(evt);
+        int idx = Manager::Get()->GetProjectManager()->GetNotebook()->GetPageIndex(m_fe);
+        if (idx != -1)
+            Manager::Get()->GetProjectManager()->GetNotebook()->RemovePage(idx);
         m_fe->Destroy();
     }
     m_fe = 0;

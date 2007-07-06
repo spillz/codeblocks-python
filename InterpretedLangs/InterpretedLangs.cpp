@@ -283,6 +283,8 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
         return;
     }
 
+    m_RunTarget.Replace(_T("*"),_T(" "));
+
     bool setdir=true;
     commandstr.Replace(_T("$file"),wxFileName(m_RunTarget).GetShortPath(),false);
     commandstr.Replace(_T("$dir"),wxFileName(m_RunTarget).GetShortPath(),false);
@@ -292,6 +294,7 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
     commandstr.Replace(_T("$interpreter"),wxFileName(m_ic.interps[m_interpnum].exec).GetShortPath(),false);
     workingdir.Replace(_T("$parentdir"),wxFileName(m_RunTarget).GetPath(),false);
     workingdir.Replace(_T("$dir"),wxFileName(m_RunTarget).GetPath(),false);
+
 
     if(Manager::Get()->GetMacrosManager())
     {

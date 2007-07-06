@@ -395,7 +395,11 @@ ShellManager::ShellManager(wxWindow* parent)
 {
     m_synctimer.SetOwner(this, ID_SHELLPOLLTIMER);
     wxBoxSizer* bs = new wxBoxSizer(wxVERTICAL);
+#ifdef CBIL_TEARAWAY
+    m_nb = new TearawayNotebook(this, ID_SHELLMGR, wxDefaultPosition, wxDefaultSize, wxFNB_X_ON_TAB|wxNB_TOP);
+#else
     m_nb = new wxFlatNotebook(this, ID_SHELLMGR, wxDefaultPosition, wxDefaultSize, wxFNB_X_ON_TAB|wxNB_TOP);
+#endif
     bs->Add(m_nb, 1, wxEXPAND | wxALL);
     SetAutoLayout(TRUE);
     SetSizer(bs);

@@ -88,6 +88,14 @@
 			<Option target="il-library" />
 			<Option target="default" />
 		</Unit>
+		<Unit filename="FileExplorerSettings.cpp">
+			<Option target="default" />
+			<Option target="il-plugin" />
+		</Unit>
+		<Unit filename="FileExplorerSettings.h">
+			<Option target="default" />
+			<Option target="il-plugin" />
+		</Unit>
 		<Unit filename="InterpretedLangs.cpp">
 			<Option target="default" />
 			<Option target="il-plugin" />

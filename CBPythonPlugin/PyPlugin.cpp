@@ -829,7 +829,7 @@ void PyPlugin::OnRelease(bool appShutDown)
     }
     m_WatchDlg = 0L;
 
-
+    Manager::Get()->GetMessageManager()->RemoveLog(m_DebugLog);
 	m_DebugLog->Destroy();
 }
 

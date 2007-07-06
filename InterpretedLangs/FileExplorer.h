@@ -9,12 +9,23 @@
     #include <wx/combobox.h>
 #endif
 
+#include <wx/dynarray.h>
+
 #include <sdk.h>
 
 
 class Expansion;
 
 typedef std::vector<Expansion*> ExpList;
+
+class FavoriteDir
+{
+public:
+    wxString alias;
+    wxString path;
+};
+
+WX_DECLARE_OBJARRAY(FavoriteDir, FavoriteDirs);
 
 class Expansion
 {
@@ -67,6 +78,7 @@ private:
     void OnNewFile(wxCommandEvent &event);
     void OnOpenInEditor(wxCommandEvent &event);
     void OnNewFolder(wxCommandEvent &event);
+    void OnAddFavorite(wxCommandEvent &event);
     void OnCopy(wxCommandEvent &event);
     void OnDuplicate(wxCommandEvent &event);
     void OnMove(wxCommandEvent &event);
@@ -102,6 +114,7 @@ private:
     wxButton *m_UpButton;
     bool m_show_hidden;
     wxArrayTreeItemIds m_selectti; //contains selections after context menu is called up
+    FavoriteDirs m_favdirs;
     int m_ticount; //number of selections
     wxString m_dragtest;
     size_t m_findmatchcount;

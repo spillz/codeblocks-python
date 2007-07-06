@@ -4,6 +4,10 @@
 #include <vector>
 #include "il_globals.h"
 
+
+#include <wx/arrimpl.cpp> // this is a magic incantation which must be done!
+WX_DEFINE_OBJARRAY(FavoriteDirs);
+
 int ID_FILETREE=wxNewId();
 int ID_FILELOC=wxNewId();
 int ID_FILEWILD=wxNewId();
@@ -12,6 +16,7 @@ int ID_SETLOC=wxNewId();
 int ID_OPENINED=wxNewId();
 int ID_FILENEWFILE=wxNewId();
 int ID_FILENEWFOLDER=wxNewId();
+int ID_FILEMAKEFAV=wxNewId();
 int ID_FILECOPY=wxNewId();
 int ID_FILEDUP=wxNewId();
 int ID_FILEMOVE=wxNewId();
@@ -81,6 +86,7 @@ BEGIN_EVENT_TABLE(FileExplorer, wxPanel)
     EVT_MENU(ID_OPENINED, FileExplorer::OnOpenInEditor)
     EVT_MENU(ID_FILENEWFILE, FileExplorer::OnNewFile)
     EVT_MENU(ID_FILENEWFOLDER,FileExplorer::OnNewFolder)
+    EVT_MENU(ID_FILEMAKEFAV,FileExplorer::OnAddFavorite)
     EVT_MENU(ID_FILECOPY,FileExplorer::OnCopy)
     EVT_MENU(ID_FILEDUP,FileExplorer::OnDuplicate)
     EVT_MENU(ID_FILEMOVE,FileExplorer::OnMove)
@@ -546,6 +552,7 @@ void FileExplorer::OnRightClick(wxTreeEvent &event)
                 #ifndef __WXMSW__
         //        m_Popup->Append(ID_FILEEXPANDALL,_T("Expand All Children")); //TODO: check availability in wx2.8 for win32 (not avail wx2.6)
                 #endif
+                m_Popup->Append(ID_FILEMAKEFAV,_T("Add to Favorites"));
                 m_Popup->Append(ID_FILENEWFILE,_T("New File..."));
                 m_Popup->Append(ID_FILENEWFOLDER,_T("Ma&ke Directory..."));
             } else
@@ -592,6 +599,12 @@ void FileExplorer::OnSetLoc(wxCommandEvent &event)
 void FileExplorer::OnNewFile(wxCommandEvent &event)
 {
 //    cbMessageBox(_T("Not Implemented"));
+}
+
+
+void FileExplorer::OnAddFavorite(wxCommandEvent &event)
+{
+
 }
 
 void FileExplorer::OnNewFolder(wxCommandEvent &event)

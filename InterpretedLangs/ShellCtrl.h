@@ -48,7 +48,8 @@ class ShellTermCtrl : public wxTextCtrl
                     const wxSize& size = wxDefaultSize,
                     long style = wxTE_RICH|wxTE_MULTILINE|wxTE_READONLY|wxTE_PROCESS_ENTER|wxEXPAND);
         virtual ~ShellTermCtrl() {if (m_proc) {if (!m_dead) {m_proc->Detach();} } }
-        long LaunchProcess(wxString processcmd, int stderrmode);
+        void ParseLinks(int lineno, int lastline);
+        long LaunchProcess(wxString processcmd, bool ParseLinks=true, bool LinkClicks=true, const wxString &LinkRegex=LinkRegexDefault);
         void KillProcess();
         void KillWindow();
         long GetPid() {if(m_proc) return m_procid; else return -1;}
@@ -58,6 +59,9 @@ class ShellTermCtrl : public wxTextCtrl
         wxString GetName() {return m_name;}
         void SetName(const wxString &name) {m_name=name;}
         bool IsDead() {return m_dead;}
+        bool ParsesLinks(wxString &LinkRegex) {LinkRegex=m_linkregex;return m_parselinks;}
+        void ParseLinks(bool parselinks=true, wxString LinkRegex=LinkRegexDefault) {m_parselinks=parselinks;}
+        static wxString LinkRegexDefault;
 // Overrideables
 //        virtual void PostReadStream(const wxString &latestdata) {}
 //        virtual void PostEndProcess() {}
@@ -75,6 +79,9 @@ class ShellTermCtrl : public wxTextCtrl
         int m_exitcode;
         wxString m_name;
         ShellManager *m_shellmgr;
+        wxString m_linkregex;
+        bool m_parselinks;
+        bool m_linkclicks;
     DECLARE_DYNAMIC_CLASS(wxTextCtrl)
     DECLARE_EVENT_TABLE()
 };
@@ -96,7 +103,7 @@ class ShellManager : public wxPanel
     public:
         ShellManager(wxWindow* parent);
         ~ShellManager(); //virtual??
-        long LaunchProcess(wxString processcmd, wxString name, int stderrmode);
+        long LaunchProcess(wxString processcmd, wxString name, bool ParseLinks=true, bool LinkClicks=true, const wxString &LinkRegex=ShellTermCtrl::LinkRegexDefault);
         void KillProcess(int id);
         void KillWindow(int id);
         ShellTermCtrl *GetPage(size_t i);

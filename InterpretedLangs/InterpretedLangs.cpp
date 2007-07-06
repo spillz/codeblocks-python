@@ -316,7 +316,7 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
 
     if(windowed)
     {
-        m_shellmgr->LaunchProcess(commandstr,consolename,0);
+        m_shellmgr->LaunchProcess(commandstr,consolename);
         ShowConsole();
     } else if (console)
     {

@@ -42,7 +42,7 @@ void ShellTermCtrl::OnEndProcess(wxProcessEvent &event)
         m_shellmgr->OnShellTerminate(this);
 }
 
-long ShellTermCtrl::LaunchProcess(wxString processcmd, int stderrmode)
+long ShellTermCtrl::LaunchProcess(wxString processcmd, bool ParseLinks, bool LinkClicks, const wxString &LinkRegex)
 {
     if(!m_dead)
         return -1;
@@ -51,6 +51,9 @@ long ShellTermCtrl::LaunchProcess(wxString processcmd, int stderrmode)
     m_proc=new wxProcess(this,ID_PROC);
     m_proc->Redirect();
     m_procid=wxExecute(processcmd,wxEXEC_ASYNC,m_proc);
+    m_parselinks=ParseLinks;
+    m_linkclicks=LinkClicks;
+    m_linkregex=LinkRegex;
     if(m_procid>0)
     {
         m_ostream=m_proc->GetOutputStream();
@@ -90,9 +93,8 @@ void ShellTermCtrl::KillProcess()
     }
 }
 
-static wxString linkregex=_T("[\"']?([^'\",\\s:;*?]+?)[\"']?[\\s]*(\\:|\\(|\\[|\\,?\\s*[Ll]ine)?\\s*(\\d*)");
-static wxString linkregex2=_T("(\\d*)\\s*(\\:|\\)|\\]|of|in)\\s*[^:;*?\\r\\n\\s]*");
-
+wxString ShellTermCtrl::LinkRegexDefault=
+_T("[\"']?([^'\",\\s:;*?]+?)[\"']?[\\s]*(\\:|\\(|\\[|\\,?\\s*[Ll]ine)?\\s*(\\d*)");
 
 void ShellTermCtrl::ReadStream(int maxchars)
 {
@@ -105,7 +107,8 @@ void ShellTermCtrl::ReadStream(int maxchars)
         oneshot=false;
     }
     int lineno=GetNumberOfLines()-1;
-    if(lineno<0) lineno=0;
+    if(lineno<0)
+        lineno=0;
     while(m_proc->IsInputAvailable())
     {
         char buf0[maxchars+1];
@@ -135,13 +138,16 @@ void ShellTermCtrl::ReadStream(int maxchars)
         }
         SetDefaultStyle(oldta);
     }
+    if(m_parselinks)
+        ParseLinks(lineno,GetNumberOfLines());
+}
 
-
+void ShellTermCtrl::ParseLinks(int lineno, int lastline)
+{
     wxTextAttr ta(wxColour(0,180,0));
     wxTextAttr oldta=GetDefaultStyle();
     SetDefaultStyle(ta);
-    int lastline=GetNumberOfLines();
-    wxRegEx re(linkregex,wxRE_ADVANCED|wxRE_NEWLINE);
+    wxRegEx re(m_linkregex,wxRE_ADVANCED|wxRE_NEWLINE);
     while(lineno<lastline)
     {
         int col=0;
@@ -206,9 +212,11 @@ void ShellTermCtrl::OnUserInput(wxKeyEvent& ke)
 
 void ShellTermCtrl::OnDClick(wxMouseEvent &e)
 {
+    if(!m_linkclicks)
+        return;
     wxTextCoord x,y;
     HitTest(e.GetPosition(),&x,&y);
-    wxRegEx re(linkregex,wxRE_ADVANCED|wxRE_NEWLINE);
+    wxRegEx re(m_linkregex,wxRE_ADVANCED|wxRE_NEWLINE);
     wxString text=GetLineText(y);
     wxString file;
     long line;
@@ -300,11 +308,11 @@ bool ShellManager::QueryClose(ShellTermCtrl* sh)
 }
 
 
-long ShellManager::LaunchProcess(wxString processcmd, wxString name, int stderrmode)
+long ShellManager::LaunchProcess(wxString processcmd, wxString name, bool ParseLinks, bool LinkClicks, const wxString &LinkRegex)
 {
     int id=wxNewId();
     ShellTermCtrl *shell=new ShellTermCtrl(m_nb,id,this,name);
-    long procid=shell->LaunchProcess(processcmd,0);
+    long procid=shell->LaunchProcess(processcmd,ParseLinks,LinkClicks,LinkRegex);
     if(procid>0)
     {
         if(!m_synctimer.IsRunning())

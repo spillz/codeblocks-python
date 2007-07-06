@@ -64,6 +64,7 @@
 			<Add option="-fPIC" />
 			<Add option="-DcbDEBUG" />
 			<Add option="-DCB_PRECOMP" />
+			<Add option="-DCBIL_TEARAWAY" />
 			<Add directory="$(#cb)/include" />
 			<Add directory="$(#cb)/include/wxscintilla/include" />
 			<Add directory="$(#cb)/include/wxFlatNotebook/include" />
@@ -104,6 +105,8 @@
 			<Option target="default" />
 			<Option target="il-plugin" />
 		</Unit>
+		<Unit filename="Resources/dialogs.fbp" />
+		<Unit filename="Resources/il_resources.xrc" />
 		<Unit filename="ShellCtrl.cpp">
 			<Option target="default" />
 			<Option target="il-library" />

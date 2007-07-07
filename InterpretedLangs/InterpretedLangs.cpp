@@ -114,7 +114,7 @@ void InterpretedLangs::OnShowConsole(wxCommandEvent& event)
     // This toggles display of the console I/O window
     CodeBlocksDockEvent evt(event.IsChecked() ? cbEVT_SHOW_DOCK_WINDOW : cbEVT_HIDE_DOCK_WINDOW);
     evt.pWindow = m_shellmgr;
-    Manager::Get()->GetAppWindow()->ProcessEvent(evt);
+    Manager::Get()->ProcessEvent(evt);
 }
 
 void InterpretedLangs::ShowConsole()
@@ -122,7 +122,7 @@ void InterpretedLangs::ShowConsole()
     // This shows the console I/O window
     CodeBlocksDockEvent evt(cbEVT_SHOW_DOCK_WINDOW);
     evt.pWindow = m_shellmgr;
-    Manager::Get()->GetAppWindow()->ProcessEvent(evt);
+    Manager::Get()->ProcessEvent(evt);
 }
 
 void InterpretedLangs::HideConsole()
@@ -130,7 +130,7 @@ void InterpretedLangs::HideConsole()
     // This hides display of the console I/O window
     CodeBlocksDockEvent evt(cbEVT_HIDE_DOCK_WINDOW);
     evt.pWindow = m_shellmgr;
-    Manager::Get()->GetAppWindow()->ProcessEvent(evt);
+    Manager::Get()->ProcessEvent(evt);
 }
 
 void InterpretedLangs::OnSettings(wxCommandEvent& event)
@@ -418,7 +418,8 @@ void InterpretedLangs::OnAttach()
     evt.desiredSize.Set(400, 300);
     evt.floatingSize.Set(400, 300);
     evt.minimumSize.Set(200, 150);
-    Manager::Get()->GetAppWindow()->ProcessEvent(evt);
+//    Manager::Get()->GetAppWindow()->ProcessEvent(evt);
+    Manager::Get()->ProcessEvent(evt);
 
     m_fe=new FileExplorer(Manager::Get()->GetAppWindow());
     Manager::Get()->GetProjectManager()->GetNotebook()->AddPage(m_fe,_T("Files"));
@@ -436,7 +437,7 @@ void InterpretedLangs::OnRelease(bool appShutDown)
     {
         CodeBlocksDockEvent evt(cbEVT_REMOVE_DOCK_WINDOW);
         evt.pWindow = m_shellmgr;
-        Manager::Get()->GetAppWindow()->ProcessEvent(evt);
+        Manager::Get()->ProcessEvent(evt);
         m_shellmgr->Destroy();
     }
     m_shellmgr = 0;

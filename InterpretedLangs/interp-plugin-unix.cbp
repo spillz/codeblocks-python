@@ -64,7 +64,6 @@
 			<Add option="-fPIC" />
 			<Add option="-DcbDEBUG" />
 			<Add option="-DCB_PRECOMP" />
-			<Add option="-DCBIL_TEARAWAY" />
 			<Add directory="$(#cb)/include" />
 			<Add directory="$(#cb)/include/wxscintilla/include" />
 			<Add directory="$(#cb)/include/wxFlatNotebook/include" />

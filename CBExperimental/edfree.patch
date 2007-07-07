@@ -1,0 +1,617 @@
+Index: src/plugins/contrib/codesnippets/codesnippets.cpp
+===================================================================
+--- src/plugins/contrib/codesnippets/codesnippets.cpp	(revision 4237)
++++ src/plugins/contrib/codesnippets/codesnippets.cpp	(working copy)
+@@ -48,7 +48,8 @@
+ #include "codesnippetswindow.h"
+ #include "snippetsconfig.h"
+ #include "messagebox.h"
+-#include <wx/wxFlatNotebook/wxFlatNotebook.h>
++#include <wx/wxFlatNotebook/wxFlatNotebook.h>
++#include <tearawaynotebook.h>
+ #include "memorymappedfile.h"
+ 
+ #if defined(__WXGTK__)
+Index: src/plugins/contrib/wxSmith/wxsresource.cpp
+===================================================================
+--- src/plugins/contrib/wxSmith/wxsresource.cpp	(revision 4237)
++++ src/plugins/contrib/wxSmith/wxsresource.cpp	(working copy)
+@@ -26,6 +26,7 @@
+ #include "wxsresourcetreeitemdata.h"
+ 
+ #include <wx/wxFlatNotebook/wxFlatNotebook.h>
++#include <tearawaynotebook.h>
+ #include <editormanager.h>
+ 
+ namespace
+Index: src/plugins/contrib/wxSmith/wxsmith.cpp
+===================================================================
+--- src/plugins/contrib/wxSmith/wxsmith.cpp	(revision 4237)
++++ src/plugins/contrib/wxSmith/wxsmith.cpp	(working copy)
+@@ -30,6 +30,7 @@
+ #include "properties/wxsproperties.h"
+ 
+ #include <wx/wxFlatNotebook/wxFlatNotebook.h>
++#include <tearawaynotebook.h>
+ #include <projectloader_hooks.h>
+ #include <projectmanager.h>
+ #include <messagemanager.h>
+Index: src/plugins/codecompletion/nativeparser.cpp
+===================================================================
+--- src/plugins/codecompletion/nativeparser.cpp	(revision 4237)
++++ src/plugins/codecompletion/nativeparser.cpp	(working copy)
+@@ -43,7 +43,8 @@
+ #include <wx/regex.h>
+ #include <wx/log.h> // for wxSafeShowMessage()
+ #include <tinyxml/tinyxml.h>
+-#include "wx/wxFlatNotebook/wxFlatNotebook.h"
++#include <wx/wxFlatNotebook/wxFlatNotebook.h>
++#include <tearawaynotebook.h>
+ 
+ #include <wx/wfstream.h>
+ 
+Index: src/sdk/projectmanager.cpp
+===================================================================
+--- src/sdk/projectmanager.cpp	(revision 4237)
++++ src/sdk/projectmanager.cpp	(working copy)
+@@ -55,6 +55,7 @@
+ #include <wx/textdlg.h>
+ #include <wx/progdlg.h>
+ #include "wx/wxFlatNotebook/wxFlatNotebook.h"
++#include "tearawaynotebook.h"
+ 
+ #include "incrementalselectlistdlg.h"
+ #include "filegroupsandmasks.h"
+@@ -80,7 +81,6 @@
+ // static
+ bool ProjectManager::s_CanShutdown = true;
+ 
+-
+ int ID_ProjectManager = wxNewId();
+ int idMenuSetActiveProject = wxNewId();
+ int idMenuOpenFile = wxNewId();
+@@ -122,6 +122,7 @@
+ static const int idNB = wxNewId();
+ static const int idNB_TabTop = wxNewId();
+ static const int idNB_TabBottom = wxNewId();
++static const int idNB_TabDetach = wxNewId();
+ 
+ #ifndef __WXMSW__
+ /*
+@@ -168,10 +169,13 @@
+     EVT_TREE_ITEM_RIGHT_CLICK(ID_ProjectManager, ProjectManager::OnTreeItemRightClick)
+     EVT_COMMAND_RIGHT_CLICK(ID_ProjectManager, ProjectManager::OnRightClick)
+ 
++    EVT_FLATNOTEBOOK_CONTEXT_MENU(idNB, ProjectManager::OnPageContextMenu)
++
+     EVT_MENU_RANGE(idOpenWith[0], idOpenWith[MAX_OPEN_WITH_ITEMS - 1], ProjectManager::OnOpenWith)
+     EVT_MENU(idOpenWithInternal, ProjectManager::OnOpenWith)
+     EVT_MENU(idNB_TabTop, ProjectManager::OnTabPosition)
+     EVT_MENU(idNB_TabBottom, ProjectManager::OnTabPosition)
++    EVT_MENU(idNB_TabDetach, ProjectManager::OnDetach)
+     EVT_MENU(idMenuSetActiveProject, ProjectManager::OnSetActiveProject)
+     EVT_MENU(idMenuNextProject, ProjectManager::OnSetActiveProject)
+     EVT_MENU(idMenuPriorProject, ProjectManager::OnSetActiveProject)
+@@ -225,15 +229,10 @@
+     m_isCheckingForExternallyModifiedProjects(false),
+     m_CanSendWorkspaceChanged(false)
+ {
+-    m_pNotebook = new wxFlatNotebook(Manager::Get()->GetAppWindow(), idNB);
++    m_pNotebook = new TearawayNotebook(Manager::Get()->GetAppWindow(), idNB);
+     m_pNotebook->SetWindowStyleFlag(Manager::Get()->GetConfigManager(_T("app"))->ReadInt(_T("/environment/project_tabs_style"), wxFNB_NO_X_BUTTON));
+     m_pNotebook->SetImageList(new wxFlatNotebookImageList);
+ 
+-    wxMenu* NBmenu = new wxMenu(); // deleted automatically by wxFlatNotebook
+-    NBmenu->Append(idNB_TabTop, _("Tabs at top"));
+-    NBmenu->Append(idNB_TabBottom, _("Tabs at bottom"));
+-    m_pNotebook->SetRightClickMenu(NBmenu);
+-
+     m_InitialDir=wxFileName::GetCwd();
+     m_pActiveProject = 0L;
+     m_pProjects = new ProjectsArray;
+@@ -2620,6 +2619,21 @@
+     }
+ }
+ 
++void ProjectManager::OnDetach(wxCommandEvent& event)
++{
++    size_t page=m_pNotebook->GetSelection();
++    if(m_pNotebook->IsDetached(page))
++    {
++        m_pNotebook->UndetachPage(page);
++    }
++    else
++    {
++        m_pNotebook->DetachPage(page,_T("")); //TODO: figure out sensible window name (full path to file)
++    }
++
++}
++
++
+ void ProjectManager::WorkspaceChanged()
+ {
+     // We use IsBusy() to check *ALL* the conditions: If we're in the process of
+@@ -2739,3 +2753,18 @@
+             break;
+     }
+ }
++
++void ProjectManager::OnPageContextMenu(wxFlatNotebookEvent& event)
++{
++    if (event.GetSelection() == -1)
++        return;
++    wxMenu* pop = new wxMenu;
++    if(m_pNotebook->IsDetached(m_pNotebook->GetSelection()))
++        pop->Append(idNB_TabDetach, _("Reattach"));
++    else
++        pop->Append(idNB_TabDetach, _("Detach"));
++    pop->Append(idNB_TabTop, _("Tabs at top"));
++    pop->Append(idNB_TabBottom, _("Tabs at bottom"));
++    m_pNotebook->PopupMenu(pop);
++    delete pop;
++}
+Index: src/sdk/messagemanager.cpp
+===================================================================
+--- src/sdk/messagemanager.cpp	(revision 4237)
++++ src/sdk/messagemanager.cpp	(working copy)
+@@ -51,6 +51,7 @@
+ #include <wx/filedlg.h>
+ 
+ #include "wx/wxFlatNotebook/wxFlatNotebook.h"
++#include "tearawaynotebook.h"
+ 
+ // Custom window to shutdown the app when closed.
+ // used for batch builds only.
+@@ -117,6 +118,7 @@
+ static const int idNB = wxNewId();
+ static const int idNB_TabTop = wxNewId();
+ static const int idNB_TabBottom = wxNewId();
++static const int idNBTabDetach = wxNewId();
+ 
+ // 64 logs should be more than enough
+ static const int MAX_LOGS = 64;
+@@ -136,6 +138,7 @@
+     EVT_MENU_RANGE(idNB_ShowHide[0], idNB_ShowHide[MAX_LOGS - 1], MessageManager::OnShowHideLog)
+     EVT_MENU(idNB_TabTop, MessageManager::OnTabPosition)
+     EVT_MENU(idNB_TabBottom, MessageManager::OnTabPosition)
++    EVT_MENU(idNBTabDetach, MessageManager::OnDetach)
+     EVT_APP_STARTUP_DONE(MessageManager::OnAppDoneStartup)
+     EVT_APP_START_SHUTDOWN(MessageManager::OnAppStartShutdown)
+     EVT_FLATNOTEBOOK_PAGE_CHANGED(idNB, MessageManager::OnPageChanged)
+@@ -154,7 +157,7 @@
+     m_HasErrors(false)
+ {
+ 
+-    m_pNotebook = new wxFlatNotebook(Manager::Get()->GetAppWindow(), idNB);
++    m_pNotebook = new TearawayNotebook(Manager::Get()->GetAppWindow(), idNB);
+     m_pNotebook->SetWindowStyleFlag(Manager::Get()->GetConfigManager(_T("app"))->ReadInt(_T("/environment/message_tabs_style"), wxFNB_BOTTOM | wxFNB_NO_X_BUTTON));
+     m_pNotebook->SetImageList(new wxFlatNotebookImageList);
+ 
+@@ -692,6 +695,10 @@
+ void MessageManager::OnPageContextMenu(wxFlatNotebookEvent& event)
+ {
+     wxMenu* NBmenu = new wxMenu();
++    if(m_pNotebook->IsDetached(m_pNotebook->GetSelection()))
++        NBmenu->Append(idNBTabDetach, _("Reattach"));
++    else
++        NBmenu->Append(idNBTabDetach, _("Detach"));
+     NBmenu->Append(idNB_TabTop, _("Tabs at top"));
+     NBmenu->Append(idNB_TabBottom, _("Tabs at bottom"));
+     NBmenu->AppendSeparator();
+@@ -711,3 +718,17 @@
+     m_pNotebook->PopupMenu(NBmenu);
+     delete NBmenu;
+ }
++
++void MessageManager::OnDetach(wxCommandEvent& event)
++{
++    size_t page=m_pNotebook->GetSelection();
++    if(m_pNotebook->IsDetached(page))
++    {
++        m_pNotebook->UndetachPage(page);
++    }
++    else
++    {
++        m_pNotebook->DetachPage(page,_T("")); //TODO: figure out sensible window name (full path to file)
++    }
++
++}
+Index: src/sdk/editorbase.cpp
+===================================================================
+--- src/sdk/editorbase.cpp	(revision 4237)
++++ src/sdk/editorbase.cpp	(working copy)
+@@ -25,6 +25,7 @@
+     #include <wx/wfstream.h>
+ #endif
+ 
++#include "tearawaynotebook.h"
+ #include "wx/wxFlatNotebook/wxFlatNotebook.h"
+ 
+ // needed for initialization of variables
+Index: src/sdk/wxFlatNotebook/src/wxFlatNotebook/wxFlatNotebook.cpp
+===================================================================
+--- src/sdk/wxFlatNotebook/src/wxFlatNotebook/wxFlatNotebook.cpp	(revision 4237)
++++ src/sdk/wxFlatNotebook/src/wxFlatNotebook/wxFlatNotebook.cpp	(working copy)
+@@ -79,6 +79,7 @@
+ 
+ BEGIN_EVENT_TABLE(wxFlatNotebook, wxPanel)
+ EVT_NAVIGATION_KEY(wxFlatNotebook::OnNavigationKey)
++
+ END_EVENT_TABLE()
+ 
+ wxFlatNotebook::wxFlatNotebook(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style, const wxString& name)
+Index: src/sdk/editormanager.cpp
+===================================================================
+--- src/sdk/editormanager.cpp	(revision 4237)
++++ src/sdk/editormanager.cpp	(working copy)
+@@ -65,6 +65,7 @@
+ #include "searchresultslog.h"
+ #include "projectfileoptionsdlg.h"
+ 
++#include "tearawaynotebook.h"
+ #include "wx/wxFlatNotebook/wxFlatNotebook.h"
+ 
+ 
+@@ -111,6 +112,7 @@
+ static const int idNBTabSplitVert = wxNewId();
+ static const int idNBTabUnsplit = wxNewId();
+ static const int idNBTabClose = wxNewId();
++static const int idNBTabDetach = wxNewId();
+ static const int idNBTabCloseAll = wxNewId();
+ static const int idNBTabCloseAllOthers = wxNewId();
+ static const int idNBTabSave = wxNewId();
+@@ -191,6 +193,7 @@
+     EVT_MENU(idNBTabTop, EditorManager::OnTabPosition)
+     EVT_MENU(idNBTabBottom, EditorManager::OnTabPosition)
+     EVT_MENU(idNBTabClose, EditorManager::OnClose)
++    EVT_MENU(idNBTabDetach, EditorManager::OnDetach)
+     EVT_MENU(idNBTabCloseAll, EditorManager::OnCloseAll)
+     EVT_MENU(idNBTabCloseAllOthers, EditorManager::OnCloseAllOthers)
+     EVT_MENU(idNBTabSave, EditorManager::OnSave)
+@@ -219,9 +222,13 @@
+ {
+     m_pData = new EditorManagerInternalData(this);
+ 
+-    m_pNotebook = new wxFlatNotebook(Manager::Get()->GetAppWindow(), ID_NBEditorManager, wxDefaultPosition, wxDefaultSize, wxNO_FULL_REPAINT_ON_RESIZE | wxCLIP_CHILDREN);
++    m_pNotebook = new TearawayNotebook(Manager::Get()->GetAppWindow(), ID_NBEditorManager, wxDefaultPosition, wxDefaultSize, wxNO_FULL_REPAINT_ON_RESIZE | wxCLIP_CHILDREN);
+     m_pNotebook->SetWindowStyleFlag(Manager::Get()->GetConfigManager(_T("app"))->ReadInt(_T("/environment/editor_tabs_style"), wxFNB_DEFAULT_STYLE | wxFNB_MOUSE_MIDDLE_CLOSES_TABS));
++    m_NotebookImages=new wxFlatNotebookImageList;
++    m_NotebookImages->Add(cbLoadBitmap(ConfigManager::GetDataFolder() + _T("/images/file-missing.png")));
++    m_pNotebook->SetImageList(m_NotebookImages);
+ 
++
+ #ifdef USE_OPENFILES_TREE
+     m_pData->m_TreeNeedsRefresh = false;
+     ShowOpenFilesTree(Manager::Get()->GetConfigManager(_T("editor"))->ReadBool(_T("/show_opened_files_tree"), true));
+@@ -254,6 +261,7 @@
+     delete m_Theme;
+     delete m_LastFindReplaceData;
+     delete m_pData->m_pImages;
++    delete m_NotebookImages;
+     delete m_pData;
+     Manager::Get()->GetConfigManager(_T("editor"))->Write(_T("/zoom"), m_zoom);
+ } // end of destructor
+@@ -2494,6 +2502,10 @@
+     if (event.GetSelection() == -1)
+         return;
+     wxMenu* pop = new wxMenu;
++    if(m_pNotebook->IsDetached(m_pNotebook->GetSelection()))
++        pop->Append(idNBTabDetach, _("Reattach"));
++    else
++        pop->Append(idNBTabDetach, _("Detach"));
+     pop->Append(idNBTabClose, _("Close"));
+     if (GetEditorsCount() > 1)
+     {
+@@ -2547,6 +2559,23 @@
+     delete pop;
+ }
+ 
++void EditorManager::OnDetach(wxCommandEvent& event)
++{
++    size_t page=m_pNotebook->GetSelection();
++    if(m_pNotebook->IsDetached(page))
++    {
++        if(m_pNotebook->UndetachPage(page))
++            m_pNotebook->SetPageImageIndex(page,-1);
++    }
++    else
++    {
++        if(m_pNotebook->DetachPage(page,_T(""))) //TODO: figure out sensible window name (full path to file)
++            m_pNotebook->SetPageImageIndex(page,0);
++    }
++
++}
++
++
+ void EditorManager::OnClose(wxCommandEvent& event)
+ {
+     Manager::Get()->GetEditorManager()->Close(GetActiveEditor());
+Index: src/include/projectmanager.h
+===================================================================
+--- src/include/projectmanager.h	(revision 4237)
++++ src/include/projectmanager.h	(working copy)
+@@ -22,6 +22,7 @@
+ class ProjectFile;
+ class FilesGroupsAndMasks;
+ class cbWorkspace;
++class TearawayNotebook;
+ class wxFlatNotebook;
+ class wxFlatNotebookEvent;
+ 
+@@ -50,7 +51,7 @@
+         ProjectManager(const ProjectManager& rhs) { cbThrow(_T("Can't call ProjectManager's copy ctor!!!")); }
+         virtual void operator=(const ProjectManager& rhs){ cbThrow(_T("Can't assign an ProjectManager* !!!")); }
+ 
+-        wxFlatNotebook* GetNotebook() { return m_pNotebook; }
++        TearawayNotebook* GetNotebook() { return m_pNotebook; }
+ 
+         // Can the app shutdown? (actually: is ProjectManager busy at the moment?)
+         static bool CanShutdown(){ return s_CanShutdown; }
+@@ -439,14 +440,15 @@
+         void OnDeleteVirtualFolder(wxCommandEvent& event);
+         void OnUpdateUI(wxUpdateUIEvent& event);
+         void OnIdle(wxIdleEvent& event);
++        void OnDetach(wxCommandEvent& event);
+         void OnAppDoneStartup(CodeBlocksEvent& event);
+-
++        void OnPageContextMenu(wxFlatNotebookEvent& event);
+         void DoOpenSelectedFile();
+         void DoOpenFile(ProjectFile* pf, const wxString& filename);
+         int DoAddFileToProject(const wxString& filename, cbProject* project, wxArrayInt& targets);
+         void RemoveFilesRecursively(wxTreeItemId& sel_id);
+ 
+-        wxFlatNotebook* m_pNotebook;
++        TearawayNotebook* m_pNotebook;
+         wxTreeCtrl* m_pTree;
+         wxTreeItemId m_TreeRoot;
+         cbProject* m_pActiveProject;
+Index: src/include/messagemanager.h
+===================================================================
+--- src/include/messagemanager.h	(revision 4237)
++++ src/include/messagemanager.h	(working copy)
+@@ -37,6 +37,7 @@
+ // forward decls
+ class wxMenuBar;
+ class wxBitmap;
++class TearawayNotebook;
+ class wxFlatNotebook;
+ class wxFlatNotebookEvent;
+ 
+@@ -82,7 +83,7 @@
+ 		void ReleaseMenu(wxMenuBar* menuBar);
+ 
+         /** @return the wxFlatNotebook control that MessageManager controls. */
+-		wxFlatNotebook* GetNotebook() { return m_pNotebook; }
++		TearawayNotebook* GetNotebook() { return m_pNotebook; }
+ 
+         /** @brief Add a new log window.
+           * @param log The log window to add.
+@@ -263,8 +264,9 @@
+         void OnShowHideLog(wxCommandEvent& event);
+         void OnPageChanged(wxFlatNotebookEvent& event);
+         void OnPageContextMenu(wxFlatNotebookEvent& event);
++        void OnDetach(wxCommandEvent& event);
+ 
+-        wxFlatNotebook* m_pNotebook;
++        TearawayNotebook* m_pNotebook;
+         LogsMap m_Logs;
+ 		int m_AppLog;
+ 		int m_DebugLog;
+Index: src/include/wxFlatNotebook/include/wx/wxFlatNotebook/wxFlatNotebook.h
+===================================================================
+--- src/include/wxFlatNotebook/include/wx/wxFlatNotebook/wxFlatNotebook.h	(revision 4237)
++++ src/include/wxFlatNotebook/include/wx/wxFlatNotebook/wxFlatNotebook.h	(working copy)
+@@ -1,5 +1,5 @@
+ ///////////////////////////////////////////////////////////////////////////////
+-// Name:		wxFlatNotebook.cpp 
++// Name:		wxFlatNotebook.cpp
+ // Purpose:     generic implementation of flat style notebook class.
+ // Author:      Eran Ifrah <eranif@bezeqint.net>
+ // Modified by: Priyank Bolia <soft@priyank.in>
+@@ -128,7 +128,7 @@
+ 	\param selected - determines if new page should be selected automatically
+ 	\param imgindex - page image index
+ 	*/
+-	bool AddPage(wxWindow* windows, const wxString& caption, const bool selected = false, const int imgindex = -1);
++	virtual bool AddPage(wxWindow* windows, const wxString& caption, const bool selected = false, const int imgindex = -1);
+ 
+ 	/// Inserts new notebook page
+ 	/**
+@@ -138,24 +138,24 @@
+ 	\param select - determines if new page should be selected automatically
+ 	\param imgindex - page image index
+ 	*/
+-	bool InsertPage(size_t index, wxWindow* page, const wxString& text, bool select = false, const int imgindex = -1);
++	virtual bool InsertPage(size_t index, wxWindow* page, const wxString& text, bool select = false, const int imgindex = -1);
+ 	/// Changes the selection from currently visible/selected page to the page given by index.
+ 	/**
+ 	\param page - index of page to be selected
+-	*/
+-	void SetSelection(size_t page);
++	*/
++	virtual void SetSelection(size_t page);
+ 	/// Removes the window from the notebook, and destroys the window associated with that notebook page.
+ 	/**
+ 	 * \param page - index of page to be deleted
+ 	 * \param notify - by default wxFlatNotebook fires two events:
+-	 * - wxEVT_COMMAND_FLATNOTEBOOK_PAGE_CLOSED 
+-	 * - wxEVT_COMMAND_FLATNOTEBOOK_PAGE_CLOSING 
++	 * - wxEVT_COMMAND_FLATNOTEBOOK_PAGE_CLOSED
++	 * - wxEVT_COMMAND_FLATNOTEBOOK_PAGE_CLOSING
+ 	 * to disable this functionality set notify to false
+ 	 */
+-	void DeletePage(size_t page, bool notify = true);
++	virtual void DeletePage(size_t page, bool notify = true);
+ 
+ 	/// Deletes all notebook pages and destroys all windows associated with pages
+-	bool DeleteAllPages();
++	virtual bool DeleteAllPages();
+ 
+ 	/// Returns the total number of pages in the notebook.
+ 	int  GetPageCount() const;
+@@ -179,7 +179,7 @@
+ 
+ 	/**
+ 	* Return the previous selection, useful when implementing smart tabulation
+-	* \return previous selection, or wxNOT_FOUND 
++	* \return previous selection, or wxNOT_FOUND
+ 	*/
+ 	int GetPreviousSelection() const;
+ 
+@@ -215,11 +215,11 @@
+ 	 * Removes the window from the notebook, and destroys the window associated with that notebook page.
+ 	 * \param page - index of page to be deleted
+ 	 * \param notify - by default wxFlatNotebook fires two events:
+-	 * - wxEVT_COMMAND_FLATNOTEBOOK_PAGE_CLOSED 
+-	 * - wxEVT_COMMAND_FLATNOTEBOOK_PAGE_CLOSING 
++	 * - wxEVT_COMMAND_FLATNOTEBOOK_PAGE_CLOSED
++	 * - wxEVT_COMMAND_FLATNOTEBOOK_PAGE_CLOSING
+ 	 * to disable this functionality set notify to false
+ 	 */
+-	bool RemovePage(size_t page, bool notify = true);
++	virtual bool RemovePage(size_t page, bool notify = true);
+ 
+ 	/// Sets the amount of space around each page's icon and label, in pixels.
+ 	/**
+@@ -359,8 +359,7 @@
+ 	/// Initialization function, called internally
+ 	virtual void Init();
+ 	wxPageContainer *m_pages;
+-
+-private:
++//private: //use protected instead
+ 	/// Internal flag to force selection of page,
+ 	/// even if this page is disabled.
+ 	/// used incase such that the book itself need to update its selection.
+@@ -543,7 +542,7 @@
+ class WXDLLIMPEXP_FNB wxPageContainer : public wxPanel
+ {
+ protected:
+-
++    friend class TearawayNotebook;
+ 	friend class wxFlatNotebook;
+ 	friend class wxFNBRenderer;
+ 	friend class wxFNBRendererDefault;
+@@ -694,7 +693,7 @@
+ 	int GetPreviousSelection() const { return m_iPreviousActivePage; }
+ 
+ 	/**
+-	 * Draw a tab preview 
++	 * Draw a tab preview
+ 	 */
+ 	void DrawDragHint();
+ 
+Index: src/include/editormanager.h
+===================================================================
+--- src/include/editormanager.h	(revision 4237)
++++ src/include/editormanager.h	(working copy)
+@@ -23,8 +23,10 @@
+ 
+ // forward decls
+ class EditorBase;
++class TearawayNotebook;
+ class wxFlatNotebook;
+ class wxFlatNotebookEvent;
++class wxFlatNotebookImageList;
+ class wxMenuBar;
+ class EditorColourSet;
+ class cbProject;
+@@ -53,7 +55,7 @@
+         EditorManager(const EditorManager& rhs) { cbThrow(_T("Can't call EditorManager's copy ctor!!!")); }
+         virtual void operator=(const EditorManager& rhs){ cbThrow(_T("Can't assign an EditorManager* !!!")); }
+ 
+-        wxFlatNotebook* GetNotebook(){ return m_pNotebook; }
++        TearawayNotebook* GetNotebook(){ return m_pNotebook; }
+         void CreateMenu(wxMenuBar* menuBar);
+         void ReleaseMenu(wxMenuBar* menuBar);
+         void Configure();
+@@ -141,6 +143,7 @@
+         void OnPageChanging(wxFlatNotebookEvent& event);
+         void OnPageClosing(wxFlatNotebookEvent& event);
+         void OnPageContextMenu(wxFlatNotebookEvent& event);
++        void OnDetach(wxCommandEvent& event);
+         void OnClose(wxCommandEvent& event);
+         void OnCloseAll(wxCommandEvent& event);
+         void OnCloseAllOthers(wxCommandEvent& event);
+@@ -189,7 +192,7 @@
+         int ReplaceInFiles(cbFindReplaceData* data);
+         int GetOpenFilesListIcon(EditorBase* ed);
+ 
+-        wxFlatNotebook* m_pNotebook;
++        TearawayNotebook* m_pNotebook;
+         cbFindReplaceData* m_LastFindReplaceData;
+         EditorColourSet* m_Theme;
+         wxTreeCtrl* m_pTree;
+@@ -202,6 +205,7 @@
+         bool m_isCheckingForExternallyModifiedFiles;
+         friend struct EditorManagerInternalData;
+         EditorManagerInternalData* m_pData;
++        wxFlatNotebookImageList *m_NotebookImages;
+ 
+         DECLARE_EVENT_TABLE()
+ };
+Index: src/src/main.cpp
+===================================================================
+--- src/src/main.cpp	(revision 4237)
++++ src/src/main.cpp	(working copy)
+@@ -69,6 +69,7 @@
+ #include <wx/printdlg.h>
+ #include <wx/filename.h>
+ #include <wx/wxFlatNotebook/wxFlatNotebook.h>
++#include "tearawaynotebook.h"
+ 
+ #include "uservarmanager.h"
+ #include "infowindow.h"
+Index: src/src/app.cpp
+===================================================================
+--- src/src/app.cpp	(revision 4237)
++++ src/src/app.cpp	(working copy)
+@@ -51,6 +51,7 @@
+ #include <manager.h>
+ #include <scriptingmanager.h>
+ #include <wx/wxFlatNotebook/wxFlatNotebook.h>
++#include "tearawaynotebook.h"
+ #include <globals.h>
+ #include "splashscreen.h"
+ #include <wx/arrstr.h>
+Index: src/CodeBlocks-unix.cbp
+===================================================================
+--- src/CodeBlocks-unix.cbp	(revision 4237)
++++ src/CodeBlocks-unix.cbp	(working copy)
+@@ -110,6 +110,7 @@
+ 				<Option projectResourceIncludeDirsRelation="2" />
+ 				<Compiler>
+ 					<Add directory="include/wxFlatNotebook/include" />
++					<Add directory="$(#cb)/include" />
+ 				</Compiler>
+ 			</Target>
+ 			<Target title="wxPropertyGrid">
+@@ -175,7 +176,7 @@
+ 				<Option external_deps="src/wxAUI/libwxaui.a;" />
+ 				<Option type="0" />
+ 				<Option compiler="gcc" />
+-				<Option parameters="--debug-log -ns" />
++				<Option parameters="--debug-log -ns --personality=debug" />
+ 				<Option projectLinkerOptionsRelation="2" />
+ 				<Option projectIncludeDirsRelation="2" />
+ 				<Option projectResourceIncludeDirsRelation="0" />
+@@ -855,6 +856,9 @@
+ 		<Unit filename="include/simpletextlog.h">
+ 			<Option target="sdk" />
+ 		</Unit>
++		<Unit filename="include/tearawaynotebook.h">
++			<Option target="sdk" />
++		</Unit>
+ 		<Unit filename="include/templatemanager.h">
+ 			<Option target="sdk" />
+ 		</Unit>
+@@ -2431,6 +2435,9 @@
+ 		<Unit filename="sdk/simpletextlog.cpp">
+ 			<Option target="sdk" />
+ 		</Unit>
++		<Unit filename="sdk/tearawaynotebook.cpp">
++			<Option target="sdk" />
++		</Unit>
+ 		<Unit filename="sdk/templatemanager.cpp">
+ 			<Option target="sdk" />
+ 		</Unit>

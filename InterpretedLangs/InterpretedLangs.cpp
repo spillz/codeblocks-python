@@ -418,7 +418,6 @@ void InterpretedLangs::OnAttach()
     evt.desiredSize.Set(400, 300);
     evt.floatingSize.Set(400, 300);
     evt.minimumSize.Set(200, 150);
-//    Manager::Get()->GetAppWindow()->ProcessEvent(evt);
     Manager::Get()->ProcessEvent(evt);
 
     m_fe=new FileExplorer(Manager::Get()->GetAppWindow());

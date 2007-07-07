@@ -725,7 +725,7 @@ void PyPlugin::OnViewWatch(wxCommandEvent& event)
     // This toggles display of watch
     CodeBlocksDockEvent evt(event.IsChecked() ? cbEVT_SHOW_DOCK_WINDOW : cbEVT_HIDE_DOCK_WINDOW);
     evt.pWindow = m_WatchDlg;
-    Manager::Get()->GetAppWindow()->ProcessEvent(evt);
+    Manager::Get()->ProcessEvent(evt);
 
     //TODO: Any required watch processing before watch is shown
 //    if (event.IsChecked())
@@ -800,7 +800,7 @@ void PyPlugin::OnAttach()
     evt.desiredSize.Set(150, 250);
     evt.floatingSize.Set(150, 250);
     evt.minimumSize.Set(150, 150);
-    Manager::Get()->GetAppWindow()->ProcessEvent(evt);
+    Manager::Get()->ProcessEvent(evt);
 
     // set log image
     // wxString prefix = ConfigManager::GetDataFolder() + _T("/images/");
@@ -824,7 +824,7 @@ void PyPlugin::OnRelease(bool appShutDown)
     {
         CodeBlocksDockEvent evt(cbEVT_REMOVE_DOCK_WINDOW);
         evt.pWindow = m_WatchDlg;
-        Manager::Get()->GetAppWindow()->ProcessEvent(evt);
+        Manager::Get()->ProcessEvent(evt);
         m_WatchDlg->Destroy();
     }
     m_WatchDlg = 0L;

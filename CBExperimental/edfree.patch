@@ -1,55 +1,3 @@
-Index: src/plugins/contrib/codesnippets/codesnippets.cpp
-===================================================================
---- src/plugins/contrib/codesnippets/codesnippets.cpp	(revision 4237)
-+++ src/plugins/contrib/codesnippets/codesnippets.cpp	(working copy)
-@@ -48,7 +48,8 @@
- #include "codesnippetswindow.h"
- #include "snippetsconfig.h"
- #include "messagebox.h"
--#include <wx/wxFlatNotebook/wxFlatNotebook.h>
-+#include <wx/wxFlatNotebook/wxFlatNotebook.h>
-+#include <tearawaynotebook.h>
- #include "memorymappedfile.h"
- 
- #if defined(__WXGTK__)
-Index: src/plugins/contrib/wxSmith/wxsresource.cpp
-===================================================================
---- src/plugins/contrib/wxSmith/wxsresource.cpp	(revision 4237)
-+++ src/plugins/contrib/wxSmith/wxsresource.cpp	(working copy)
-@@ -26,6 +26,7 @@
- #include "wxsresourcetreeitemdata.h"
- 
- #include <wx/wxFlatNotebook/wxFlatNotebook.h>
-+#include <tearawaynotebook.h>
- #include <editormanager.h>
- 
- namespace
-Index: src/plugins/contrib/wxSmith/wxsmith.cpp
-===================================================================
---- src/plugins/contrib/wxSmith/wxsmith.cpp	(revision 4237)
-+++ src/plugins/contrib/wxSmith/wxsmith.cpp	(working copy)
-@@ -30,6 +30,7 @@
- #include "properties/wxsproperties.h"
- 
- #include <wx/wxFlatNotebook/wxFlatNotebook.h>
-+#include <tearawaynotebook.h>
- #include <projectloader_hooks.h>
- #include <projectmanager.h>
- #include <messagemanager.h>
-Index: src/plugins/codecompletion/nativeparser.cpp
-===================================================================
---- src/plugins/codecompletion/nativeparser.cpp	(revision 4237)
-+++ src/plugins/codecompletion/nativeparser.cpp	(working copy)
-@@ -43,7 +43,8 @@
- #include <wx/regex.h>
- #include <wx/log.h> // for wxSafeShowMessage()
- #include <tinyxml/tinyxml.h>
--#include "wx/wxFlatNotebook/wxFlatNotebook.h"
-+#include <wx/wxFlatNotebook/wxFlatNotebook.h>
-+#include <tearawaynotebook.h>
- 
- #include <wx/wfstream.h>
- 
 Index: src/sdk/projectmanager.cpp
 ===================================================================
 --- src/sdk/projectmanager.cpp	(revision 4237)
@@ -109,7 +57,33 @@ Index: src/sdk/projectmanager.cpp
      m_InitialDir=wxFileName::GetCwd();
      m_pActiveProject = 0L;
      m_pProjects = new ProjectsArray;
-@@ -2620,6 +2619,21 @@
+@@ -264,6 +263,7 @@
+     // this is a core manager, so it is removed when the app is shutting down.
+     // in this case, the app has already un-hooked us, so no need to do it ourselves...
+ //    Manager::Get()->GetAppWindow()->RemoveEventHandler(this);
++    m_pNotebook->UndetachAllPages();
+ 
+     delete m_pWorkspace;
+     m_pWorkspace = 0;
+@@ -292,6 +292,7 @@
+     if(m_pTree)
+         return;
+     BuildTree();
++
+     m_pNotebook->AddPage(m_pTree, _("Projects"));
+ }
+ 
+@@ -328,7 +329,9 @@
+     #else
+         m_pTree = new wxTreeCtrl(m_pNotebook, ID_ProjectManager, wxDefaultPosition, wxDefaultSize, wxTR_EDIT_LABELS | wxTR_DEFAULT_STYLE | wxNO_BORDER);
+     #endif
++    m_pTree->SetAutoLayout(TRUE);
+ 
++
+     static const wxString imgs[] = {
+ 
+         // NOTE: Keep in sync with FileVisualState in globals.h!
+@@ -2620,6 +2623,21 @@
      }
  }
  
@@ -131,7 +105,7 @@ Index: src/sdk/projectmanager.cpp
  void ProjectManager::WorkspaceChanged()
  {
      // We use IsBusy() to check *ALL* the conditions: If we're in the process of
-@@ -2739,3 +2753,18 @@
+@@ -2739,3 +2757,18 @@
              break;
      }
  }
@@ -149,242 +123,6 @@ Index: src/sdk/projectmanager.cpp
 +    pop->Append(idNB_TabBottom, _("Tabs at bottom"));
 +    m_pNotebook->PopupMenu(pop);
 +    delete pop;
-+}
-Index: src/sdk/tearawaynotebook.cpp
-===================================================================
---- src/sdk/tearawaynotebook.cpp	(revision 0)
-+++ src/sdk/tearawaynotebook.cpp	(revision 0)
-@@ -0,0 +1,231 @@
-+#include "tearawaynotebook.h"
-+#include "sdk_events.h"
-+#include "manager.h"
-+
-+#include <wx/arrimpl.cpp>
-+WX_DEFINE_OBJARRAY(wxWindowArray);
-+
-+
-+IMPLEMENT_DYNAMIC_CLASS(TearawayNotebook, wxFlatNotebook)
-+
-+BEGIN_EVENT_TABLE(TearawayNotebook, wxFlatNotebook)
-+//EVT_COMMAND_FLATNOTEBOOK_PAGE_CHANGING(TearawayNotebook::);
-+EVT_DOCK_WINDOW_VISIBILITY(TearawayNotebook::OnDockWindowVisibility)
-+END_EVENT_TABLE()
-+
-+
-+TearawayNotebook::~TearawayNotebook()
-+{
-+    for(size_t i=0;i<m_detachedwindow.GetCount();i++)
-+        if(m_detachedwindow[i])
-+            UndetachPage(i);
-+}
-+
-+bool TearawayNotebook::IsDetached(size_t page)
-+{
-+    if(page>m_detachedwindow.GetCount())
-+        return false;
-+    return m_detachedwindow[page];
-+}
-+
-+bool TearawayNotebook::DetachPage(size_t page, wxString windowname)
-+{
-+    if(page >= m_windows.GetCount())
-+        return false;
-+//	// Support for disabed tabs
-+//	if(!m_pages->GetEnabled(page) && m_windows.GetCount() > 1 && !m_bForceSelection)
-+//		return;
-+
-+    int newfocal=GetPreviousSelection();
-+    if(newfocal==wxNOT_FOUND || m_detachedwindow[newfocal])
-+        for(size_t i=0;i<m_detachedwindow.GetCount();i++)
-+        {
-+            if(m_detachedwindow[i]==NULL)
-+            {
-+                newfocal=i;
-+                break;
-+            }
-+        }
-+    if(newfocal==wxNOT_FOUND)
-+        newfocal=page;
-+    SetSelection(newfocal);
-+
-+
-+    CodeBlocksDockEvent evt(cbEVT_ADD_DOCK_WINDOW);
-+    evt.name = GetPageText(page); //windowname;
-+    evt.title = GetPageText(page);
-+    evt.pWindow = GetPage(page);
-+    evt.dockSide = CodeBlocksDockEvent::dsFloating;
-+    evt.desiredSize.Set(350, 250);
-+    evt.floatingSize.Set(350, 250);
-+    evt.minimumSize.Set(150, 150);
-+    evt.shown = true;
-+    evt.hideable = true;
-+    m_detachedwindow[page]=GetPage(page);
-+    Manager::Get()->ProcessEvent(evt);
-+    return true;
-+}
-+
-+
-+bool TearawayNotebook::UndetachPage(size_t page)
-+{
-+    if (m_detachedwindow[page])
-+    {
-+        CodeBlocksDockEvent evt(cbEVT_REMOVE_DOCK_WINDOW);
-+        evt.pWindow = m_detachedwindow[page];
-+        Manager::Get()->ProcessEvent(evt);
-+        m_detachedwindow[page]->Reparent(this);
-+        m_detachedwindow[page]=NULL;
-+        if(page==static_cast<size_t>(GetSelection()))
-+        {
-+            Freeze();
-+            if(m_windowStyle & wxFNB_BOTTOM)
-+            {
-+                m_mainSizer->Insert(0, m_windows[page], 1, wxEXPAND);
-+            }
-+            else
-+            {
-+                // We leave a space of 1 pixel around the window
-+                m_mainSizer->Add(m_windows[page], 1, wxEXPAND);
-+            }
-+            m_windows[page]->Show();
-+            Thaw();
-+            m_mainSizer->Layout();
-+        }
-+        else
-+            SetSelection(page);
-+        return true;
-+    }
-+    return false;
-+}
-+
-+void TearawayNotebook::SetSelection(size_t page)
-+{
-+    if(page >= m_windows.GetCount())
-+        return;
-+    // Support for disabed tabs
-+    if(!m_pages->GetEnabled(page) && m_windows.GetCount() > 1 && !m_bForceSelection)
-+        return;
-+
-+    if( m_sendPageChangeEvent )
-+    {
-+        // Allow the user to veto the selection
-+        int oldSelection = GetSelection();
-+
-+        wxFlatNotebookEvent event(wxEVT_COMMAND_FLATNOTEBOOK_PAGE_CHANGING, GetId());
-+        event.SetSelection( (int)page );
-+        event.SetOldSelection( oldSelection );
-+        event.SetEventObject( this );
-+        GetEventHandler()->ProcessEvent(event);
-+
-+        if( !event.IsAllowed() )
-+        {
-+            return;
-+        }
-+    }
-+
-+    // program allows the page change
-+    Freeze();
-+    int curSel = m_pages->GetSelection();
-+    if(curSel >= 0 && !m_detachedwindow[curSel])
-+    {
-+        // Remove the window from the main sizer
-+        m_mainSizer->Detach(m_windows[curSel]);
-+        m_windows[curSel]->Hide();
-+    }
-+
-+    if (m_detachedwindow[page])
-+    {
-+        CodeBlocksDockEvent evt(cbEVT_SHOW_DOCK_WINDOW);
-+        evt.pWindow = GetPage(page);
-+        Manager::Get()->ProcessEvent(evt);
-+//        m_detachedwindow[page]->SetFocus();
-+    } else
-+    {
-+        if(m_windowStyle & wxFNB_BOTTOM)
-+        {
-+            m_mainSizer->Insert(0, m_windows[page], 1, wxEXPAND);
-+        }
-+        else
-+        {
-+            // We leave a space of 1 pixel around the window
-+            m_mainSizer->Add(m_windows[page], 1, wxEXPAND);
-+        }
-+        m_windows[page]->Show();
-+    }
-+    Thaw();
-+    m_mainSizer->Layout();
-+
-+    if( page != (size_t)m_pages->m_iActivePage )
-+        //there is a real page changing
-+        m_pages->m_iPreviousActivePage = m_pages->m_iActivePage;
-+
-+    m_pages->m_iActivePage = (int)page;
-+    m_pages->DoSetSelection(page);
-+
-+    if( m_sendPageChangeEvent )
-+    {
-+        // Fire event 'Page Changed'
-+        wxFlatNotebookEvent event(wxEVT_COMMAND_FLATNOTEBOOK_PAGE_CHANGED, GetId());
-+        event.SetSelection( (int)page );
-+        event.SetEventObject( this );
-+        GetEventHandler()->ProcessEvent(event);
-+    }
-+}
-+
-+
-+//TODO: This message never gets passed -- need to look into wxAUI events...
-+void TearawayNotebook::OnDockWindowVisibility(CodeBlocksDockEvent& event)
-+{
-+    for(size_t i=0;i<m_detachedwindow.GetCount();i++)
-+        if(m_detachedwindow[i]==event.pWindow)
-+        {
-+            UndetachPage(i);
-+//            SetSelection(i);
-+        }
-+}
-+
-+bool TearawayNotebook::AddPage(wxWindow* page, const wxString& caption, const bool selected, const int imgindex)
-+{
-+//    cbMessageBox(wxString::Format(_T("adding pages numd %i numw %i"),m_detachedwindow.GetCount(),m_windows.GetCount()));
-+    return InsertPage(m_windows.GetCount(),page,caption,selected,imgindex);
-+}
-+
-+bool TearawayNotebook::InsertPage(size_t index, wxWindow* page, const wxString& text, bool select, const int imgindex)
-+{
-+//    cbMessageBox(wxString::Format(_T("insert page %i numd %i numw %i"),index,m_detachedwindow.GetCount(),m_windows.GetCount()));
-+    m_detachedwindow.Insert((wxWindow*)NULL,index);
-+    if(wxFlatNotebook::InsertPage(index,page,text,select,imgindex))
-+    {
-+        return true;
-+    } else
-+    {
-+        m_detachedwindow.RemoveAt(index);
-+        return false;
-+    }
-+}
-+
-+void TearawayNotebook::DeletePage(size_t page, bool notify)
-+{
-+    if(m_detachedwindow[page])
-+        UndetachPage(page);
-+    m_detachedwindow.RemoveAt(page);
-+    wxFlatNotebook::DeletePage(page,notify);
-+}
-+
-+bool TearawayNotebook::RemovePage(size_t page, bool notify)
-+{
-+    if(m_detachedwindow[page])
-+        UndetachPage(page);
-+    m_detachedwindow.RemoveAt(page);
-+    bool result=wxFlatNotebook::RemovePage(page,notify);
-+    return result;
-+}
-+
-+bool TearawayNotebook::DeleteAllPages()
-+{
-+    for(size_t i=0;i<m_detachedwindow.GetCount();i++)
-+        if(m_detachedwindow[i])
-+            UndetachPage(i);
-+    return wxFlatNotebook::DeleteAllPages();
 +}
 Index: src/sdk/messagemanager.cpp
 ===================================================================
@@ -562,6 +300,58 @@ Index: src/sdk/editormanager.cpp
  void EditorManager::OnClose(wxCommandEvent& event)
  {
      Manager::Get()->GetEditorManager()->Close(GetActiveEditor());
+Index: src/plugins/contrib/codesnippets/codesnippets.cpp
+===================================================================
+--- src/plugins/contrib/codesnippets/codesnippets.cpp	(revision 4237)
++++ src/plugins/contrib/codesnippets/codesnippets.cpp	(working copy)
+@@ -48,7 +48,8 @@
+ #include "codesnippetswindow.h"
+ #include "snippetsconfig.h"
+ #include "messagebox.h"
+-#include <wx/wxFlatNotebook/wxFlatNotebook.h>
++#include <wx/wxFlatNotebook/wxFlatNotebook.h>
++#include <tearawaynotebook.h>
+ #include "memorymappedfile.h"
+ 
+ #if defined(__WXGTK__)
+Index: src/plugins/contrib/wxSmith/wxsresource.cpp
+===================================================================
+--- src/plugins/contrib/wxSmith/wxsresource.cpp	(revision 4237)
++++ src/plugins/contrib/wxSmith/wxsresource.cpp	(working copy)
+@@ -26,6 +26,7 @@
+ #include "wxsresourcetreeitemdata.h"
+ 
+ #include <wx/wxFlatNotebook/wxFlatNotebook.h>
++#include <tearawaynotebook.h>
+ #include <editormanager.h>
+ 
+ namespace
+Index: src/plugins/contrib/wxSmith/wxsmith.cpp
+===================================================================
+--- src/plugins/contrib/wxSmith/wxsmith.cpp	(revision 4237)
++++ src/plugins/contrib/wxSmith/wxsmith.cpp	(working copy)
+@@ -30,6 +30,7 @@
+ #include "properties/wxsproperties.h"
+ 
+ #include <wx/wxFlatNotebook/wxFlatNotebook.h>
++#include <tearawaynotebook.h>
+ #include <projectloader_hooks.h>
+ #include <projectmanager.h>
+ #include <messagemanager.h>
+Index: src/plugins/codecompletion/nativeparser.cpp
+===================================================================
+--- src/plugins/codecompletion/nativeparser.cpp	(revision 4237)
++++ src/plugins/codecompletion/nativeparser.cpp	(working copy)
+@@ -43,7 +43,8 @@
+ #include <wx/regex.h>
+ #include <wx/log.h> // for wxSafeShowMessage()
+ #include <tinyxml/tinyxml.h>
+-#include "wx/wxFlatNotebook/wxFlatNotebook.h"
++#include <wx/wxFlatNotebook/wxFlatNotebook.h>
++#include <tearawaynotebook.h>
+ 
+ #include <wx/wfstream.h>
+ 
 Index: src/include/projectmanager.h
 ===================================================================
 --- src/include/projectmanager.h	(revision 4237)
@@ -583,7 +373,7 @@ Index: src/include/projectmanager.h
  
          // Can the app shutdown? (actually: is ProjectManager busy at the moment?)
          static bool CanShutdown(){ return s_CanShutdown; }
-@@ -439,14 +440,15 @@
+@@ -439,15 +440,17 @@
          void OnDeleteVirtualFolder(wxCommandEvent& event);
          void OnUpdateUI(wxUpdateUIEvent& event);
          void OnIdle(wxIdleEvent& event);
@@ -599,8 +389,10 @@ Index: src/include/projectmanager.h
 -        wxFlatNotebook* m_pNotebook;
 +        TearawayNotebook* m_pNotebook;
          wxTreeCtrl* m_pTree;
++        wxPanel *m_panel;
          wxTreeItemId m_TreeRoot;
          cbProject* m_pActiveProject;
+         wxImageList* m_pImages;
 Index: src/include/messagemanager.h
 ===================================================================
 --- src/include/messagemanager.h	(revision 4237)
@@ -633,117 +425,6 @@ Index: src/include/messagemanager.h
          LogsMap m_Logs;
  		int m_AppLog;
  		int m_DebugLog;
-Index: src/include/tearawaynotebook.h
-===================================================================
---- src/include/tearawaynotebook.h	(revision 0)
-+++ src/include/tearawaynotebook.h	(revision 0)
-@@ -0,0 +1,106 @@
-+///////////////////////////////////////////////////////////////////////////////
-+// Name:		wxFlatNotebook.cpp
-+// Purpose:     generic implementation of flat style notebook class.
-+// Author:      Eran Ifrah <eranif@bezeqint.net>
-+// Modified by: Priyank Bolia <soft@priyank.in>
-+// Created:     30/12/2005
-+// Modified:    01/01/2006
-+// Copyright:   Eran Ifrah (c)
-+// Licence:     wxWindows license <http://www.wxwidgets.org/licence3.txt>
-+///////////////////////////////////////////////////////////////////////////////
-+
-+#ifndef TEARAWAYNOTEBOOK_H
-+#define TEARAWAYNOTEBOOK_H
-+
-+#include "wx/wxFlatNotebook/wxFlatNotebook.h"
-+#include <wx/dynarray.h>
-+
-+#include "sdk_events.h"
-+
-+WX_DECLARE_OBJARRAY(wxWindow*, wxWindowArray);
-+
-+
-+class TearawayNotebook : public wxFlatNotebook
-+{
-+public:
-+    // Constructors/Destructors
-+    TearawayNotebook() : wxFlatNotebook() {}
-+    TearawayNotebook(wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition,
-+        const wxSize& size = wxDefaultSize, long style = 0, const wxString& name = wxT("Tearaway Notebook"))
-+        : wxFlatNotebook(parent, id, pos, size, style, name) {}
-+    virtual ~TearawayNotebook();
-+    bool IsDetached(size_t page);
-+    // Detaches page and puts it in a dockable
-+    bool DetachPage(size_t page, wxString windowname);
-+    // If user hide the dockable
-+    bool UndetachPage(size_t page);
-+    void SetSelection(size_t page);
-+	bool AddPage(wxWindow* page, const wxString& caption, const bool selected = false, const int imgindex = -1);
-+	bool InsertPage(size_t index, wxWindow* page, const wxString& text, bool select = false, const int imgindex = -1);
-+    void DeletePage(size_t page, bool notify = true);
-+    bool RemovePage(size_t page, bool notify = true);
-+    bool DeleteAllPages();
-+	//void OnHideDetachedPage(CodeBlocksDockEvent &event);
-+private:
-+	wxWindowArray m_detachedwindow;
-+    void OnDockWindowVisibility(CodeBlocksDockEvent& event);
-+	DECLARE_DYNAMIC_CLASS(TearawayNotebook)
-+	DECLARE_EVENT_TABLE()
-+};
-+
-+
-+#endif // TEARAWAYNOTEBOOK_H
-+
-+///////////////////////////////////////////////////////////////////////////////
-+// Name:		wxFlatNotebook.cpp
-+// Purpose:     generic implementation of flat style notebook class.
-+// Author:      Eran Ifrah <eranif@bezeqint.net>
-+// Modified by: Priyank Bolia <soft@priyank.in>
-+// Created:     30/12/2005
-+// Modified:    01/01/2006
-+// Copyright:   Eran Ifrah (c)
-+// Licence:     wxWindows license <http://www.wxwidgets.org/licence3.txt>
-+///////////////////////////////////////////////////////////////////////////////
-+
-+#ifndef TEARAWAYNOTEBOOK_H
-+#define TEARAWAYNOTEBOOK_H
-+
-+#include "wx/wxFlatNotebook/wxFlatNotebook.h"
-+#include <wx/dynarray.h>
-+
-+#include "sdk_events.h"
-+
-+WX_DECLARE_OBJARRAY(wxWindow*, wxWindowArray);
-+
-+
-+class TearawayNotebook : public wxFlatNotebook
-+{
-+public:
-+    // Constructors/Destructors
-+    TearawayNotebook() : wxFlatNotebook() {}
-+    TearawayNotebook(wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition,
-+        const wxSize& size = wxDefaultSize, long style = 0, const wxString& name = wxT("Tearaway Notebook"))
-+        : wxFlatNotebook(parent, id, pos, size, style, name) {}
-+    virtual ~TearawayNotebook();
-+    bool IsDetached(size_t page);
-+    // Detaches page and puts it in a dockable
-+    bool DetachPage(size_t page, wxString windowname);
-+    // If user hide the dockable
-+    bool UndetachPage(size_t page);
-+    void SetSelection(size_t page);
-+	bool AddPage(wxWindow* page, const wxString& caption, const bool selected = false, const int imgindex = -1);
-+	bool InsertPage(size_t index, wxWindow* page, const wxString& text, bool select = false, const int imgindex = -1);
-+    void DeletePage(size_t page, bool notify = true);
-+    bool RemovePage(size_t page, bool notify = true);
-+    bool DeleteAllPages();
-+	//void OnHideDetachedPage(CodeBlocksDockEvent &event);
-+private:
-+	wxWindowArray m_detachedwindow;
-+    void OnDockWindowVisibility(CodeBlocksDockEvent& event);
-+	DECLARE_DYNAMIC_CLASS(TearawayNotebook)
-+	DECLARE_EVENT_TABLE()
-+};
-+
-+
-+#endif // TEARAWAYNOTEBOOK_H
-+
 Index: src/include/wxFlatNotebook/include/wx/wxFlatNotebook/wxFlatNotebook.h
 ===================================================================
 --- src/include/wxFlatNotebook/include/wx/wxFlatNotebook/wxFlatNotebook.h	(revision 4237)
@@ -909,6 +590,103 @@ Index: src/src/main.cpp
  
  #include "uservarmanager.h"
  #include "infowindow.h"
+@@ -526,7 +527,7 @@
+     DoFixToolbarsLayout();
+     gDefaultLayoutData = m_LayoutManager.SavePerspective(); // keep the "hardcoded" layout handy
+     SaveViewLayout(gDefaultLayout, gDefaultLayoutData);
+-    LoadWindowState();
++//    LoadWindowState();
+ 
+     ShowHideStartPage();
+     m_ScriptConsoleVisible = Manager::Get()->GetConfigManager(_T("app"))->ReadBool(_T("/show_script_console"), false);
+@@ -539,7 +540,7 @@
+ 	RunStartupScripts();
+ 
+     m_StartupDone = true;
+-    DoUpdateLayout();
++//    DoUpdateLayout();
+ 
+     if (Manager::Get()->GetMessageManager()->HasErrors())
+     {
+@@ -558,6 +559,8 @@
+ 
+ 	CodeBlocksEvent event(cbEVT_APP_STARTUP_DONE);
+ 	Manager::Get()->ProcessEvent(event);
++    LoadWindowState();
++    DoUpdateLayout();
+ }
+ 
+ MainFrame::~MainFrame()
+@@ -574,7 +577,7 @@
+ 	Manager* pm = Manager::Get();
+ 
+     pm->RegisterEventSink(cbEVT_EDITOR_UPDATE_UI, new cbEventFunctor<MainFrame, CodeBlocksEvent>(this, &MainFrame::OnEditorUpdateUI));
+-    
++
+     pm->RegisterEventSink(cbEVT_PROJECT_ACTIVATE, new cbEventFunctor<MainFrame, CodeBlocksEvent>(this, &MainFrame::OnProjectActivated));
+     pm->RegisterEventSink(cbEVT_PROJECT_OPEN, new cbEventFunctor<MainFrame, CodeBlocksEvent>(this, &MainFrame::OnProjectOpened));
+     pm->RegisterEventSink(cbEVT_PROJECT_CLOSE, new cbEventFunctor<MainFrame, CodeBlocksEvent>(this, &MainFrame::OnProjectClosed));
+@@ -583,18 +586,18 @@
+     pm->RegisterEventSink(cbEVT_EDITOR_ACTIVATED, new cbEventFunctor<MainFrame, CodeBlocksEvent>(this, &MainFrame::OnEditorActivated));
+     pm->RegisterEventSink(cbEVT_EDITOR_SAVE, new cbEventFunctor<MainFrame, CodeBlocksEvent>(this, &MainFrame::OnEditorSaved));
+     pm->RegisterEventSink(cbEVT_EDITOR_MODIFIED, new cbEventFunctor<MainFrame, CodeBlocksEvent>(this, &MainFrame::OnEditorModified));
+-    
++
+     pm->RegisterEventSink(cbEVT_ADD_DOCK_WINDOW, new cbEventFunctor<MainFrame, CodeBlocksDockEvent>(this, &MainFrame::OnRequestDockWindow));
+     pm->RegisterEventSink(cbEVT_REMOVE_DOCK_WINDOW, new cbEventFunctor<MainFrame, CodeBlocksDockEvent>(this, &MainFrame::OnRequestUndockWindow));
+     pm->RegisterEventSink(cbEVT_SHOW_DOCK_WINDOW, new cbEventFunctor<MainFrame, CodeBlocksDockEvent>(this, &MainFrame::OnRequestShowDockWindow));
+     pm->RegisterEventSink(cbEVT_HIDE_DOCK_WINDOW, new cbEventFunctor<MainFrame, CodeBlocksDockEvent>(this, &MainFrame::OnRequestHideDockWindow));
+     pm->RegisterEventSink(cbEVT_DOCK_WINDOW_VISIBILITY, new cbEventFunctor<MainFrame, CodeBlocksDockEvent>(this, &MainFrame::OnDockWindowVisibility));
+-    
++
+     pm->RegisterEventSink(cbEVT_PLUGIN_ATTACHED, new cbEventFunctor<MainFrame, CodeBlocksEvent>(this, &MainFrame::OnPluginLoaded));
+     pm->RegisterEventSink(cbEVT_PLUGIN_RELEASED, new cbEventFunctor<MainFrame, CodeBlocksEvent>(this, &MainFrame::OnPluginUnloaded));
+     pm->RegisterEventSink(cbEVT_PLUGIN_INSTALLED, new cbEventFunctor<MainFrame, CodeBlocksEvent>(this, &MainFrame::OnPluginInstalled));
+     pm->RegisterEventSink(cbEVT_PLUGIN_UNINSTALLED, new cbEventFunctor<MainFrame, CodeBlocksEvent>(this, &MainFrame::OnPluginUninstalled));
+-    
++
+     pm->RegisterEventSink(cbEVT_SWITCH_VIEW_LAYOUT, new cbEventFunctor<MainFrame, CodeBlocksLayoutEvent>(this, &MainFrame::OnLayoutSwitch));
+ }
+ 
+@@ -1049,6 +1052,14 @@
+ 
+ void MainFrame::LoadWindowState()
+ {
++    // load detached state of manager and messages pages and add the detached windows
++    Manager::Get()->GetProjectManager()->GetNotebook()->SetDetached(Manager::Get()->GetConfigManager(_T("app"))->Read(_T("/main_frame/layout/left_block_detached"), _T("")));
++    Manager::Get()->GetMessageManager()->GetNotebook()->SetDetached(Manager::Get()->GetConfigManager(_T("app"))->Read(_T("/main_frame/layout/bottom_block_detached"), _T("")));
++    // load manager and messages selected page
++    Manager::Get()->GetProjectManager()->GetNotebook()->SetSelection(Manager::Get()->GetConfigManager(_T("app"))->ReadInt(_T("/main_frame/layout/left_block_selection"), 0));
++    Manager::Get()->GetMessageManager()->GetNotebook()->SetSelection(Manager::Get()->GetConfigManager(_T("app"))->ReadInt(_T("/main_frame/layout/bottom_block_selection"), 0));
++
++
+     wxArrayString subs = Manager::Get()->GetConfigManager(_T("app"))->EnumerateSubPaths(_T("/main_frame/layout"));
+     for (size_t i = 0; i < subs.GetCount(); ++i)
+     {
+@@ -1059,9 +1070,9 @@
+     wxString deflayout = Manager::Get()->GetConfigManager(_T("app"))->Read(_T("/main_frame/layout/default"));
+     LoadViewLayout(deflayout);
+ 
+-    // load manager and messages selected page
+-    Manager::Get()->GetProjectManager()->GetNotebook()->SetSelection(Manager::Get()->GetConfigManager(_T("app"))->ReadInt(_T("/main_frame/layout/left_block_selection"), 0));
+-    Manager::Get()->GetMessageManager()->GetNotebook()->SetSelection(Manager::Get()->GetConfigManager(_T("app"))->ReadInt(_T("/main_frame/layout/bottom_block_selection"), 0));
++//    // load manager and messages selected page
++//    Manager::Get()->GetProjectManager()->GetNotebook()->SetSelection(Manager::Get()->GetConfigManager(_T("app"))->ReadInt(_T("/main_frame/layout/left_block_selection"), 0));
++//    Manager::Get()->GetMessageManager()->GetNotebook()->SetSelection(Manager::Get()->GetConfigManager(_T("app"))->ReadInt(_T("/main_frame/layout/bottom_block_selection"), 0));
+ 
+ #ifndef __WXMAC__
+     int x = 0;
+@@ -1102,6 +1113,10 @@
+         Manager::Get()->GetConfigManager(_T("app"))->Write(key + _T("data"), it->second);
+     }
+ 
++    // save detached state of manager and messages pages
++    Manager::Get()->GetConfigManager(_T("app"))->Write(_T("/main_frame/layout/left_block_detached"), Manager::Get()->GetProjectManager()->GetNotebook()->GetDetached());
++    Manager::Get()->GetConfigManager(_T("app"))->Write(_T("/main_frame/layout/bottom_block_detached"), Manager::Get()->GetMessageManager()->GetNotebook()->GetDetached());
++
+     // save manager and messages selected page
+     Manager::Get()->GetConfigManager(_T("app"))->Write(_T("/main_frame/layout/left_block_selection"), Manager::Get()->GetProjectManager()->GetNotebook()->GetSelection());
+     Manager::Get()->GetConfigManager(_T("app"))->Write(_T("/main_frame/layout/bottom_block_selection"), Manager::Get()->GetMessageManager()->GetNotebook()->GetSelection());
 Index: src/src/app.cpp
 ===================================================================
 --- src/src/app.cpp	(revision 4237)

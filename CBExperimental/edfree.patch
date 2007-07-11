@@ -1,6 +1,58 @@
+Index: src/plugins/contrib/codesnippets/codesnippets.cpp
+===================================================================
+--- src/plugins/contrib/codesnippets/codesnippets.cpp	(revision 4257)
++++ src/plugins/contrib/codesnippets/codesnippets.cpp	(working copy)
+@@ -48,7 +48,8 @@
+ #include "codesnippetswindow.h"
+ #include "snippetsconfig.h"
+ #include "messagebox.h"
+-#include <wx/wxFlatNotebook/wxFlatNotebook.h>
++#include <wx/wxFlatNotebook/wxFlatNotebook.h>
++#include <tearawaynotebook.h>
+ #include "memorymappedfile.h"
+ 
+ #if defined(__WXGTK__)
+Index: src/plugins/contrib/wxSmith/wxsresource.cpp
+===================================================================
+--- src/plugins/contrib/wxSmith/wxsresource.cpp	(revision 4257)
++++ src/plugins/contrib/wxSmith/wxsresource.cpp	(working copy)
+@@ -26,6 +26,7 @@
+ #include "wxsresourcetreeitemdata.h"
+ 
+ #include <wx/wxFlatNotebook/wxFlatNotebook.h>
++#include <tearawaynotebook.h>
+ #include <editormanager.h>
+ 
+ namespace
+Index: src/plugins/contrib/wxSmith/wxsmith.cpp
+===================================================================
+--- src/plugins/contrib/wxSmith/wxsmith.cpp	(revision 4257)
++++ src/plugins/contrib/wxSmith/wxsmith.cpp	(working copy)
+@@ -30,6 +30,7 @@
+ #include "properties/wxsproperties.h"
+ 
+ #include <wx/wxFlatNotebook/wxFlatNotebook.h>
++#include <tearawaynotebook.h>
+ #include <projectloader_hooks.h>
+ #include <projectmanager.h>
+ #include <messagemanager.h>
+Index: src/plugins/codecompletion/nativeparser.cpp
+===================================================================
+--- src/plugins/codecompletion/nativeparser.cpp	(revision 4257)
++++ src/plugins/codecompletion/nativeparser.cpp	(working copy)
+@@ -43,7 +43,8 @@
+ #include <wx/regex.h>
+ #include <wx/log.h> // for wxSafeShowMessage()
+ #include <tinyxml/tinyxml.h>
+-#include "wx/wxFlatNotebook/wxFlatNotebook.h"
++#include <wx/wxFlatNotebook/wxFlatNotebook.h>
++#include <tearawaynotebook.h>
+ 
+ #include <wx/wfstream.h>
+ 
 Index: src/sdk/projectmanager.cpp
 ===================================================================
---- src/sdk/projectmanager.cpp	(revision 4237)
+--- src/sdk/projectmanager.cpp	(revision 4257)
 +++ src/sdk/projectmanager.cpp	(working copy)
 @@ -55,6 +55,7 @@
  #include <wx/textdlg.h>
@@ -83,7 +135,7 @@ Index: src/sdk/projectmanager.cpp
      static const wxString imgs[] = {
  
          // NOTE: Keep in sync with FileVisualState in globals.h!
-@@ -2620,6 +2623,21 @@
+@@ -2502,6 +2505,21 @@
      }
  }
  
@@ -105,11 +157,10 @@ Index: src/sdk/projectmanager.cpp
  void ProjectManager::WorkspaceChanged()
  {
      // We use IsBusy() to check *ALL* the conditions: If we're in the process of
-@@ -2739,3 +2757,18 @@
-             break;
+@@ -2622,6 +2640,21 @@
      }
  }
-+
+ 
 +void ProjectManager::OnPageContextMenu(wxFlatNotebookEvent& event)
 +{
 +    if (event.GetSelection() == -1)
@@ -124,6 +175,15 @@ Index: src/sdk/projectmanager.cpp
 +    m_pNotebook->PopupMenu(pop);
 +    delete pop;
 +}
++
+ bool ProjectManager::BeginLoadingProject()
+ {
+     if (m_IsLoadingProject)
+@@ -2790,3 +2823,4 @@
+         CloseWorkspace();
+     }
+ }
++
 Index: src/sdk/tearawaynotebook.cpp
 ===================================================================
 --- src/sdk/tearawaynotebook.cpp	(revision 0)
@@ -425,7 +485,7 @@ Index: src/sdk/tearawaynotebook.cpp
 +}
 Index: src/sdk/messagemanager.cpp
 ===================================================================
---- src/sdk/messagemanager.cpp	(revision 4237)
+--- src/sdk/messagemanager.cpp	(revision 4257)
 +++ src/sdk/messagemanager.cpp	(working copy)
 @@ -51,6 +51,7 @@
  #include <wx/filedlg.h>
@@ -491,7 +551,7 @@ Index: src/sdk/messagemanager.cpp
 +}
 Index: src/sdk/editorbase.cpp
 ===================================================================
---- src/sdk/editorbase.cpp	(revision 4237)
+--- src/sdk/editorbase.cpp	(revision 4257)
 +++ src/sdk/editorbase.cpp	(working copy)
 @@ -25,6 +25,7 @@
      #include <wx/wfstream.h>
@@ -503,7 +563,7 @@ Index: src/sdk/editorbase.cpp
  // needed for initialization of variables
 Index: src/sdk/wxFlatNotebook/src/wxFlatNotebook/wxFlatNotebook.cpp
 ===================================================================
---- src/sdk/wxFlatNotebook/src/wxFlatNotebook/wxFlatNotebook.cpp	(revision 4237)
+--- src/sdk/wxFlatNotebook/src/wxFlatNotebook/wxFlatNotebook.cpp	(revision 4257)
 +++ src/sdk/wxFlatNotebook/src/wxFlatNotebook/wxFlatNotebook.cpp	(working copy)
 @@ -79,6 +79,7 @@
  
@@ -515,7 +575,7 @@ Index: src/sdk/wxFlatNotebook/src/wxFlatNotebook/wxFlatNotebook.cpp
  wxFlatNotebook::wxFlatNotebook(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style, const wxString& name)
 Index: src/sdk/editormanager.cpp
 ===================================================================
---- src/sdk/editormanager.cpp	(revision 4237)
+--- src/sdk/editormanager.cpp	(revision 4257)
 +++ src/sdk/editormanager.cpp	(working copy)
 @@ -65,6 +65,7 @@
  #include "searchresultslog.h"
@@ -599,61 +659,9 @@ Index: src/sdk/editormanager.cpp
  void EditorManager::OnClose(wxCommandEvent& event)
  {
      Manager::Get()->GetEditorManager()->Close(GetActiveEditor());
-Index: src/plugins/contrib/codesnippets/codesnippets.cpp
-===================================================================
---- src/plugins/contrib/codesnippets/codesnippets.cpp	(revision 4237)
-+++ src/plugins/contrib/codesnippets/codesnippets.cpp	(working copy)
-@@ -48,7 +48,8 @@
- #include "codesnippetswindow.h"
- #include "snippetsconfig.h"
- #include "messagebox.h"
--#include <wx/wxFlatNotebook/wxFlatNotebook.h>
-+#include <wx/wxFlatNotebook/wxFlatNotebook.h>
-+#include <tearawaynotebook.h>
- #include "memorymappedfile.h"
- 
- #if defined(__WXGTK__)
-Index: src/plugins/contrib/wxSmith/wxsresource.cpp
-===================================================================
---- src/plugins/contrib/wxSmith/wxsresource.cpp	(revision 4237)
-+++ src/plugins/contrib/wxSmith/wxsresource.cpp	(working copy)
-@@ -26,6 +26,7 @@
- #include "wxsresourcetreeitemdata.h"
- 
- #include <wx/wxFlatNotebook/wxFlatNotebook.h>
-+#include <tearawaynotebook.h>
- #include <editormanager.h>
- 
- namespace
-Index: src/plugins/contrib/wxSmith/wxsmith.cpp
-===================================================================
---- src/plugins/contrib/wxSmith/wxsmith.cpp	(revision 4237)
-+++ src/plugins/contrib/wxSmith/wxsmith.cpp	(working copy)
-@@ -30,6 +30,7 @@
- #include "properties/wxsproperties.h"
- 
- #include <wx/wxFlatNotebook/wxFlatNotebook.h>
-+#include <tearawaynotebook.h>
- #include <projectloader_hooks.h>
- #include <projectmanager.h>
- #include <messagemanager.h>
-Index: src/plugins/codecompletion/nativeparser.cpp
-===================================================================
---- src/plugins/codecompletion/nativeparser.cpp	(revision 4237)
-+++ src/plugins/codecompletion/nativeparser.cpp	(working copy)
-@@ -43,7 +43,8 @@
- #include <wx/regex.h>
- #include <wx/log.h> // for wxSafeShowMessage()
- #include <tinyxml/tinyxml.h>
--#include "wx/wxFlatNotebook/wxFlatNotebook.h"
-+#include <wx/wxFlatNotebook/wxFlatNotebook.h>
-+#include <tearawaynotebook.h>
- 
- #include <wx/wfstream.h>
- 
 Index: src/include/projectmanager.h
 ===================================================================
---- src/include/projectmanager.h	(revision 4237)
+--- src/include/projectmanager.h	(revision 4257)
 +++ src/include/projectmanager.h	(working copy)
 @@ -22,6 +22,7 @@
  class ProjectFile;
@@ -672,7 +680,7 @@ Index: src/include/projectmanager.h
  
          // Can the app shutdown? (actually: is ProjectManager busy at the moment?)
          static bool CanShutdown(){ return s_CanShutdown; }
-@@ -439,15 +440,17 @@
+@@ -462,15 +463,17 @@
          void OnDeleteVirtualFolder(wxCommandEvent& event);
          void OnUpdateUI(wxUpdateUIEvent& event);
          void OnIdle(wxIdleEvent& event);
@@ -694,7 +702,7 @@ Index: src/include/projectmanager.h
          wxImageList* m_pImages;
 Index: src/include/messagemanager.h
 ===================================================================
---- src/include/messagemanager.h	(revision 4237)
+--- src/include/messagemanager.h	(revision 4257)
 +++ src/include/messagemanager.h	(working copy)
 @@ -37,6 +37,7 @@
  // forward decls
@@ -785,7 +793,7 @@ Index: src/include/tearawaynotebook.h
 +
 Index: src/include/wxFlatNotebook/include/wx/wxFlatNotebook/wxFlatNotebook.h
 ===================================================================
---- src/include/wxFlatNotebook/include/wx/wxFlatNotebook/wxFlatNotebook.h	(revision 4237)
+--- src/include/wxFlatNotebook/include/wx/wxFlatNotebook/wxFlatNotebook.h	(revision 4257)
 +++ src/include/wxFlatNotebook/include/wx/wxFlatNotebook/wxFlatNotebook.h	(working copy)
 @@ -1,5 +1,5 @@
  ///////////////////////////////////////////////////////////////////////////////
@@ -889,7 +897,7 @@ Index: src/include/wxFlatNotebook/include/wx/wxFlatNotebook/wxFlatNotebook.h
  
 Index: src/include/editormanager.h
 ===================================================================
---- src/include/editormanager.h	(revision 4237)
+--- src/include/editormanager.h	(revision 4257)
 +++ src/include/editormanager.h	(working copy)
 @@ -23,8 +23,10 @@
  
@@ -938,7 +946,7 @@ Index: src/include/editormanager.h
  };
 Index: src/src/main.cpp
 ===================================================================
---- src/src/main.cpp	(revision 4237)
+--- src/src/main.cpp	(revision 4257)
 +++ src/src/main.cpp	(working copy)
 @@ -69,6 +69,7 @@
  #include <wx/printdlg.h>
@@ -1045,9 +1053,20 @@ Index: src/src/main.cpp
      // save manager and messages selected page
      Manager::Get()->GetConfigManager(_T("app"))->Write(_T("/main_frame/layout/left_block_selection"), Manager::Get()->GetProjectManager()->GetNotebook()->GetSelection());
      Manager::Get()->GetConfigManager(_T("app"))->Write(_T("/main_frame/layout/bottom_block_selection"), Manager::Get()->GetMessageManager()->GetNotebook()->GetSelection());
+@@ -2536,6 +2551,10 @@
+     m_LayoutManager.DetachPane(Manager::Get()->GetMessageManager()->GetNotebook());
+     m_LayoutManager.DetachPane(Manager::Get()->GetEditorManager()->GetNotebook());
+ 
++    Manager::Get()->GetProjectManager()->GetNotebook()->UndetachAllPages();
++    Manager::Get()->GetMessageManager()->GetNotebook()->UndetachAllPages();
++    Manager::Get()->GetEditorManager()->GetNotebook()->UndetachAllPages();
++
+     m_LayoutManager.UnInit();
+     TerminateRecentFilesHistory();
+ 
 Index: src/src/app.cpp
 ===================================================================
---- src/src/app.cpp	(revision 4237)
+--- src/src/app.cpp	(revision 4257)
 +++ src/src/app.cpp	(working copy)
 @@ -51,6 +51,7 @@
  #include <manager.h>
@@ -1059,7 +1078,7 @@ Index: src/src/app.cpp
  #include <wx/arrstr.h>
 Index: src/CodeBlocks-unix.cbp
 ===================================================================
---- src/CodeBlocks-unix.cbp	(revision 4237)
+--- src/CodeBlocks-unix.cbp	(revision 4257)
 +++ src/CodeBlocks-unix.cbp	(working copy)
 @@ -110,6 +110,7 @@
  				<Option projectResourceIncludeDirsRelation="2" />
@@ -1078,7 +1097,7 @@ Index: src/CodeBlocks-unix.cbp
  				<Option projectLinkerOptionsRelation="2" />
  				<Option projectIncludeDirsRelation="2" />
  				<Option projectResourceIncludeDirsRelation="0" />
-@@ -855,6 +856,9 @@
+@@ -854,6 +855,9 @@
  		<Unit filename="include/simpletextlog.h">
  			<Option target="sdk" />
  		</Unit>
@@ -1088,7 +1107,7 @@ Index: src/CodeBlocks-unix.cbp
  		<Unit filename="include/templatemanager.h">
  			<Option target="sdk" />
  		</Unit>
-@@ -2431,6 +2435,9 @@
+@@ -2498,6 +2502,9 @@
  		<Unit filename="sdk/simpletextlog.cpp">
  			<Option target="sdk" />
  		</Unit>

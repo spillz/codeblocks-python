@@ -1,7 +1,8 @@
-
 #include "py_embedder.h"
-using namespace std;
+#include <wx/listimpl.cpp>
+WX_DEFINE_LIST(PyJobQueue);
 
+using namespace std;
 
 PyMgr::PyMgr()
 {

@@ -1,6 +1,5 @@
-//#include <sdk.h> // Code::Blocks SDK
-#include <configurationpanel.h>
 #include "PyPlugin.h"
+#include <configurationpanel.h>
 #include <wx/regex.h>
 // Register the plugin with Code::Blocks.
 // We are using an anonymous namespace so we don't litter the global one.
@@ -10,14 +9,25 @@ namespace
 }
 
 
-int ID_LangMenu_Settings=wxNewId();
-//int ID_LangMenu_RunPiped=wxNewId();
-int ID_LangMenu_Run=wxNewId();
+bool WildCardListMatch(wxString list, wxString name)
+{
+    if(list==_T("")) //any empty list matches everything by default
+        return true;
+    wxString wildlist=list;
+    wxString wild=list.BeforeFirst(';');
+    while(wildlist!=_T(""))
+    {
+        if(wild!=_T("") && ::wxMatchWild(wild,name))
+            return true;
+        wildlist=wildlist.AfterFirst(';');
+        wild=wildlist.BeforeFirst(';');
+    }
+    return false;
+}
 
-//int ID_LangMenu_DebugContinue=wxNewId();
-//int ID_LangMenu_DebugNext=wxNewId();
-//int ID_LangMenu_DebugStep=wxNewId();
-//int ID_LangMenu_DebugStop=wxNewId();
+
+int ID_LangMenu_Settings=wxNewId();
+int ID_LangMenu_Run=wxNewId();
 int ID_LangMenu_DebugSendCommand=wxNewId();
 int ID_LangMenu_ShowWatch=wxNewId();
 int ID_LangMenu_UpdateWatch=wxNewId();
@@ -27,37 +37,20 @@ int ID_TimerPollDebugger=wxNewId();
 
 //assign menu IDs to correspond with toolbar buttons
 int ID_LangMenu_RunPiped = wxNewId();//XRCID("idPyDebuggerMenuDebug");
-//int idMenuRunToCursor = XRCID("idDebuggerMenuRunToCursor");
-int ID_LangMenu_DebugNext = XRCID("idPyDebuggerMenuNext");
-int ID_LangMenu_DebugStep = XRCID("idPyDebuggerMenuStep");
-//int idMenuNextInstr = XRCID("idDebuggerMenuNextInstr");
-//int idMenuStepOut = XRCID("idDebuggerMenuStepOut");
-int ID_LangMenu_DebugStop = XRCID("idPyDebuggerMenuStop");
-int ID_LangMenu_DebugContinue = XRCID("idPyDebuggerMenuDebug");
-
-// Additional toolbar items
-//    <object class="tool" name="idPyDebuggerToolWindows">
-//    <object class="tool" name="idPyDebuggerToolInfo">
-
 
 // events handling
-BEGIN_EVENT_TABLE(PyPlugin, cbPlugin)
+BEGIN_EVENT_TABLE(PyPlugin, cbDebuggerPlugin)
 	// add any events you want to handle here
     EVT_MENU(ID_LangMenu_Run,PyPlugin::OnRun)
     EVT_MENU(ID_LangMenu_RunPiped,PyPlugin::OnDebugTarget)
-    EVT_MENU(ID_LangMenu_DebugContinue,PyPlugin::OnContinue)
-    EVT_MENU(ID_LangMenu_DebugNext,PyPlugin::OnNext)
-    EVT_MENU(ID_LangMenu_DebugStep,PyPlugin::OnStep)
-    EVT_MENU(ID_LangMenu_DebugStop,PyPlugin::OnStop)
+    EVT_MENU(XRCID("idPyDebuggerMenuDebug"),PyPlugin::OnContinue)
+    EVT_MENU(XRCID("idPyDebuggerMenuNext"),PyPlugin::OnNext)
+    EVT_MENU(XRCID("idPyDebuggerMenuStep"),PyPlugin::OnStep)
+    EVT_MENU(XRCID("idPyDebuggerMenuStop"),PyPlugin::OnStop)
     EVT_MENU(ID_LangMenu_DebugSendCommand,PyPlugin::OnSendCommand)
     EVT_MENU(ID_LangMenu_ShowWatch,PyPlugin::OnViewWatch)
     EVT_MENU(ID_LangMenu_UpdateWatch,PyPlugin::OnUpdateWatch)
-//    EVT_MENU_RANGE(ID_ContextMenu_0,ID_ContextMenu_9,PyPlugin::OnRunTarget)
-//    EVT_MENU_RANGE(ID_NoTargMenu_0, ID_NoTargMenu_9, PyPlugin::OnRun)
-//    EVT_MENU_RANGE(ID_SubMenu_0, ID_SubMenu_20, PyPlugin::OnRunTarget)
     EVT_END_PROCESS(ID_PipedProcess, PyPlugin::OnTerminatePipedProcess)
-    EVT_PIPEDPROCESS_STDOUT(ID_PipedProcess, PyPlugin::OnPipedOutput)
-//    EVT_IDLE(PyPlugin::OnIdle)
     EVT_TIMER(ID_TimerPollDebugger, PyPlugin::OnTimer)
 END_EVENT_TABLE()
 
@@ -68,27 +61,8 @@ void PyPlugin::ReadPluginConfig()
 {
     ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("PyPlugin"));
     m_DefaultDebugCmdLine=cfg->Read(_T("debug_cmd_line"),_T(" -u -m pdb "));
-    m_DefaultInterpreter=cfg->Read(_T("python_executable"),_T("python.exe")); //TODO: make default command platform specific
-    wxString ext=cfg->Read(_T("python_file_extensions"),_T("*.py;*.pyw"));
-    //Convert file extension to a list - this is very ugly code. Extensions string must use wildcard form (TODO: make more flexible)
-    int lloc=0;
-    int rloc=ext.Find(_T(";"));
-    wxString nextext;
-    while(rloc!=-1)
-    {
-        if(lloc+2>=rloc)
-            continue;
-        nextext=ext(lloc+2,rloc-2);
-        if(nextext!=_T(""))
-            m_PythonFileExtensions.push_back(nextext);
-        lloc=rloc+1;
-        rloc=ext.Mid(lloc).Find(_T(";"));
-    }
-    if(lloc+2>=(int)ext.Len())
-        return;
-    nextext=ext.Mid(lloc+2);
-    if(nextext!=_T(""))
-        m_PythonFileExtensions.push_back(nextext);
+    m_DefaultInterpreter=cfg->Read(_T("python_executable"),_T("python")); //TODO: make default command platform specific
+    m_PythonFileExtensions=cfg->Read(_T("python_file_extensions"),_T("*.py;*.pyc"));
 }
 
 // Retrieve configuration values from the dialog widgets and store them appropriately
@@ -183,10 +157,8 @@ bool PyPlugin::DispatchCommands(const wxString& cmd, int cmdtype, bool poll)
 
 bool PyPlugin::IsPythonFile(const wxString &file)
 {
-    wxFileName f(file);
-    for(std::vector<wxString>::const_iterator it=m_PythonFileExtensions.begin();it!=m_PythonFileExtensions.end();++it)
-        if(*it==f.GetExt())
-            return true;
+    if(WildCardListMatch(m_PythonFileExtensions,file))
+        return true;
     return false;
 }
 
@@ -496,6 +468,7 @@ int PyPlugin::Debug()
     wxSetWorkingDirectory(wxFileName(m_RunTarget).GetPath());
     target.Replace(_T("\\"),_T("/"),true);
     wxString commandln=wxFileName(m_DefaultInterpreter).GetShortPath()+m_DefaultDebugCmdLine+target;
+    cbMessageBox(commandln);
     #ifdef EXPERIMENTAL_PYTHON_DEBUG
 //    LogMessage(wxString::Format(_("Launching '%s': %s (in %s)"), consolename.c_str(), commandstr.c_str(), workingdir.c_str()));
 //    InterpretedLangs* plugin = Manager::Get()->GetPluginManager()->LoadPlugin(_T("InterpretedLangs"));
@@ -684,7 +657,7 @@ void PyPlugin::OnSubMenuSelect(wxUpdateUIEvent& event)
 void PyPlugin::OnSetTarget(wxCommandEvent& event)
 {
     //TODO: use default file extensions
-    wxFileDialog *fd=new wxFileDialog(NULL,_T("Choose the interpreter Target"),_T(""),_T(""),_T(""),wxOPEN|wxFILE_MUST_EXIST);
+    wxFileDialog *fd=new wxFileDialog(NULL,_T("Choose the interpreter Target"),_T(""),_T(""),m_PythonFileExtensions,wxOPEN|wxFILE_MUST_EXIST);
     if(fd->ShowModal()==wxID_OK)
     {
         m_RunTarget=fd->GetPath();
@@ -852,14 +825,13 @@ void PyPlugin::CreateMenu()
     LangMenu->Append(ID_LangMenu_Run,_T("Python &Run..."),_T(""));
     LangMenu->AppendSeparator();
     LangMenu->Append(ID_LangMenu_RunPiped,_T("Start &Debug..."),_T(""));
-    LangMenu->Append(ID_LangMenu_DebugContinue,_T("&Continue"),_T(""));
-    LangMenu->Append(ID_LangMenu_DebugNext,_T("&Next"),_T(""));
-    LangMenu->Append(ID_LangMenu_DebugStep,_T("Step &Into"),_T(""));
-    LangMenu->Append(ID_LangMenu_DebugStop,_T("&Stop"),_T(""));
+    LangMenu->Append(XRCID("idPyDebuggerMenuDebug"),_T("&Continue"),_T(""));
+    LangMenu->Append(XRCID("idPyDebuggerMenuNext"),_T("&Next"),_T(""));
+    LangMenu->Append(XRCID("idPyDebuggerMenuStep"),_T("Step &Into"),_T(""));
+    LangMenu->Append(XRCID("idPyDebuggerMenuStop"),_T("&Stop"),_T(""));
     LangMenu->Append(ID_LangMenu_DebugSendCommand,_T("&Send Debugger Command"),_T(""));
     LangMenu->Append(ID_LangMenu_ShowWatch,_T("Toggle &Watch"),_T(""),wxITEM_CHECK);
     LangMenu->Append(ID_LangMenu_UpdateWatch,_T("&Update Watch"),_T(""));
-
 }
 
 
@@ -939,7 +911,7 @@ void PyPlugin::BuildModuleMenu(const ModuleType type, wxMenu* menu, const FileTr
             wxString name=f.GetFullName();
             if(IsPythonFile(name))
             {
-                m_RunTarget=name;
+                m_RunTarget=filename;
                 m_RunTargetSelected=true;
                 menu->AppendSeparator();
 //            menu->Append(ID_LangMenu_Run,_T("Python Run"),_T(""));
@@ -959,6 +931,6 @@ bool PyPlugin::BuildToolBar(wxToolBar* toolBar)
     wxString my_16x16=Manager::isToolBar16x16(toolBar) ? _T("_16x16") : _T("");
     Manager::AddonToolBar(toolBar,wxString(_T("py_debugger_toolbar"))+my_16x16);
     toolBar->Realize();
-    toolBar->SetBestFittingSize();
+//    toolBar->SetBestFittingSize();
     return true;
 }

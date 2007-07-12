@@ -34,30 +34,6 @@
 
 //class InterpreterCollection;
 
-/*
-What does this plugin do?
-
-a python debugger now runs on a simple test file
-while the debugger is active can call next, step into, continue, stop, add and remove breakpoints (bps).
-
-also offers the full feature set of the InterpetedLangs plugin (add/remove interpreters with various "actions")
-- most of this functionality will be removed to make this a Python specific plugin
-
-What it doesn't do but will do eventually
-A) Debugger
-1. restrict bp responses to python files
-2. error handling from debugger (post mortem mode etc)
-3. output streaming
-4. Full UI interface with target selection, toolbars, breakpoints etc
-5. Add/remove breakpoints even while debugger is not in an active session (also add bps that are present in the debugger when debug session begins - problematic when has preselected a whole bunch of breakpoints in other python files that can't ever be encountered in this session)
-6. Handle effect of add/remove lines on breakpoints
-7. Custom control to watch variables and expressions
-8. Config dialog to handle Regexes and text strings for passing commands to the debugger and interpreting its output
-(I'll add other to this list as I think of them)
-B) Python Projects (Easy)
-C) Python Source Browser and Code Completion (Medium/Hard)
-*/
-
 typedef std::set<int> BPLtype;
 
 struct FileBreakpoints
@@ -280,7 +256,7 @@ class PyPlugin : public cbDebuggerPlugin
 
         wxMenu *LangMenu;  // pointer to the interpreters menu
 //        int m_interpnum;
-        std::vector<wxString> m_PythonFileExtensions;
+        wxString m_PythonFileExtensions;
 
         // Information about current debug location
         unsigned long m_curline;

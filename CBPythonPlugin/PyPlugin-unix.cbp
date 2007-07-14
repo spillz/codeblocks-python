@@ -83,10 +83,10 @@
 		<Unit filename="manifest.xml" />
 		<Unit filename="pdb2.py" />
 		<Unit filename="py_embedder.cpp">
-			<Option target="&lt;{~None~}&gt;" />
+			<Option target="experimental" />
 		</Unit>
 		<Unit filename="py_embedder.h">
-			<Option target="&lt;{~None~}&gt;" />
+			<Option target="experimental" />
 		</Unit>
 		<Unit filename="pydebugtermctrl.cpp">
 			<Option target="experimental" />

@@ -555,6 +555,7 @@ void FileExplorer::OnRightClick(wxTreeEvent &event)
                 m_Popup->Append(ID_FILEMAKEFAV,_T("Add to Favorites"));
                 m_Popup->Append(ID_FILENEWFILE,_T("New File..."));
                 m_Popup->Append(ID_FILENEWFOLDER,_T("Ma&ke Directory..."));
+                m_Popup->Append(ID_FILERENAME,_T("&Rename..."));
             } else
             {
                 m_Popup->Append(ID_OPENINED,_T("&Open in CB Editor"));
@@ -772,22 +773,38 @@ void FileExplorer::OnDelete(wxCommandEvent &event)
 
 void FileExplorer::OnRename(wxCommandEvent &event)
 {
-    wxFileName path(GetFullPath(m_selectti[0]));  //SINGLE: m_Tree->GetSelection()
-    if(path.FileExists())
+    wxString path(GetFullPath(m_selectti[0]));  //SINGLE: m_Tree->GetSelection()
+    if(wxFileName::FileExists(path))
     {
         EditorManager* em = Manager::Get()->GetEditorManager();
-        if(em->IsOpen(path.GetFullPath()))
+        if(em->IsOpen(path))
         {
             cbMessageBox(_T("Close file first"));
             return;
         }
-        wxTextEntryDialog te(this,_T("New Name: "));
+        wxTextEntryDialog te(this,_T("New name:"),_T("Rename File"),wxFileName(path).GetFullName());
         if(te.ShowModal()==wxID_CANCEL)
             return;
         wxFileName destpath(path);
         destpath.SetFullName(te.GetValue());
-        if(!::wxRenameFile(path.GetFullPath(),destpath.GetFullPath()))
+        if(!::wxRenameFile(path,destpath.GetFullPath()))
             cbMessageBox(_T("Rename failed"));
+    }
+    if(wxFileName::DirExists(path))
+    {
+        wxTextEntryDialog te(this,_T("New name:"),_T("Rename File"),wxFileName(path).GetFullName());
+        if(te.ShowModal()==wxID_CANCEL)
+            return;
+        wxFileName destpath(path);
+        destpath.SetFullName(te.GetValue());
+#ifdef __WXMSW__
+        wxArrayString output;
+        int hresult=::wxExecute(_T("cmd /c move /S/Q \"")+path+_T("\" \"")+destpath.GetFullPath()+_T("\""),output,wxEXEC_SYNC);
+#else
+        int hresult=::wxExecute(_T("/bin/mv \"")+path+_T("\" \"")+destpath.GetFullPath()+_T("\""),wxEXEC_SYNC);
+#endif
+        if(hresult)
+            MessageBox(m_Tree,_T("Rename directory '")+path+_T("' failed with error ")+wxString::Format(_T("%i"),hresult));
     }
     Refresh(m_Tree->GetItemParent(m_selectti[0])); //SINGLE: m_Tree->GetSelection()
 }

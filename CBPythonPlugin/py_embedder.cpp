@@ -4,15 +4,30 @@ WX_DEFINE_LIST(PyJobQueue);
 
 using namespace std;
 
-PyMgr::PyMgr()
+
+// code implementing the event types and classes (move to the .cpp file)
+DEFINE_EVENT_TYPE( wxEVT_PY_NOTIFY_INTERPRETER )
+
+PyNotifyIntepreterEvent::PyNotifyIntepreterEvent(int id) : wxEvent(id, wxEVT_PY_NOTIFY_INTERPRETER) {}
+
+
+DEFINE_EVENT_TYPE( wxEVT_PY_NOTIFY_UI )
+
+PyNotifyUIEvent::PyNotifyUIEvent(int id, PyInstance *inst, JobStates js) : wxEvent(id, wxEVT_PY_NOTIFY_UI)
 {
-    Py_Initialize();// need to init threads?
+    instance=inst;
+    jobstate=js;
+    job=NULL;
 }
 
-PyMgr::~PyMgr()
-{
-    Py_Finalize();
-}
+
+
+
+
+BEGIN_EVENT_TABLE(PyInstance, wxEvtHandler)
+    EVT_PY_NOTIFY_UI(wxID_ANY, PyInstance::OnJobNotify)
+END_EVENT_TABLE()
+
 
 PyInstance::PyInstance()
 {
@@ -28,6 +43,48 @@ PyInstance::~PyInstance()
     PyEval_ReleaseLock();
 }
 
+bool PyInstance::AddJob(PyJob *job)
+{
+    if(job->Create()!=wxTHREAD_NO_ERROR)
+        return false;
+    m_queue.Append(job);
+    if(m_paused)
+        return;
+    PyJob *newjob=m_queue.GetFirst()->GetData();
+    if(!newjob->finished && !newjob->started)
+    {
+        newjob->started=true;
+        newjob->Run();
+    }
+}
+
+void PyInstance::OnJobNotify(PyNotifyUIEvent &event)
+{
+    if(event.jobstate==PYSTATE_ABORTEDJOB||event.jobstate==PYSTATE_FINISHEDJOB)
+    {
+        event.job=m_queue.GetFirst()->GetData();
+        event.job->Wait();
+        if(event.job->killonexit)
+        {
+            delete event.job;
+            event.job=NULL;
+        }
+        m_queue.DeleteNode(m_queue.GetFirst());
+    }
+    ::wxSendEvent(event.parent,pe);
+    if(m_paused)
+        return;
+    wxNode node=m_queue.GetFirst();
+    if(!node)
+        return;
+    PyJob *newjob=node->GetData();
+    if(!newjob->finished && !newjob->started)
+    {
+        newjob->started=true;
+        newjob->Run();
+    }
+}
+
 
 // Not sure about this locking stuff...
 void PyInstance::Lock()
@@ -35,7 +92,7 @@ void PyInstance::Lock()
     PyEval_AcquireThread(tstate);
 }
 
-void PyInstance::EvalString(char *str)
+void PyInstance::EvalString(char *str, bool wait)
 {
     PyRun_SimpleString(str);
 }
@@ -43,6 +100,16 @@ void PyInstance::EvalString(char *str)
 void PyInstance::Release()
 {
     PyEval_ReleaseThread(tstate);
+}
+
+PyMgr::PyMgr()
+{
+    Py_Initialize();// need to init threads?
+}
+
+PyMgr::~PyMgr()
+{
+    Py_Finalize();
 }
 
 

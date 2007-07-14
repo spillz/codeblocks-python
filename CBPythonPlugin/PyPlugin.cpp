@@ -9,6 +9,7 @@ namespace
 }
 
 
+
 bool WildCardListMatch(wxString list, wxString name)
 {
     if(list==_T("")) //any empty list matches everything by default

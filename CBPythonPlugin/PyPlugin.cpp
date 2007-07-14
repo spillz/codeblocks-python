@@ -475,8 +475,8 @@ int PyPlugin::Debug()
 //    InterpretedLangs* plugin = Manager::Get()->GetPluginManager()->LoadPlugin(_T("InterpretedLangs"));
 //    m_ilplugin->m_shellmgr->LaunchProcess(commandln,_(T"PyDEBUG"),0);
 //    m_ilplugin->ShowConsole();
-    ilShellTermEvent e;
-    ProcessEvent(e);
+//    ilShellTermEvent e;
+//    ProcessEvent(e);
     #else
     if(!wxExecute(commandln,wxEXEC_ASYNC,m_pp))
     {

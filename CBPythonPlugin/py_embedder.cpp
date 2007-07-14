@@ -1,14 +1,23 @@
 #include "py_embedder.h"
 #include <wx/listimpl.cpp>
+#include <wx/arrimpl.cpp>
+WX_DEFINE_OBJARRAY(PyInstanceCollection);
 WX_DEFINE_LIST(PyJobQueue);
 
 using namespace std;
 
 
-// code implementing the event types and classes (move to the .cpp file)
+//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+// classes PyNotifyIntepreterEvent and PyNotifyUIEvent
+//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+
 DEFINE_EVENT_TYPE( wxEVT_PY_NOTIFY_INTERPRETER )
 
-PyNotifyIntepreterEvent::PyNotifyIntepreterEvent(int id) : wxEvent(id, wxEVT_PY_NOTIFY_INTERPRETER) {}
+PyNotifyIntepreterEvent::PyNotifyIntepreterEvent(int id) : wxEvent(id, wxEVT_PY_NOTIFY_INTERPRETER)
+{
+}
 
 
 DEFINE_EVENT_TYPE( wxEVT_PY_NOTIFY_UI )
@@ -20,14 +29,58 @@ PyNotifyUIEvent::PyNotifyUIEvent(int id, PyInstance *inst, JobStates js) : wxEve
     job=NULL;
 }
 
+//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+// class PyJob
+//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+
+PyJob::PyJob(wxWindow *p, int id, bool selfdestroy):wxThread(wxTHREAD_JOINABLE)
+{
+    parent=p;
+    this->id=id;
+    finished=false;
+    started=false;
+    killonexit=selfdestroy;
+}
+
+PyJob::~PyJob()
+{
+}
+
+void *PyJob::Entry()
+{
+    PyNotifyUIEvent pe(id,jobowner,PYSTATE_STARTEDJOB);
+    ::wxPostEvent(jobowner,pe);
+    if((*this)())
+        pe.SetState(PYSTATE_FINISHEDJOB);
+    else
+        pe.SetState(PYSTATE_ABORTEDJOB);
+    ::wxPostEvent(jobowner,pe);
+    Exit();
+    return NULL;
+}
+
+void PyJob::Lock()
+{
+    jobowner->Lock();
+}
+
+void PyJob::Release()
+{
+    jobowner->Release();
+}
 
 
-
+//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+// class PyInstance
+//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
 
 BEGIN_EVENT_TABLE(PyInstance, wxEvtHandler)
     EVT_PY_NOTIFY_UI(wxID_ANY, PyInstance::OnJobNotify)
 END_EVENT_TABLE()
-
 
 PyInstance::PyInstance()
 {
@@ -49,13 +102,14 @@ bool PyInstance::AddJob(PyJob *job)
         return false;
     m_queue.Append(job);
     if(m_paused)
-        return;
+        return true;
     PyJob *newjob=m_queue.GetFirst()->GetData();
     if(!newjob->finished && !newjob->started)
     {
         newjob->started=true;
         newjob->Run();
     }
+    return true;
 }
 
 void PyInstance::OnJobNotify(PyNotifyUIEvent &event)
@@ -71,10 +125,10 @@ void PyInstance::OnJobNotify(PyNotifyUIEvent &event)
         }
         m_queue.DeleteNode(m_queue.GetFirst());
     }
-    ::wxSendEvent(event.parent,pe);
+    ::wxPostEvent(event.parent,event);
     if(m_paused)
         return;
-    wxNode node=m_queue.GetFirst();
+    wxPyJobQueueNode *node=m_queue.GetFirst();
     if(!node)
         return;
     PyJob *newjob=node->GetData();
@@ -105,6 +159,7 @@ void PyInstance::Release()
 PyMgr::PyMgr()
 {
     Py_Initialize();// need to init threads?
+    PyEval_InitThreads();
 }
 
 PyMgr::~PyMgr()

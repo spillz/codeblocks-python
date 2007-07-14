@@ -2,23 +2,26 @@
 #define PYEMBEDDER_H_INCLUDED
 
 #include <wx/wx.h>
-#include <Python.h>
+#include <wx/app.h>
 #include <wx/dynarray.h>
+
+#include <Python.h>
 
 
 class PyJob;
 class PyInstance;
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+// Python Interpreter Events
+/////////////////////////////////////////////////////////////////////////////////////
 
 BEGIN_DECLARE_EVENT_TYPES()
 DECLARE_EVENT_TYPE(wxEVT_PY_NOTIFY_INTERPRETER, -1)
 DECLARE_EVENT_TYPE(wxEVT_PY_NOTIFY_UI, -1)
 END_DECLARE_EVENT_TYPES()
 
-//DECLARE_EVENT_MACRO( wxEVT_PY_NOTIFY_INTERPRETER, -1 )
-//DECLARE_EVENT_MACRO( wxEVT_PY_NOTIFY_UI, -1 )
-
-// Events sent from the UI to an intepreter
-// request for shutdown
+// Events sent from the UI to an intepreter request for shutdown
 class PyNotifyIntepreterEvent: public wxEvent
 {
 public:
@@ -34,6 +37,7 @@ enum JobStates {PYSTATE_STARTEDJOB, PYSTATE_FINISHEDJOB, PYSTATE_ABORTEDJOB};
 // indicating job completion, interpreter shutdown etc
 class PyNotifyUIEvent: public wxEvent
 {
+    friend class PyInstance;
 public:
     PyNotifyUIEvent(int id, PyInstance *instance, JobStates jobstate);
     PyNotifyUIEvent(const PyNotifyUIEvent& c) : wxEvent(c)
@@ -47,9 +51,10 @@ public:
     PyInstance *GetInterpreter();
     void SetState(JobStates s) {jobstate=s;}
     JobStates jobstate;
-private:
+protected:
     PyInstance *instance;
     PyJob *job;
+    wxWindow *parent;
 };
 
 typedef void (wxEvtHandler::*PyNotifyIntepreterEventFunction)(PyNotifyIntepreterEvent&);
@@ -65,59 +70,25 @@ typedef void (wxEvtHandler::*PyNotifyUIEventFunction)(PyNotifyUIEvent&);
     (wxObjectEventFunction) (wxEventFunction) \
     wxStaticCastEvent( PyNotifyUIEventFunction, & fn ), (wxObject *) NULL ),
 
-//Receiving events
-//BEGIN_EVENT_TABLE(MyFrame, wxFrame)
-//    EVT_PLOT(ID_MY_WINDOW,  MyFrame::OnPlot)
-//END_EVENT_TABLE()
-//
-//void MyFrame::OnPythonEvent(PyNotifyIntepreterEvent &event)
-//{
-//    wxPlotCurve *curve = event.GetCurve();
-//}
 
-//Sending events
-// user code sending the event void MyWindow::SendEvent()
-//{
-//    PyNotifyIntepreterEvent event( wxEVT_PLOT_ACTION, GetId() );
-//    event.SetEventObject( this );
-//    event.SetCurve( m_curve );
-//    GetEventHandler()->ProcessEvent( event );
-//}
-
-
-// An abstract class for a python job
-// the job is defined in the pure virtual method operator()
-// The job should try to restrict itself
-// to writing to its own non-GUI data members
-// for thread safety.
-// For intensive tasks, PyJob should
-// release the interpreter lock
-// from time to time.
+/////////////////////////////////////////////////////////////////////////////////////
+// PyJob: An abstract class for a python job to be run by an interpreter instance.
+// The job is defined in the pure virtual method operator(). The job should try to
+// restrict itself to writing to its own non-GUI data members for thread safety.
+// For intensive tasks, PyJob should release the interpreter lock from time to time.
+// The PyJob starts in a released state. before making any API calls, call Lock
+// you must release the lock with Release before returning.
+/////////////////////////////////////////////////////////////////////////////////////
 class PyJob: public wxThread
 {
 public:
-    virtual void operator()()=0;
-    PyJob(wxWindow *p, int id, bool selfdestroy=true):wxThread(wxTHREAD_JOINABLE)
-    {
-        parent=p;
-        this->id=id;
-        finished=false;
-        started=false;
-        killonexit=selfdestroy;
-    }
-    virtual ~PyJob() {}
+    virtual bool operator()();
+    PyJob(wxWindow *p, int id, bool selfdestroy=true);
+    void Lock();
+    void Release();
+    virtual ~PyJob();
 protected:
-    void Entry()
-    {
-        PyNotifyUIEvent pe(id,jobowner,PYSTATE_STARTEDJOB);
-        ::wxSendEvent(jobowner,pe);
-        if(operator())
-            pe.SetState(PYSTATE_FINISHEDJOB)
-        else
-            pe.SetState(PYSTATE_ABORTEDJOB)
-        ::wxSendEvent(jobowner,pe);
-        Exit();
-    }
+    virtual void *Entry();
     PyInstance *jobowner;
     wxWindow *parent;
     int id;
@@ -127,15 +98,23 @@ protected:
     friend class PyInstance;
 };
 
-WX_DECLARE_LIST(PyJob*, PyJobQueue);
+WX_DECLARE_LIST(PyJob, PyJobQueue);
 
-// The interface to an instance of a running interpreter
+/////////////////////////////////////////////////////////////////////////////////////
+// PyInstance: The interface to an instance of a running interpreter
 // The interface maintains a queue of jobs for the interpreter,
 // which are run in sequence by a single worker thread.
 // Consequently jobs must not interact with live objects on the main thread.
+/////////////////////////////////////////////////////////////////////////////////////
 class PyInstance: public wxEvtHandler
 {
+public:
     PyInstance();
+    PyInstance(const PyInstance &copy)
+    {
+        tstate=copy.tstate;
+        m_queue=copy.m_queue;
+    }
     ~PyInstance();
     void Lock();
     void Release();
@@ -148,16 +127,26 @@ class PyInstance: public wxEvtHandler
     PyJobQueue m_queue;
     bool m_paused;
     //void AttachExtension(); //attach a python extension table as an import for this interpreter
+    DECLARE_EVENT_TABLE();
 };
 
 WX_DECLARE_OBJARRAY(PyInstance, PyInstanceCollection);
 
-// manages the collection of interpreters
+/////////////////////////////////////////////////////////////////////////////////////
+// PyMgr: manages the collection of interpreters
+/////////////////////////////////////////////////////////////////////////////////////
 class PyMgr
 {
     PyMgr();
     ~PyMgr();
-    PyInstance *LaunchInterpreter();
+    PyInstance *LaunchInterpreter()
+    {
+        PyInstance *p=new PyInstance();
+        if(!p)
+            return p;
+        m_Interpreters.Add(p);
+        return p;
+    }
 private:
     PyInstanceCollection m_Interpreters;
 };

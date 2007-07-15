@@ -75,6 +75,12 @@
 		<Unit filename="CodeBrowsingSamples/cb_py_interpreter_code.py" />
 		<Unit filename="ConfigDialog.cpp" />
 		<Unit filename="ConfigDialog.h" />
+		<Unit filename="PyEvalJob.cpp">
+			<Option target="experimental" />
+		</Unit>
+		<Unit filename="PyEvalJob.h">
+			<Option target="experimental" />
+		</Unit>
 		<Unit filename="PyPlugin.cpp" />
 		<Unit filename="PyPlugin.h" />
 		<Unit filename="Resources/dialogs.fbp" />

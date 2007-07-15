@@ -164,9 +164,27 @@ PyMgr::PyMgr()
 
 PyMgr::~PyMgr()
 {
+    m_Interpreters.Empty();
     Py_Finalize();
 }
 
+PyInstance *PyMgr::LaunchInterpreter()
+{
+    PyInstance *p=new PyInstance();
+    if(!p)
+        return p;
+    m_Interpreters.Add(p);
+    return p;
+}
+
+PyMgr &PyMgr::Get()
+{
+    if (theSingleInstance.get() == 0)
+      theSingleInstance.reset(new PyMgr);
+    return *theSingleInstance;
+}
+
+std::auto_ptr<PyMgr> PyMgr::theSingleInstance;
 
 
 void exec_pycode(const char* code)

@@ -5,6 +5,8 @@
 #include <wx/app.h>
 #include <wx/dynarray.h>
 
+
+#include <memory>
 #include <Python.h>
 
 
@@ -137,18 +139,16 @@ WX_DECLARE_OBJARRAY(PyInstance, PyInstanceCollection);
 /////////////////////////////////////////////////////////////////////////////////////
 class PyMgr
 {
-    PyMgr();
+public:
+    PyInstance *LaunchInterpreter();
+    static PyMgr &Get();
     ~PyMgr();
-    PyInstance *LaunchInterpreter()
-    {
-        PyInstance *p=new PyInstance();
-        if(!p)
-            return p;
-        m_Interpreters.Add(p);
-        return p;
-    }
+protected:
+    PyMgr();
 private:
     PyInstanceCollection m_Interpreters;
+    static std::auto_ptr<PyMgr> theSingleInstance;
 };
+
 
 #endif //PYEMBEDDER_H_INCLUDED

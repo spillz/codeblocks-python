@@ -2,7 +2,7 @@
 #include <wx/dir.h>
 #include <wx/filename.h>
 #include <vector>
-#include "il_globals.h"
+#include "se_globals.h"
 
 
 #include <wx/arrimpl.cpp> // this is a magic incantation which must be done!

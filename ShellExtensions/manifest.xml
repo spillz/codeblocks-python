@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_plugin_manifest_file>
     <SdkVersion major="1" minor="10"  release="0" />
-    <Plugin name="InterpretedLangs">
-        <Value title="InterpretedLangs" />
+    <Plugin name="ShellExtensions">
+        <Value title="ShellExtensions" />
         <Value version="0.1" />
         <Value description="" />
         <Value author="Damien Moore" />

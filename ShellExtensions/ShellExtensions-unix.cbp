@@ -21,8 +21,8 @@
 					<Add after="zip -j9 $(#cb)/devel/share/codeblocks/InterpretedLangs.zip manifest.xml" />
 				</ExtraCommands>
 			</Target>
-			<Target title="il-library">
-				<Option output="$(#cb)/devel/il-common.so" prefix_auto="0" extension_auto="0" />
+			<Target title="se-library">
+				<Option output="$(#cb)/devel/se-common.so" prefix_auto="0" extension_auto="0" />
 				<Option working_dir="$(#cb)/devel" />
 				<Option type="3" />
 				<Option compiler="gcc" />
@@ -33,7 +33,7 @@
 					<Add option="-g" />
 				</Compiler>
 			</Target>
-			<Target title="il-plugin">
+			<Target title="se-plugin">
 				<Option output="$(#cb)/devel/share/codeblocks/plugins/libInterpretedLangs.so" prefix_auto="0" extension_auto="0" />
 				<Option working_dir="$(#cb)/devel" />
 				<Option type="3" />
@@ -45,7 +45,7 @@
 					<Add option="-g" />
 				</Compiler>
 				<Linker>
-					<Add library="$(#cb)/devel/il-common.so" />
+					<Add library="$(#cb)/devel/se-common.so" />
 				</Linker>
 				<ExtraCommands>
 					<Add after="zip -j9 $(#cb)/devel/share/codeblocks/InterpretedLangs.zip manifest.xml" />
@@ -90,78 +90,78 @@
 		</Linker>
 		<Unit filename="ConfigDialog.cpp">
 			<Option target="default" />
-			<Option target="il-plugin" />
+			<Option target="se-plugin" />
 			<Option target="detachable" />
 		</Unit>
 		<Unit filename="ConfigDialog.h">
 			<Option target="default" />
-			<Option target="il-plugin" />
+			<Option target="se-plugin" />
 			<Option target="detachable" />
 		</Unit>
 		<Unit filename="FileExplorer.cpp">
-			<Option target="il-library" />
+			<Option target="se-library" />
 			<Option target="default" />
 			<Option target="detachable" />
 		</Unit>
 		<Unit filename="FileExplorer.h">
-			<Option target="il-library" />
+			<Option target="se-library" />
 			<Option target="default" />
 			<Option target="detachable" />
 		</Unit>
 		<Unit filename="FileExplorerSettings.cpp">
-			<Option target="il-plugin" />
+			<Option target="se-plugin" />
 		</Unit>
 		<Unit filename="FileExplorerSettings.h">
-			<Option target="il-plugin" />
+			<Option target="se-plugin" />
 		</Unit>
-		<Unit filename="InterpretedLangs.cpp">
+		<Unit filename="ShellExtensions.cpp">
 			<Option target="default" />
-			<Option target="il-plugin" />
+			<Option target="se-plugin" />
 			<Option target="detachable" />
 		</Unit>
-		<Unit filename="InterpretedLangs.h">
+		<Unit filename="ShellExtensions.h">
 			<Option target="default" />
-			<Option target="il-plugin" />
+			<Option target="se-plugin" />
 			<Option target="detachable" />
 		</Unit>
 		<Unit filename="Resources/dialogs.fbp" />
 		<Unit filename="Resources/il_resources.xrc">
-			<Option target="il-library" />
-			<Option target="il-plugin" />
+			<Option target="se-library" />
+			<Option target="se-plugin" />
 		</Unit>
 		<Unit filename="ShellCtrl.cpp">
 			<Option target="default" />
-			<Option target="il-library" />
+			<Option target="se-library" />
 			<Option target="detachable" />
 		</Unit>
 		<Unit filename="ShellCtrl.h">
 			<Option target="default" />
-			<Option target="il-library" />
+			<Option target="se-library" />
 			<Option target="detachable" />
 		</Unit>
-		<Unit filename="il_globals.cpp">
+		<Unit filename="se_globals.cpp">
 			<Option target="default" />
-			<Option target="il-library" />
+			<Option target="se-library" />
 			<Option target="detachable" />
 		</Unit>
-		<Unit filename="il_globals.h">
+		<Unit filename="se_globals.h">
 			<Option target="default" />
-			<Option target="il-library" />
+			<Option target="se-library" />
 			<Option target="detachable" />
 		</Unit>
-		<Unit filename="interpreterproperties.cpp">
+		<Unit filename="shellproperties.cpp">
 			<Option target="default" />
-			<Option target="il-plugin" />
+			<Option target="se-plugin" />
 			<Option target="detachable" />
 		</Unit>
-		<Unit filename="interpreterproperties.h">
+		<Unit filename="shellproperties.h">
 			<Option target="default" />
-			<Option target="il-plugin" />
+			<Option target="se-plugin" />
 			<Option target="detachable" />
 		</Unit>
 		<Unit filename="manifest.xml">
 			<Option target="default" />
-			<Option target="il-plugin" />
+			<Option target="se-plugin" />
 			<Option target="detachable" />
 		</Unit>
 		<Extensions>

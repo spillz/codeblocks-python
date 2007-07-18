@@ -2,7 +2,7 @@
 #include <wx/textctrl.h>
 #include <wx/regex.h>
 #include "ShellCtrl.h"
-#include "globals.h"
+#include <globals.h>
 
 ////////////////////////////////////// ShellTermCtrl /////////////////////////////////////////////
 int ID_SHELLPOLLTIMER=wxNewId();

@@ -1,4 +1,4 @@
-#include "InterpretedLangs.h"
+#include "ShellExtensions.h"
 #include "ConfigDialog.h"
 
 int ID_NEW=wxNewId();
@@ -30,7 +30,7 @@ BEGIN_EVENT_TABLE(ConfigDialog, wxPanel)
 END_EVENT_TABLE()
 
 //ConfigDialog::ConfigDialog( wxWindow* parent, int id, wxPoint pos, wxSize size, int style ) : wxPanel( parent, id, pos, size, style )
-ConfigDialog::ConfigDialog(wxWindow* parent, InterpretedLangs* plugin) //: cbConfigurationPanel()
+ConfigDialog::ConfigDialog(wxWindow* parent, ShellExtensions* plugin) //: cbConfigurationPanel()
 {
     m_plugin=plugin;
     m_icperm=&(plugin->m_ic);
@@ -43,7 +43,7 @@ ConfigDialog::ConfigDialog(wxWindow* parent, InterpretedLangs* plugin) //: cbCon
 	wxBoxSizer* bSizer12;
 	bSizer12 = new wxBoxSizer( wxVERTICAL );
 
-	m_staticText1 = new wxStaticText( this, wxID_DEFAULT, wxT("Known Interpreters"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText1 = new wxStaticText( this, wxID_DEFAULT, wxT("Known Shell Command Groupings"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer12->Add( m_staticText1, 0, wxALL, 5 );
 
 	wxBoxSizer* bSizer14;
@@ -99,7 +99,7 @@ ConfigDialog::ConfigDialog(wxWindow* parent, InterpretedLangs* plugin) //: cbCon
 	wxBoxSizer* bSizer20;
 	bSizer20 = new wxBoxSizer( wxHORIZONTAL );
 
-	m_staticText3 = new wxStaticText( this, wxID_DEFAULT, wxT("Interpreter Executable"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText3 = new wxStaticText( this, wxID_DEFAULT, wxT("ShellCommand Executable"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer20->Add( m_staticText3, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 
 	m_editexec = new wxTextCtrl( this, ID_EXEC, wxT(""), wxDefaultPosition, wxDefaultSize, 0|wxTAB_TRAVERSAL );
@@ -179,7 +179,7 @@ void ConfigDialog::SetDialogItems()
     if(m_ic.interps.size()>0)
     {
 //        m_interplist->Select(m_activeinterp); //Caused crash on linux
-        Interpreter &interp=m_ic.interps[m_activeinterp];
+        ShellCommand &interp=m_ic.interps[m_activeinterp];
         m_editname->SetValue(interp.name);
         m_editexec->SetValue(interp.exec);
         m_editext->SetValue(interp.extensions);
@@ -197,12 +197,12 @@ void ConfigDialog::GetDialogItems()
 {
     if(!m_ic.interps.size())
         return;
-    Interpreter &interp=m_ic.interps[m_activeinterp];
+    ShellCommand &interp=m_ic.interps[m_activeinterp];
     interp.name=m_editname->GetValue();
     interp.exec=m_editexec->GetValue();
     interp.extensions=m_editext->GetValue();
     wxString actions=m_editactions->GetValue();
-    InterpreterAction act;
+    ShellCommandAction act;
     interp.actions.clear();
     for(int i=0;actions!=_T("");i++)
     {
@@ -224,11 +224,11 @@ void ConfigDialog::GetDialogItems()
 void ConfigDialog::New(wxCommandEvent &event)
 {
     GetDialogItems();
-    Interpreter interp;
-    interp.name=_T("New Interpreter");
+    ShellCommand interp;
+    interp.name=_T("New ShellCommand");
 
     // Add a default action
-    InterpreterAction act;
+    ShellCommandAction act;
     act.name=_T("Run");
     act.command=_T("$interpreter $file");
     act.mode=_T("W");
@@ -248,7 +248,7 @@ void ConfigDialog::Copy(wxCommandEvent &event)
     GetDialogItems();
     if(m_ic.interps.size()>0)
     {
-        Interpreter interp=m_ic.interps[m_activeinterp];
+        ShellCommand interp=m_ic.interps[m_activeinterp];
         interp.name+=_T(" (Copy)");
         m_ic.interps.push_back(interp);
 
@@ -280,7 +280,7 @@ void ConfigDialog::OnUp(wxCommandEvent &event)
     if(m_activeinterp>0 && m_ic.interps.size()>1)
     {
         GetDialogItems();
-        Interpreter interp=m_ic.interps[m_activeinterp];
+        ShellCommand interp=m_ic.interps[m_activeinterp];
         m_ic.interps.erase(m_ic.interps.begin()+m_activeinterp);
         m_interplist->Delete(m_activeinterp);
         m_activeinterp--;
@@ -295,7 +295,7 @@ void ConfigDialog::OnDown(wxCommandEvent &event)
     if(m_activeinterp+1<m_ic.interps.size() && m_ic.interps.size()>1)
     {
         GetDialogItems();
-        Interpreter interp=m_ic.interps[m_activeinterp];
+        ShellCommand interp=m_ic.interps[m_activeinterp];
         m_ic.interps.erase(m_ic.interps.begin()+m_activeinterp);
         m_interplist->Delete(m_activeinterp);
         m_activeinterp++;

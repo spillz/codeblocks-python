@@ -1,5 +1,5 @@
-#include "InterpretedLangs.h"
-#include "il_globals.h"
+#include "ShellExtensions.h"
+#include "se_globals.h"
 #ifdef CBIL_TEARAWAY
 #include <tearawaynotebook.h>
 #endif
@@ -8,7 +8,7 @@
 // We are using an anonymous namespace so we don't litter the global one.
 namespace
 {
-    PluginRegistrant<InterpretedLangs> reg(_T("InterpretedLangs"));
+    PluginRegistrant<ShellExtensions> reg(_T("ShellExtensions"));
 }
 
 int ID_UpdateUI=wxNewId();
@@ -91,16 +91,16 @@ int ID_SubMenu_19=wxNewId();
 int ID_SubMenu_20=wxNewId();
 
 // events handling
-BEGIN_EVENT_TABLE(InterpretedLangs, cbPlugin)
-    EVT_MENU_RANGE(ID_ContextMenu_0,ID_ContextMenu_9,InterpretedLangs::OnRunTarget)
-    EVT_MENU_RANGE(ID_NoTargMenu_0, ID_NoTargMenu_9, InterpretedLangs::OnRun)
-    EVT_MENU_RANGE(ID_SubMenu_0, ID_SubMenu_20, InterpretedLangs::OnRunTarget)
-    EVT_MENU(ID_LangMenu_ShowConsole,InterpretedLangs::OnShowConsole)
-    EVT_UPDATE_UI(ID_LangMenu_ShowConsole, InterpretedLangs::OnUpdateUI)
+BEGIN_EVENT_TABLE(ShellExtensions, cbPlugin)
+    EVT_MENU_RANGE(ID_ContextMenu_0,ID_ContextMenu_9,ShellExtensions::OnRunTarget)
+    EVT_MENU_RANGE(ID_NoTargMenu_0, ID_NoTargMenu_9, ShellExtensions::OnRun)
+    EVT_MENU_RANGE(ID_SubMenu_0, ID_SubMenu_20, ShellExtensions::OnRunTarget)
+    EVT_MENU(ID_LangMenu_ShowConsole,ShellExtensions::OnShowConsole)
+    EVT_UPDATE_UI(ID_LangMenu_ShowConsole, ShellExtensions::OnUpdateUI)
 END_EVENT_TABLE()
 
 
-void InterpretedLangs::OnUpdateUI(wxUpdateUIEvent& event)
+void ShellExtensions::OnUpdateUI(wxUpdateUIEvent& event)
 {
     m_LangMenu->Check(ID_LangMenu_ShowConsole,IsWindowReallyShown(m_shellmgr));
     // allow other UpdateUI handlers to process this event
@@ -109,7 +109,7 @@ void InterpretedLangs::OnUpdateUI(wxUpdateUIEvent& event)
 }
 
 
-void InterpretedLangs::OnShowConsole(wxCommandEvent& event)
+void ShellExtensions::OnShowConsole(wxCommandEvent& event)
 {
     // This toggles display of the console I/O window
     CodeBlocksDockEvent evt(event.IsChecked() ? cbEVT_SHOW_DOCK_WINDOW : cbEVT_HIDE_DOCK_WINDOW);
@@ -117,7 +117,7 @@ void InterpretedLangs::OnShowConsole(wxCommandEvent& event)
     Manager::Get()->ProcessEvent(evt);
 }
 
-void InterpretedLangs::ShowConsole()
+void ShellExtensions::ShowConsole()
 {
     // This shows the console I/O window
     CodeBlocksDockEvent evt(cbEVT_SHOW_DOCK_WINDOW);
@@ -125,7 +125,7 @@ void InterpretedLangs::ShowConsole()
     Manager::Get()->ProcessEvent(evt);
 }
 
-void InterpretedLangs::HideConsole()
+void ShellExtensions::HideConsole()
 {
     // This hides display of the console I/O window
     CodeBlocksDockEvent evt(cbEVT_HIDE_DOCK_WINDOW);
@@ -133,12 +133,12 @@ void InterpretedLangs::HideConsole()
     Manager::Get()->ProcessEvent(evt);
 }
 
-void InterpretedLangs::OnSettings(wxCommandEvent& event)
+void ShellExtensions::OnSettings(wxCommandEvent& event)
 {
     cbMessageBox(_T("Settings..."));
 }
 
-void InterpretedLangs::OnSubMenuSelect(wxUpdateUIEvent& event)
+void ShellExtensions::OnSubMenuSelect(wxUpdateUIEvent& event)
 {
     int num=event.GetId()-ID_Menu_0;
     if(num>=0 && num<=9)
@@ -153,7 +153,7 @@ void InterpretedLangs::OnSubMenuSelect(wxUpdateUIEvent& event)
     }
 }
 
-void InterpretedLangs::OnSetTarget(wxCommandEvent& event)
+void ShellExtensions::OnSetTarget(wxCommandEvent& event)
 {
     wxString wild(m_wildcard);
     if(wild==_T(""))
@@ -162,7 +162,7 @@ void InterpretedLangs::OnSetTarget(wxCommandEvent& event)
 #else
         wild=_T("*");
 #endif
-    wxFileDialog *fd=new wxFileDialog(NULL,_T("Choose the Interpreter Target"),_T(""),_T(""),wild,wxOPEN|wxFILE_MUST_EXIST);
+    wxFileDialog *fd=new wxFileDialog(NULL,_T("Choose the ShellCommand Target"),_T(""),_T(""),wild,wxOPEN|wxFILE_MUST_EXIST);
     if(fd->ShowModal()==wxID_OK)
     {
         m_RunTarget=fd->GetPath();
@@ -171,7 +171,7 @@ void InterpretedLangs::OnSetTarget(wxCommandEvent& event)
     delete fd;
 }
 
-void InterpretedLangs::OnSetMultiTarget(wxCommandEvent& event)
+void ShellExtensions::OnSetMultiTarget(wxCommandEvent& event)
 {
     wxString wild(m_wildcard);
     if(wild==_T(""))
@@ -180,7 +180,7 @@ void InterpretedLangs::OnSetMultiTarget(wxCommandEvent& event)
 #else
         wild=_T("*");
 #endif
-    wxFileDialog *fd=new wxFileDialog(NULL,_T("Choose the Interpreter Targets"),_T(""),_T(""),wild,wxOPEN|wxFILE_MUST_EXIST|wxMULTIPLE);
+    wxFileDialog *fd=new wxFileDialog(NULL,_T("Choose the ShellCommand Targets"),_T(""),_T(""),wild,wxOPEN|wxFILE_MUST_EXIST|wxMULTIPLE);
     if(fd->ShowModal()==wxID_OK)
     {
         wxArrayString paths;
@@ -194,7 +194,7 @@ void InterpretedLangs::OnSetMultiTarget(wxCommandEvent& event)
 }
 
 
-void InterpretedLangs::OnSetDirTarget(wxCommandEvent& event)
+void ShellExtensions::OnSetDirTarget(wxCommandEvent& event)
 {
     wxDirDialog *dd=new wxDirDialog(NULL,_T("Choose the Target Directory"),_T(""));
     if(dd->ShowModal()==wxID_OK)
@@ -205,7 +205,7 @@ void InterpretedLangs::OnSetDirTarget(wxCommandEvent& event)
     delete dd;
 }
 
-void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
+void ShellExtensions::OnRunTarget(wxCommandEvent& event)
 {
     int ID=event.GetId();
     wxString commandstr;
@@ -255,7 +255,7 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
             OnSetTarget(event);
             if(!wxFileName::FileExists(m_RunTarget))
             {
-                LogMessage(_("InterpretedLangs: ")+m_RunTarget+_(" not found"));
+                LogMessage(_("ShellExtensions: ")+m_RunTarget+_(" not found"));
                 return;
             }
         }
@@ -264,7 +264,7 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
             OnSetDirTarget(event);
             if(!wxFileName::DirExists(m_RunTarget))
             {
-                LogMessage(_("InterpretedLangs: ")+m_RunTarget+_(" not found"));
+                LogMessage(_("ShellExtensions: ")+m_RunTarget+_(" not found"));
                 return;
             }
             if(m_RunTarget==_T(""))
@@ -279,7 +279,7 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
     }
     else
     {
-        LogMessage(wxString::Format(_T("WARNING: Unprocessed Interpreter Menu Message: ID %i, IDbase %i, IDend %i, num items on menu %i"),ID,ID_ContextMenu_0,ID_ContextMenu_29,(int)m_contextvec.size()));
+        LogMessage(wxString::Format(_T("WARNING: Unprocessed ShellCommand Menu Message: ID %i, IDbase %i, IDend %i, num items on menu %i"),ID,ID_ContextMenu_0,ID_ContextMenu_29,(int)m_contextvec.size()));
         return;
     }
 
@@ -346,7 +346,7 @@ void InterpretedLangs::OnRunTarget(wxCommandEvent& event)
 }
 
 // DEPRECATED - NO LONGER REQUIRED
-void InterpretedLangs::OnRun(wxCommandEvent& event)
+void ShellExtensions::OnRun(wxCommandEvent& event)
 {
     int ID=event.GetId();
     wxString commandstr;
@@ -370,18 +370,18 @@ void InterpretedLangs::OnRun(wxCommandEvent& event)
 }
 
 // constructor
-InterpretedLangs::InterpretedLangs()
+ShellExtensions::ShellExtensions()
 {
     // Make sure our resources are available.
     // In the generated boilerplate code we have no resources but when
     // we add some, it will be nice that this code is in place already ;)
-    if(!Manager::LoadResource(_T("InterpretedLangs.zip")))
+    if(!Manager::LoadResource(_T("ShellExtensions.zip")))
     {
-        NotifyMissingFile(_T("InterpretedLangs.zip"));
+        NotifyMissingFile(_T("ShellExtensions.zip"));
     }
 }
 
-cbConfigurationPanel* InterpretedLangs::GetConfigurationPanel(wxWindow* parent)
+cbConfigurationPanel* ShellExtensions::GetConfigurationPanel(wxWindow* parent)
 {
 //    MyDialog* dlg = new MyDialog(this, *m_pKeyProfArr, parent,
 //        wxT("Keybindings"), mode);
@@ -390,12 +390,12 @@ cbConfigurationPanel* InterpretedLangs::GetConfigurationPanel(wxWindow* parent)
 }
 
 // destructor
-InterpretedLangs::~InterpretedLangs()
+ShellExtensions::~ShellExtensions()
 {
 
 }
 
-void InterpretedLangs::OnAttach()
+void ShellExtensions::OnAttach()
 {
 	// do whatever initialization you need for your plugin
 	// NOTE: after this function, the inherited member variable
@@ -424,7 +424,7 @@ void InterpretedLangs::OnAttach()
     Manager::Get()->GetProjectManager()->GetNotebook()->AddPage(m_fe,_T("Files"));
 }
 
-void InterpretedLangs::OnRelease(bool appShutDown)
+void ShellExtensions::OnRelease(bool appShutDown)
 {
 	// do de-initialization for your plugin
 	// if appShutDown is false, the plugin is unloaded because Code::Blocks is being shut down,
@@ -450,10 +450,10 @@ void InterpretedLangs::OnRelease(bool appShutDown)
     m_fe = 0;
 }
 
-int InterpretedLangs::Configure()
+int ShellExtensions::Configure()
 {
 	//create and display the configuration dialog for your plugin
-	cbConfigurationDialog dlg(Manager::Get()->GetAppWindow(), wxID_ANY, _("Interpreter Settings"));
+	cbConfigurationDialog dlg(Manager::Get()->GetAppWindow(), wxID_ANY, _("ShellCommand Settings"));
 	cbConfigurationPanel* panel = GetConfigurationPanel(&dlg);
 	if (panel)
 	{
@@ -464,7 +464,7 @@ int InterpretedLangs::Configure()
 	return -1;
 }
 
-void InterpretedLangs::CreateMenu()
+void ShellExtensions::CreateMenu()
 {
     unsigned int j=0; //index to actions
     for(unsigned int i=0;i<m_ic.interps.size()&&i<10;i++) //create at most 10 interpreter submenus
@@ -489,7 +489,7 @@ void InterpretedLangs::CreateMenu()
     m_LangMenu->Append(ID_LangMenu_ShowConsole,_T("Toggle I/O console"),_T(""),wxITEM_CHECK);
 }
 
-void InterpretedLangs::UpdateMenu()
+void ShellExtensions::UpdateMenu()
 {
     //delete the old menu items
     if(m_LangMenu)
@@ -501,7 +501,7 @@ void InterpretedLangs::UpdateMenu()
     }
 }
 
-void InterpretedLangs::BuildMenu(wxMenuBar* menuBar)
+void ShellExtensions::BuildMenu(wxMenuBar* menuBar)
 {
 	//The application is offering its menubar for your plugin,
 	//to add any menu items you want...
@@ -511,16 +511,16 @@ void InterpretedLangs::BuildMenu(wxMenuBar* menuBar)
 	CreateMenu();
 	int pos = menuBar->FindMenu(_T("Plugins"));
 	if(pos!=wxNOT_FOUND)
-        menuBar->Insert(pos, m_LangMenu, _T("&Interpreters"));
+        menuBar->Insert(pos, m_LangMenu, _T("E&xtensions"));
     else
     {
         delete m_LangMenu;
         m_LangMenu=0;
     }
-//	NotImplemented(_T("InterpretedLangs::BuildMenu()"));
+//	NotImplemented(_T("ShellExtensions::BuildMenu()"));
 }
 
-void InterpretedLangs::BuildModuleMenu(const ModuleType type, wxMenu* menu, const FileTreeData* data)
+void ShellExtensions::BuildModuleMenu(const ModuleType type, wxMenu* menu, const FileTreeData* data)
 {
 	//Some library module is ready to display a pop-up menu.
 	//Check the parameter \"type\" and see which module it is
@@ -549,7 +549,7 @@ void InterpretedLangs::BuildModuleMenu(const ModuleType type, wxMenu* menu, cons
                                 if(m_ic.interps[i].actions[j].command.Find(_T("$file"))>=0)
                                 {
                                     wxString menutext=m_ic.interps[i].name+_T(" ")+m_ic.interps[i].actions[j].name;
-                                    m_contextvec.push_back(InterpreterMenuRef(i,j));
+                                    m_contextvec.push_back(ShellCommandMenuRef(i,j));
                                     menu->Append(ID_ContextMenu_0+added,menutext,_T(""));
                                     added++;
                                 }
@@ -578,7 +578,7 @@ void InterpretedLangs::BuildModuleMenu(const ModuleType type, wxMenu* menu, cons
                     if(m_ic.interps[i].actions[j].command.Find(_T("$file"))>=0)
                     {
                         wxString menutext=m_ic.interps[i].name+_T(" ")+m_ic.interps[i].actions[j].name;
-                        m_contextvec.push_back(InterpreterMenuRef(i,j));
+                        m_contextvec.push_back(ShellCommandMenuRef(i,j));
                         menu->Append(ID_ContextMenu_0+added,menutext,_T(""));
                         added++;
                     }
@@ -608,7 +608,7 @@ void InterpretedLangs::BuildModuleMenu(const ModuleType type, wxMenu* menu, cons
                                 m_ic.interps[i].actions[j].command.Find(_T("$mpaths"))>=0)
                             {
                                 wxString menutext=m_ic.interps[i].name+_T(" ")+m_ic.interps[i].actions[j].name;
-                                m_contextvec.push_back(InterpreterMenuRef(i,j));
+                                m_contextvec.push_back(ShellCommandMenuRef(i,j));
                                 menu->Append(ID_ContextMenu_0+added,menutext,_T(""));
                                 added++;
                             }
@@ -631,7 +631,7 @@ void InterpretedLangs::BuildModuleMenu(const ModuleType type, wxMenu* menu, cons
                                 m_ic.interps[i].actions[j].command.Find(_T("$mpaths"))>=0)
                             {
                                 wxString menutext=m_ic.interps[i].name+_T(" ")+m_ic.interps[i].actions[j].name;
-                                m_contextvec.push_back(InterpreterMenuRef(i,j));
+                                m_contextvec.push_back(ShellCommandMenuRef(i,j));
                                 menu->Append(ID_ContextMenu_0+added,menutext,_T(""));
                                 added++;
                             }
@@ -664,7 +664,7 @@ void InterpretedLangs::BuildModuleMenu(const ModuleType type, wxMenu* menu, cons
                             if(m_ic.interps[i].actions[j].command.Find(_T("$mpaths"))>=0)
                             {
                                 wxString menutext=m_ic.interps[i].name+_T(" ")+m_ic.interps[i].actions[j].name;
-                                m_contextvec.push_back(InterpreterMenuRef(i,j));
+                                m_contextvec.push_back(ShellCommandMenuRef(i,j));
                                 menu->Append(ID_ContextMenu_0+added,menutext,_T(""));
                                 added++;
                             }
@@ -675,6 +675,6 @@ void InterpretedLangs::BuildModuleMenu(const ModuleType type, wxMenu* menu, cons
             if(added>0)
                 menu->InsertSeparator(sep_pos);
 	    }
-//	NotImplemented(_T("InterpretedLangs::BuildModuleMenu()"));
+//	NotImplemented(_T("ShellExtensions::BuildModuleMenu()"));
 }
 

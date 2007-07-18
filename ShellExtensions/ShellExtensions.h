@@ -1,5 +1,5 @@
 /***************************************************************
- * Name:      InterpretedLangs
+ * Name:      ShellExtensions
  * Purpose:   Code::Blocks plugin
  * Author:    Damien Moore ()
  * Created:   2006-09-28
@@ -7,8 +7,8 @@
  * License:   GPL
  **************************************************************/
 
-#ifndef INTERPRETEDLANGS_H_INCLUDED
-#define INTERPRETEDLANGS_H_INCLUDED
+#ifndef SHELLEXTENSIONS_H_INCLUDED
+#define SHELLEXTENSIONS_H_INCLUDED
 
 // For compilers that support precompilation, includes <wx/wx.h>
 #include <wx/wxprec.h>
@@ -19,18 +19,18 @@
 
 #include <sdk.h>
 #include <cbplugin.h> // for "class cbPlugin"
-#include "interpreterproperties.h"
+#include "shellproperties.h"
 #include "ConfigDialog.h"
 #include "ShellCtrl.h"
 #include "FileExplorer.h"
 
-class InterpretedLangs : public cbPlugin
+class ShellExtensions : public cbPlugin
 {
     public:
 		/** Constructor. */
-        InterpretedLangs();
+        ShellExtensions();
 		/** Destructor. */
-        virtual ~InterpretedLangs();
+        virtual ~ShellExtensions();
 
 		/** Invoke configuration dialog. */
         virtual int Configure();
@@ -128,7 +128,7 @@ class InterpretedLangs : public cbPlugin
         void CreateMenu();
         void ShowConsole();
         void HideConsole();
-        InterpreterCollection m_ic; //object holding interpreter properties
+        CommandCollection m_ic; //object holding interpreter properties
 
     private:
         void OnSettings(wxCommandEvent& event);
@@ -147,8 +147,8 @@ class InterpretedLangs : public cbPlugin
         unsigned int m_contextactions[10];
         wxString m_wildcard;
 
-        InterpreterMenuVec m_contextvec;
-        InterpreterMenuVec m_menuvec;
+        ShellCommandMenuVec m_contextvec;
+        ShellCommandMenuVec m_menuvec;
 
         wxString m_RunTarget;
 
@@ -168,4 +168,4 @@ class InterpretedLangs : public cbPlugin
         DECLARE_EVENT_TABLE();
 };
 
-#endif // INTERPRETEDLANGS_H_INCLUDED
+#endif // SHELLEXTENSIONS_H_INCLUDED

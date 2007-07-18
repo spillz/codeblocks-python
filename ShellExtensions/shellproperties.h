@@ -13,17 +13,17 @@
 #include <sdk.h> // Code::Blocks SDK
 
 
-struct InterpreterMenuRef
+struct ShellCommandMenuRef
 {
-    InterpreterMenuRef(size_t interp, size_t act) {i=interp; a=act;}
+    ShellCommandMenuRef(size_t interp, size_t act) {i=interp; a=act;}
     size_t i;
     size_t a;
 };
 
-typedef std::vector<InterpreterMenuRef> InterpreterMenuVec;
+typedef std::vector<ShellCommandMenuRef> ShellCommandMenuVec;
 
 
-struct InterpreterAction
+struct ShellCommandAction
 {
    wxString name; // the action's name, e.g. "Run"
    wxString command; // the command, e.g. "$interpreter --run $file"
@@ -32,25 +32,25 @@ struct InterpreterAction
    wxString envvarset;
 };
 
-struct Interpreter
+struct ShellCommand
 {
    wxString name; // a friendly name for the interpreter
    wxString exec; // the full path to the interpreter's executable
    wxString extensions; // a semicolon-separated list of extension wildcards (e.g. "*.py;*.pyc")
-   std::vector<InterpreterAction> actions; // an array of possible actions with this interpreter
+   std::vector<ShellCommandAction> actions; // an array of possible actions with this interpreter
 };
 
-class InterpreterCollection
+class CommandCollection
 {
 public:
-//    InterpreterCollection();
-//    virtual ~InterpreterCollection();
-//    virtual ~InterpreterCollection();
+//    CommandCollection();
+//    virtual ~CommandCollection();
+//    virtual ~CommandCollection();
     bool WriteConfig(); //TODO: pass handle to config manager
     bool ReadConfig(); // ditto
 //    bool ConvertExtsWildCard(const wxString &seplist);
 //    wxString ConvertExtsWildCard();
-    std::vector<Interpreter> interps;
+    std::vector<ShellCommand> interps;
 };
 
 

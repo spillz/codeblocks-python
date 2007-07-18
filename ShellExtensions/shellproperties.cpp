@@ -1,4 +1,4 @@
-#include "interpreterproperties.h"
+#include "shellproperties.h"
 
 
 wxString istr0(int i)
@@ -6,7 +6,7 @@ wxString istr0(int i)
     return wxString::Format(_T("%i"),i);
 }
 
-bool InterpreterCollection::WriteConfig()
+bool CommandCollection::WriteConfig()
 {
     ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("InterpretedLangs"));
     //cfg->Clear();
@@ -34,7 +34,7 @@ bool InterpreterCollection::WriteConfig()
 }
 
 
-bool InterpreterCollection::ReadConfig()
+bool CommandCollection::ReadConfig()
 {
     ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("InterpretedLangs"));
     int len;
@@ -67,20 +67,20 @@ bool InterpreterCollection::ReadConfig()
 }
 
 /*
-bool InterpreterCollection::ConvertExtsWildCard(const wxString &seplist)
+bool CommandCollection::ConvertExtsWildCard(const wxString &seplist)
 {
 }
 
-wxString InterpreterCollection::ConvertExtsWildCard()
+wxString CommandCollection::ConvertExtsWildCard()
 {
 }
 
-InterpreterCollection::InterpreterCollection()
+CommandCollection::CommandCollection()
 {
     //ctor
 }
 
-InterpreterCollection::~InterpreterCollection()
+CommandCollection::~CommandCollection()
 {
     //dtor
 }

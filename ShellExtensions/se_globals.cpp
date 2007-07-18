@@ -1,4 +1,4 @@
-#include "il_globals.h"
+#include "se_globals.h"
 
 bool WildCardListMatch(wxString list, wxString name)
 {

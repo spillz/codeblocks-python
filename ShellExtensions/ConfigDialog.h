@@ -9,22 +9,22 @@
 
 #include <sdk.h>
 #include <configurationpanel.h>
-#include "interpreterproperties.h"
+#include "shellproperties.h"
 
 
 
-class InterpretedLangs;
-class InterpreterCollection;
+class ShellExtensions;
+class CommandCollection;
 
 class ConfigDialog : public cbConfigurationPanel
 {
   private:
 
   public:
-    ConfigDialog(wxWindow* parent, InterpretedLangs* plugin);
+    ConfigDialog(wxWindow* parent, ShellExtensions* plugin);
     virtual ~ConfigDialog();
 
-    virtual wxString GetTitle() const { return _("Interpreters"); }
+    virtual wxString GetTitle() const { return _("Shell Extensions"); }
     virtual wxString GetBitmapBaseName() const { return _T("batch"); }
     virtual void OnApply();
     virtual void OnCancel(){}
@@ -37,7 +37,7 @@ class ConfigDialog : public cbConfigurationPanel
     void NameChange(wxCommandEvent &event);
     void OnUp(wxCommandEvent &event);
     void OnDown(wxCommandEvent &event);
-    // Controls in the Edit Interpreter Box
+    // Controls in the Edit ShellCommand Box
     void OnEditOK(wxCommandEvent &event);
     void OnEditCancel(wxCommandEvent &event);
     void OnEditBrowseExec(wxCommandEvent &event);
@@ -65,9 +65,9 @@ class ConfigDialog : public cbConfigurationPanel
     unsigned int m_activeinterp;
 
   private:
-    InterpreterCollection m_ic;
-    InterpreterCollection *m_icperm;
-    InterpretedLangs *m_plugin;
+    CommandCollection m_ic;
+    CommandCollection *m_icperm;
+    ShellExtensions *m_plugin;
     void UpdateEntry(int index);
     void ChooseFile();
 

@@ -162,7 +162,7 @@ void ShellExtensions::OnSetTarget(wxCommandEvent& event)
 #else
         wild=_T("*");
 #endif
-    wxFileDialog *fd=new wxFileDialog(NULL,_T("Choose the ShellCommand Target"),_T(""),_T(""),wild,wxOPEN|wxFILE_MUST_EXIST);
+    wxFileDialog *fd=new wxFileDialog(NULL,_T("Choose the Command Target"),_T(""),_T(""),wild,wxOPEN|wxFILE_MUST_EXIST);
     if(fd->ShowModal()==wxID_OK)
     {
         m_RunTarget=fd->GetPath();
@@ -180,7 +180,7 @@ void ShellExtensions::OnSetMultiTarget(wxCommandEvent& event)
 #else
         wild=_T("*");
 #endif
-    wxFileDialog *fd=new wxFileDialog(NULL,_T("Choose the ShellCommand Targets"),_T(""),_T(""),wild,wxOPEN|wxFILE_MUST_EXIST|wxMULTIPLE);
+    wxFileDialog *fd=new wxFileDialog(NULL,_T("Choose the Command Targets"),_T(""),_T(""),wild,wxOPEN|wxFILE_MUST_EXIST|wxMULTIPLE);
     if(fd->ShowModal()==wxID_OK)
     {
         wxArrayString paths;
@@ -264,7 +264,7 @@ void ShellExtensions::OnRunTarget(wxCommandEvent& event)
             OnSetDirTarget(event);
             if(!wxFileName::DirExists(m_RunTarget))
             {
-                LogMessage(_("ShellExtensions: ")+m_RunTarget+_(" not found"));
+                LogMessage(_("Shell Extensions: ")+m_RunTarget+_(" not found"));
                 return;
             }
             if(m_RunTarget==_T(""))
@@ -307,7 +307,7 @@ void ShellExtensions::OnRunTarget(wxCommandEvent& event)
     {
         if(!wxSetWorkingDirectory(workingdir))
         {
-            LogMessage(_T("IntepretedLangs: Can't change to working directory to ")+workingdir);
+            LogMessage(_T("Shell Extensions Plugin: Can't change to working directory to ")+workingdir);
             return;
         }
     }

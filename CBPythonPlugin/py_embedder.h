@@ -5,14 +5,11 @@
 #include <wx/app.h>
 #include <wx/dynarray.h>
 
-
 #include <memory>
 #include <Python.h>
 
-
 class PyJob;
 class PyInstance;
-
 
 /////////////////////////////////////////////////////////////////////////////////////
 // Python Interpreter Events

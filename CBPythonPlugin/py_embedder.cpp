@@ -6,7 +6,6 @@ WX_DEFINE_LIST(PyJobQueue);
 
 using namespace std;
 
-
 //////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////
 // classes PyNotifyIntepreterEvent and PyNotifyUIEvent
@@ -18,7 +17,6 @@ DEFINE_EVENT_TYPE( wxEVT_PY_NOTIFY_INTERPRETER )
 PyNotifyIntepreterEvent::PyNotifyIntepreterEvent(int id) : wxEvent(id, wxEVT_PY_NOTIFY_INTERPRETER)
 {
 }
-
 
 DEFINE_EVENT_TYPE( wxEVT_PY_NOTIFY_UI )
 
@@ -42,6 +40,7 @@ PyJob::PyJob(wxWindow *p, int id, bool selfdestroy):wxThread(wxTHREAD_JOINABLE)
     finished=false;
     started=false;
     killonexit=selfdestroy;
+    // need to call a Python method to notify it of this thread using the API...
 }
 
 PyJob::~PyJob()
@@ -186,12 +185,10 @@ PyMgr &PyMgr::Get()
 
 std::auto_ptr<PyMgr> PyMgr::theSingleInstance;
 
-
 void exec_pycode(const char* code)
 {
   PyRun_SimpleString(code);
 }
-
 
 void exec_interactive_interpreter(int argc, char** argv)
 {
@@ -199,7 +196,6 @@ void exec_interactive_interpreter(int argc, char** argv)
   Py_Main(argc, argv);
   Py_Finalize();
 }
-
 
 void process_expression(char* filename,int num,char** exp)
 {
@@ -219,6 +215,7 @@ void process_expression(char* filename,int num,char** exp)
         PyRun_SimpleString("print x");
     }
 }
+
 int main2(int argc, char** argv)
 {
     Py_Initialize();

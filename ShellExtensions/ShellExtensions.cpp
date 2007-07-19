@@ -286,15 +286,20 @@ void ShellExtensions::OnRunTarget(wxCommandEvent& event)
     m_RunTarget.Replace(_T("*"),_T(" "));
 
     bool setdir=true;
-    commandstr.Replace(_T("$file"),wxFileName(m_RunTarget).GetShortPath(),false);
-    commandstr.Replace(_T("$dir"),wxFileName(m_RunTarget).GetShortPath(),false);
-    commandstr.Replace(_T("$path"),wxFileName(m_RunTarget).GetShortPath(),false);
-    if(commandstr.Replace(_T("$mpaths"),m_RunTarget,false)>0)
+    commandstr.Replace(_T("$file"),wxFileName(m_RunTarget).GetShortPath());
+    commandstr.Replace(_T("$relfile"),wxFileName(m_RunTarget).GetFullName());
+    commandstr.Replace(_T("$fname"),wxFileName(m_RunTarget).GetName());
+    commandstr.Replace(_T("$fext"),wxFileName(m_RunTarget).GetExt());
+    commandstr.Replace(_T("$dir"),wxFileName(m_RunTarget).GetShortPath());
+    commandstr.Replace(_T("$reldir"),wxFileName(m_RunTarget).GetFullName());
+    commandstr.Replace(_T("$path"),wxFileName(m_RunTarget).GetShortPath());
+    commandstr.Replace(_T("$relpath"),wxFileName(m_RunTarget).GetFullPath());
+    if(commandstr.Replace(_T("$mpaths"),m_RunTarget)>0)
         setdir=false;
-    commandstr.Replace(_T("$interpreter"),wxFileName(m_ic.interps[m_interpnum].exec).GetShortPath(),false);
-    workingdir.Replace(_T("$parentdir"),wxFileName(m_RunTarget).GetPath(),false);
-    workingdir.Replace(_T("$dir"),wxFileName(m_RunTarget).GetPath(),false);
-
+    commandstr.Replace(_T("$interpreter"),wxFileName(m_ic.interps[m_interpnum].exec).GetShortPath());
+    workingdir.Replace(_T("$parentdir"),wxFileName(m_RunTarget).GetPath());
+    if(wxFileName::DirExists(m_RunTarget))
+        workingdir.Replace(_T("$dir"),wxFileName(m_RunTarget).GetFullPath());
 
     if(Manager::Get()->GetMacrosManager())
     {
@@ -546,7 +551,13 @@ void ShellExtensions::BuildModuleMenu(const ModuleType type, wxMenu* menu, const
                             m_RunTarget=filename;
                             for(unsigned int j=0;j<m_ic.interps[i].actions.size();j++)
                             {
-                                if(m_ic.interps[i].actions[j].command.Find(_T("$file"))>=0)
+                                if(m_ic.interps[i].actions[j].command.Find(_T("$file"))>=0 ||
+                                    m_ic.interps[i].actions[j].command.Find(_T("$relfile"))>=0 ||
+                                    m_ic.interps[i].actions[j].command.Find(_T("$fname"))>=0 ||
+                                    m_ic.interps[i].actions[j].command.Find(_T("$fext"))>=0 ||
+                                    m_ic.interps[i].actions[j].command.Find(_T("$path"))>=0 ||
+                                    m_ic.interps[i].actions[j].command.Find(_T("$relpath"))>=0 ||
+                                    m_ic.interps[i].actions[j].command.Find(_T("$mpaths"))>=0)
                                 {
                                     wxString menutext=m_ic.interps[i].name+_T(" ")+m_ic.interps[i].actions[j].name;
                                     m_contextvec.push_back(ShellCommandMenuRef(i,j));
@@ -575,7 +586,13 @@ void ShellExtensions::BuildModuleMenu(const ModuleType type, wxMenu* menu, const
                 m_RunTarget=filename;
                 for(unsigned int j=0;j<m_ic.interps[i].actions.size();j++)
                 {
-                    if(m_ic.interps[i].actions[j].command.Find(_T("$file"))>=0)
+                    if(m_ic.interps[i].actions[j].command.Find(_T("$file"))>=0 ||
+                        m_ic.interps[i].actions[j].command.Find(_T("$relfile"))>=0 ||
+                        m_ic.interps[i].actions[j].command.Find(_T("$fname"))>=0 ||
+                        m_ic.interps[i].actions[j].command.Find(_T("$fext"))>=0 ||
+                        m_ic.interps[i].actions[j].command.Find(_T("$path"))>=0 ||
+                        m_ic.interps[i].actions[j].command.Find(_T("$relpath"))>=0 ||
+                        m_ic.interps[i].actions[j].command.Find(_T("$mpaths"))>=0)
                     {
                         wxString menutext=m_ic.interps[i].name+_T(" ")+m_ic.interps[i].actions[j].name;
                         m_contextvec.push_back(ShellCommandMenuRef(i,j));
@@ -604,7 +621,11 @@ void ShellExtensions::BuildModuleMenu(const ModuleType type, wxMenu* menu, const
                         for(unsigned int j=0;j<m_ic.interps[i].actions.size();j++)
                         {
                             if(m_ic.interps[i].actions[j].command.Find(_T("$file"))>=0 ||
+                                m_ic.interps[i].actions[j].command.Find(_T("$relfile"))>=0 ||
+                                m_ic.interps[i].actions[j].command.Find(_T("$fname"))>=0 ||
+                                m_ic.interps[i].actions[j].command.Find(_T("$fext"))>=0 ||
                                 m_ic.interps[i].actions[j].command.Find(_T("$path"))>=0 ||
+                                m_ic.interps[i].actions[j].command.Find(_T("$relpath"))>=0 ||
                                 m_ic.interps[i].actions[j].command.Find(_T("$mpaths"))>=0)
                             {
                                 wxString menutext=m_ic.interps[i].name+_T(" ")+m_ic.interps[i].actions[j].name;
@@ -627,7 +648,9 @@ void ShellExtensions::BuildModuleMenu(const ModuleType type, wxMenu* menu, const
                         for(unsigned int j=0;j<m_ic.interps[i].actions.size();j++)
                         {
                             if(m_ic.interps[i].actions[j].command.Find(_T("$dir"))>=0 ||
+                                m_ic.interps[i].actions[j].command.Find(_T("$reldir"))>=0 ||
                                 m_ic.interps[i].actions[j].command.Find(_T("$path"))>=0 ||
+                                m_ic.interps[i].actions[j].command.Find(_T("$relpath"))>=0 ||
                                 m_ic.interps[i].actions[j].command.Find(_T("$mpaths"))>=0)
                             {
                                 wxString menutext=m_ic.interps[i].name+_T(" ")+m_ic.interps[i].actions[j].name;

@@ -27,7 +27,6 @@
 				<Option type="3" />
 				<Option compiler="gcc" />
 				<Option parameters="--personality=debug" />
-				<Option host_application="$(#cb)/devel/codeblocks" />
 				<Compiler>
 					<Add option="-Wall" />
 					<Add option="-g" />
@@ -56,7 +55,6 @@
 				<Option working_dir="$(#cb)/devel" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option parameters="--personality=debug" />
 				<Option host_application="$(#cb)/devel/codeblocks" />
 				<Compiler>
 					<Add option="-Wall" />
@@ -166,6 +164,7 @@
 		</Unit>
 		<Extensions>
 			<code_completion />
+			<envvars />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

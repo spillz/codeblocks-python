@@ -26,6 +26,7 @@ BEGIN_EVENT_TABLE(ConfigDialog, wxPanel)
   EVT_BUTTON(ID_CANCEL, ConfigDialog::OnEditCancel)
   EVT_BUTTON(ID_BROWSE_EXEC, ConfigDialog::OnEditBrowseExec)
   EVT_LISTBOX(ID_INTERP_LIST, ConfigDialog::ChangeSelection)
+//  EVT_LIST_ITEM_SELECTED(ID_INTERP_LIST, ConfigDialog::ChangeSelection)
   EVT_TEXT(ID_NAME, ConfigDialog::NameChange)
 END_EVENT_TABLE()
 
@@ -121,7 +122,7 @@ ConfigDialog::ConfigDialog(wxWindow* parent, ShellExtensions* plugin) //: cbConf
 
 	bSizer18->Add( bSizer21, 0, wxEXPAND, 5 );
 
-	m_staticText4 = new wxStaticText( this, wxID_DEFAULT, wxT("Actions string format: Name;Command;[W|C];WorkDir;EnvVarSet \nCommand line variables: $interpreter, $file, $dir, $path, $mpaths\nWorking directory variables: $dir, $parentdir\nYou may also use global and project variables"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4 = new wxStaticText( this, wxID_DEFAULT, wxT("Actions string format: Name;Command;[W|C];WorkDir;EnvVarSet \nCommand line variables: $interpreter, $fname, $fext, $file, $relfile, $dir, $reldir, $path, $relpath, $mpaths\nWorking directory variables: $dir, $parentdir\nYou may also use global and project variables"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer18->Add( m_staticText4, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 
 	m_editactions = new wxTextCtrl( this, ID_ACTIONS, wxT(""), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxTAB_TRAVERSAL );
@@ -138,7 +139,7 @@ ConfigDialog::ConfigDialog(wxWindow* parent, ShellExtensions* plugin) //: cbConf
 	bSizer12->SetSizeHints(this);
 
     m_activeinterp=0;
-    for(unsigned int i=0;i<m_ic.interps.size();i++)
+    for(unsigned int i=0;i<m_ic.interps.GetCount();i++)
         m_interplist->Append(m_ic.interps[i].name);
     SetDialogItems();
 
@@ -159,13 +160,13 @@ void ConfigDialog::OnApply()
 
 void ConfigDialog::NameChange(wxCommandEvent& event)
 {
-    if(m_ic.interps.size()>0)
+    if(m_ic.interps.GetCount()>0)
         m_interplist->SetString(m_activeinterp, m_editname->GetValue());
 }
 
 void ConfigDialog::ChangeSelection(wxCommandEvent& event)
 {
-    if(m_ic.interps.size()>0)
+    if(m_interplist->GetSelection()>=0)
     {
         GetDialogItems();
         m_activeinterp=m_interplist->GetSelection();
@@ -176,26 +177,31 @@ void ConfigDialog::ChangeSelection(wxCommandEvent& event)
 // Updates the Dialog controls to the stored values for the current interpreter
 void ConfigDialog::SetDialogItems()
 {
-    if(m_ic.interps.size()>0)
+    if(m_ic.interps.GetCount()>0&&m_activeinterp>=0&&m_activeinterp<static_cast<int>(m_ic.interps.GetCount()))
     {
-//        m_interplist->Select(m_activeinterp); //Caused crash on linux
         ShellCommand &interp=m_ic.interps[m_activeinterp];
         m_editname->SetValue(interp.name);
         m_editexec->SetValue(interp.exec);
         m_editext->SetValue(interp.extensions);
         wxString actionstring;
-        for(unsigned int i=0;i<interp.actions.size();i++)
+        for(unsigned int i=0;i<interp.actions.GetCount();i++)
             actionstring+=interp.actions[i].name+_T(";")+interp.actions[i].command+_T(";")
             +interp.actions[i].mode+_T(";")+interp.actions[i].wdir+_T(";")+
             interp.actions[i].envvarset+_T("\n");
         m_editactions->SetValue(actionstring);
+    } else
+    {
+        m_editname->SetValue(_T(""));
+        m_editexec->SetValue(_T(""));
+        m_editext->SetValue(_T(""));
+        m_editactions->SetValue(_T(""));
     }
 }
 
 // Retrieve configuration values from the dialog widgets and store them appropriately
 void ConfigDialog::GetDialogItems()
 {
-    if(!m_ic.interps.size())
+    if(!m_ic.interps.GetCount()||m_activeinterp<0||m_activeinterp>=static_cast<int>(m_ic.interps.GetCount()))
         return;
     ShellCommand &interp=m_ic.interps[m_activeinterp];
     interp.name=m_editname->GetValue();
@@ -203,7 +209,7 @@ void ConfigDialog::GetDialogItems()
     interp.extensions=m_editext->GetValue();
     wxString actions=m_editactions->GetValue();
     ShellCommandAction act;
-    interp.actions.clear();
+    interp.actions.Empty();
     for(int i=0;actions!=_T("");i++)
     {
         wxString actionstring=actions.BeforeFirst('\n');
@@ -216,7 +222,7 @@ void ConfigDialog::GetDialogItems()
         act.wdir=actionstring.BeforeFirst(';');
         actionstring=actionstring.AfterFirst(';');
         act.envvarset=actionstring.BeforeFirst(';');
-        interp.actions.push_back(act);
+        interp.actions.Add(act);
         actions=actions.AfterFirst('\n');
     }
 }
@@ -233,58 +239,60 @@ void ConfigDialog::New(wxCommandEvent &event)
     act.command=_T("$interpreter $file");
     act.mode=_T("W");
     act.wdir=_T("$parentdir");
-    interp.actions.push_back(act);
-    m_ic.interps.push_back(interp);
+    interp.actions.Add(act);
+    m_ic.interps.Add(interp);
 
-    m_activeinterp=m_ic.interps.size()-1;
+    m_activeinterp=m_ic.interps.GetCount()-1;
 
     m_interplist->Insert(m_ic.interps[m_activeinterp].name,m_activeinterp);
 
+    m_interplist->SetSelection(m_activeinterp);
     SetDialogItems();
 }
 
 void ConfigDialog::Copy(wxCommandEvent &event)
 {
     GetDialogItems();
-    if(m_ic.interps.size()>0)
+    if(m_ic.interps.GetCount()>0)
     {
         ShellCommand interp=m_ic.interps[m_activeinterp];
         interp.name+=_T(" (Copy)");
-        m_ic.interps.push_back(interp);
+        m_ic.interps.Add(interp);
 
-        m_activeinterp=m_ic.interps.size()-1;
+        m_activeinterp=m_ic.interps.GetCount()-1;
 
         m_interplist->Insert(m_ic.interps[m_activeinterp].name,m_activeinterp);
 
-        m_interplist->Select(m_activeinterp);
+        m_interplist->SetSelection(m_activeinterp);
         SetDialogItems();
     }
 }
 
 void ConfigDialog::Delete(wxCommandEvent &event)
 {
-  if(m_ic.interps.size()>0)
-      if (cbMessageBox(_("Are you sure you want to remove this interpreter?"), _("Remove"), wxICON_QUESTION | wxYES_NO) == wxID_YES)
-      {
-          GetDialogItems();
-          m_ic.interps.erase(m_ic.interps.begin()+m_activeinterp);
-          m_interplist->Delete(m_activeinterp);
-          if(m_activeinterp>=m_ic.interps.size())
-            m_activeinterp=m_ic.interps.size()-1;
-          SetDialogItems();
-      }
+    if(m_activeinterp>=0 && m_ic.interps.GetCount()>0)
+        if (cbMessageBox(_("Are you sure you want to remove this command group?"), _("Remove"), wxICON_QUESTION | wxYES_NO) == wxID_YES)
+        {
+            m_ic.interps.RemoveAt(m_activeinterp);
+            m_interplist->Delete(m_activeinterp);
+            if(m_activeinterp>=static_cast<int>(m_ic.interps.GetCount()))
+                m_activeinterp=m_ic.interps.GetCount()-1;
+            SetDialogItems();
+            if(m_activeinterp>=0)
+                m_interplist->SetSelection(m_activeinterp);
+        }
 }
 
 void ConfigDialog::OnUp(wxCommandEvent &event)
 {
-    if(m_activeinterp>0 && m_ic.interps.size()>1)
+    if(m_activeinterp>0 && m_ic.interps.GetCount()>1)
     {
         GetDialogItems();
         ShellCommand interp=m_ic.interps[m_activeinterp];
-        m_ic.interps.erase(m_ic.interps.begin()+m_activeinterp);
+        m_ic.interps.RemoveAt(m_activeinterp);
         m_interplist->Delete(m_activeinterp);
         m_activeinterp--;
-        m_ic.interps.insert(m_ic.interps.begin()+m_activeinterp,interp);
+        m_ic.interps.Insert(interp,m_activeinterp);
         m_interplist->Insert(interp.name,m_activeinterp);
         m_interplist->Select(m_activeinterp);
     }
@@ -292,14 +300,14 @@ void ConfigDialog::OnUp(wxCommandEvent &event)
 
 void ConfigDialog::OnDown(wxCommandEvent &event)
 {
-    if(m_activeinterp+1<m_ic.interps.size() && m_ic.interps.size()>1)
+    if(m_activeinterp+1<static_cast<int>(m_ic.interps.GetCount()) && m_ic.interps.GetCount()>1)
     {
         GetDialogItems();
         ShellCommand interp=m_ic.interps[m_activeinterp];
-        m_ic.interps.erase(m_ic.interps.begin()+m_activeinterp);
+        m_ic.interps.RemoveAt(m_activeinterp);
         m_interplist->Delete(m_activeinterp);
         m_activeinterp++;
-        m_ic.interps.insert(m_ic.interps.begin()+m_activeinterp,interp);
+        m_ic.interps.Insert(interp,m_activeinterp);
         m_interplist->Insert(interp.name,m_activeinterp);
         m_interplist->Select(m_activeinterp);
     }

@@ -62,7 +62,7 @@ class ConfigDialog : public cbConfigurationPanel
     wxTextCtrl* m_editext;
     wxStaticText* m_staticText4;
     wxTextCtrl* m_editactions;
-    unsigned int m_activeinterp;
+    int m_activeinterp;
 
   private:
     CommandCollection m_ic;

@@ -531,7 +531,7 @@ void ShellExtensions::BuildModuleMenu(const ModuleType type, wxMenu* menu, const
 	//Check the parameter \"type\" and see which module it is
 	//and append any items you need in the menu...
 	//TIP: for consistency, add a separator as the first item...
-	m_contextvec.clear();
+	m_contextvec.Empty();
 	if(type==mtProjectManager)
 	{
 	    if(data)

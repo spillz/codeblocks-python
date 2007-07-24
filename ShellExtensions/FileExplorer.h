@@ -27,6 +27,16 @@ public:
 
 WX_DECLARE_OBJARRAY(FavoriteDir, FavoriteDirs);
 
+class VCSstate
+{
+public:
+    int state;
+    wxString path;
+};
+
+WX_DECLARE_OBJARRAY(VCSstate, VCSstatearray);
+
+
 class Expansion
 {
 public:
@@ -96,6 +106,7 @@ private:
     void WriteConfig();
     void ReadConfig();
 
+    VCSstatearray ParseSVNstate(const wxString &path);
     bool IsFilesOnly(wxArrayTreeItemIds tis);
     void FindFile(const wxString &findfilename, const wxTreeItemId &ti);
     void FocusFile(const wxTreeItemId &ti);
@@ -119,6 +130,7 @@ private:
     wxString m_dragtest;
     size_t m_findmatchcount;
     wxArrayString m_findmatch;
+    bool m_show_vcs_state;
     DECLARE_EVENT_TABLE()
 };
 

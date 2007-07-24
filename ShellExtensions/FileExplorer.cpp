@@ -7,6 +7,7 @@
 
 #include <wx/arrimpl.cpp> // this is a magic incantation which must be done!
 WX_DEFINE_OBJARRAY(FavoriteDirs);
+WX_DEFINE_OBJARRAY(VCSstatearray);
 
 int ID_FILETREE=wxNewId();
 int ID_FILELOC=wxNewId();
@@ -71,9 +72,9 @@ FileTreeCtrl::~FileTreeCtrl()
 
 int FileTreeCtrl::OnCompareItems(const wxTreeItemId& item1, const wxTreeItemId& item2)
 {
-    if(GetItemImage(item1)>GetItemImage(item2))
+    if((GetItemImage(item1)==fvsFolder)>(GetItemImage(item2)==fvsFolder))
         return -1;
-    if(GetItemImage(item1)<GetItemImage(item2))
+    if((GetItemImage(item1)==fvsFolder)<(GetItemImage(item2)==fvsFolder))
         return 1;
     return (GetItemText(item1).CmpNoCase(GetItemText(item2)));
 }
@@ -113,6 +114,7 @@ FileExplorer::FileExplorer(wxWindow *parent,wxWindowID id,
     wxPanel(parent,id,pos,size,style, name)
 {
     m_show_hidden=false;
+    m_show_vcs_state=true;
     wxBoxSizer* bs = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer* bsh = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer* bshloc = new wxBoxSizer(wxHORIZONTAL);
@@ -263,25 +265,45 @@ bool FileExplorer::AddTreeItems(const wxTreeItemId &ti)
     int flags=wxDIR_FILES|wxDIR_DIRS;
     if(m_show_hidden)
         flags|=wxDIR_HIDDEN;
+    VCSstatearray sa;
+    bool is_vcs=false;
+    if(m_show_vcs_state)
+        if(wxFileName(path,_T(".svn")).DirExists())
+        {
+            sa=ParseSVNstate(path);
+            is_vcs=true;
+        }
 
     bool cont = dir.GetFirst(&filename,wxEmptyString,flags);
     while ( cont )
     {
-        int itemstate=0;
+        int itemstate;
         bool match=true;
         if(wxFileName(path,filename).DirExists()) //TODO: use static version instead, this only works by accident on win32 (always true)
             itemstate=fvsFolder;
         if(wxFileName(path,filename).FileExists())
         {
+            if(is_vcs)
+                itemstate=fvsVcUpToDate;
+            else
+                itemstate=fvsNormal;
             wxFileName fn(path,filename);
 #if wxCHECK_VERSION(2,8,0)
-            if(fn.IsFileWritable())
-                itemstate=fvsNormal;
-            else
+            if(!fn.IsFileWritable())
                 itemstate=fvsReadOnly;
-#else
-            itemstate=fvsNormal; //file writeable only available from wx2.8 -- TODO: create win32/linux API calls for early versions?
 #endif
+            int deli=-1;
+            for(size_t i=0;i<sa.GetCount();i++)
+            {
+                if(fn.SameAs(sa[i].path))
+                {
+                    itemstate=sa[i].state;
+                    deli=i;
+                    break;
+                }
+            }
+            if(deli>=0)
+                sa.RemoveAt(deli);
             wxString wildcard=m_WildCards->GetValue();
             if(!WildCardListMatch(wildcard,filename))
                 match=false;
@@ -936,4 +958,56 @@ bool FileExplorer::IsFilesOnly(wxArrayTreeItemIds tis)
         if(m_Tree->GetItemImage(tis[i])==fvsFolder)
             return false;
     return true;
+}
+
+VCSstatearray FileExplorer::ParseSVNstate(const wxString &path)
+{
+    VCSstatearray sa;
+    wxArrayString output;
+    int hresult=::wxExecute(_T("svn stat -N ")+path,output,wxEXEC_SYNC);
+    if(hresult!=0)
+        return sa;
+    for(size_t i=0;i<output.GetCount();i++)
+    {
+        if(output[i].Len()<=7)
+            break;
+        VCSstate s;
+        wxChar a=output[i][0];
+        switch(a)
+        {
+            case ' ':
+                s.state=fvsVcUpToDate;
+                break;
+            case '?':
+                s.state=fvsVcNonControlled;
+                break;
+            case 'A':
+                s.state=fvsVcAdded;
+                break;
+            case 'M':
+                s.state=fvsVcModified;
+                break;
+            case 'C':
+                s.state=fvsVcConflict;
+                break;
+            case 'D':
+                s.state=fvsVcMissing;
+                break;
+            case 'I':
+                s.state=fvsVcNonControlled;
+                break;
+            case 'X':
+                s.state=fvsVcExternal;
+                break;
+            case '!':
+                s.state=fvsVcMissing;
+                break;
+            case '~':
+                s.state=fvsVcLockStolen;
+                break;
+        }
+        s.path=wxFileName(output[i].Mid(7)).GetFullPath();
+        sa.Add(s);
+    }
+    return sa;
 }

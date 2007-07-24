@@ -8,11 +8,11 @@
 #endif
 
 #include <wx/process.h>
-#ifdef CBIL_TEARAWAY
-#include <tearawaynotebook.h>
-#else
+//#ifdef CBIL_TEARAWAY
+//#include <tearawaynotebook.h>
+//#else
 #include <wx/wxFlatNotebook/wxFlatNotebook.h>
-#endif
+//#endif
 
 #include <sdk.h>
 
@@ -120,11 +120,11 @@ class ShellManager : public wxPanel
         size_t GetTermNum(ShellTermCtrl *term);
     protected:
         wxTimer m_synctimer;
-#ifdef CBIL_TEARAWAY
-        TearawayNotebook *m_nb;
-#else
+//#ifdef CBIL_TEARAWAY
+//        TearawayNotebook *m_nb;
+//#else
         wxFlatNotebook *m_nb;
-#endif
+//#endif
     DECLARE_EVENT_TABLE()
 };
 

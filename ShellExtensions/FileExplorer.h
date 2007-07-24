@@ -108,6 +108,7 @@ private:
 
     VCSstatearray ParseSVNstate(const wxString &path);
     bool ParseBZRstate(const wxString &path, VCSstatearray &sa);
+    bool ParseHGstate(const wxString &path, VCSstatearray &sa);
     bool IsFilesOnly(wxArrayTreeItemIds tis);
     void FindFile(const wxString &findfilename, const wxTreeItemId &ti);
     void FocusFile(const wxTreeItemId &ti);

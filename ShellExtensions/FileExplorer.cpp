@@ -276,6 +276,9 @@ bool FileExplorer::AddTreeItems(const wxTreeItemId &ti)
         } else
             if(ParseBZRstate(path,sa))
                 is_vcs=true;
+            else
+                if(ParseHGstate(path,sa))
+                    is_vcs=true;
     }
 
     bool cont = dir.GetFirst(&filename,wxEmptyString,flags);
@@ -1077,6 +1080,52 @@ bool FileExplorer::ParseBZRstate(const wxString &path, VCSstatearray &sa)
         }
         wxFileName f(output[i].Mid(4));
         f.MakeAbsolute(rpath);
+        s.path=f.GetFullPath();
+//        cbMessageBox(output[i]+_T("\n")+s.path);
+        sa.Add(s);
+    }
+    return true;
+}
+
+
+bool FileExplorer::ParseHGstate(const wxString &path, VCSstatearray &sa)
+{
+    wxArrayString output;
+    wxString wdir=wxGetCwd();
+    wxSetWorkingDirectory(path);
+    int hresult=::wxExecute(_T("hg -y stat ."),output,wxEXEC_SYNC);
+    wxSetWorkingDirectory(wdir);
+    if(hresult!=0)
+        return false;
+    for(size_t i=0;i<output.GetCount();i++)
+    {
+        if(output[i].Len()<=2)
+            break;
+        VCSstate s;
+        wxChar a=output[i][0];
+        switch(a)
+        {
+            case 'C': //clean
+                s.state=fvsVcUpToDate;
+                break;
+            case '?': //not tracked
+                s.state=fvsVcNonControlled;
+                break;
+            case '!': // local copy removed -- will not see this file
+                s.state=fvsVcMissing;
+                break;
+            case 'A': // added
+                s.state=fvsVcAdded;
+                break;
+            case 'R': //removed from branch, but exists in local copy
+                s.state=fvsVcMissing;
+                break;
+            case 'M': //modified
+                s.state=fvsVcModified;
+                break;
+        }
+        wxFileName f(output[i].Mid(2));
+        f.MakeAbsolute(path);
         s.path=f.GetFullPath();
 //        cbMessageBox(output[i]+_T("\n")+s.path);
         sa.Add(s);

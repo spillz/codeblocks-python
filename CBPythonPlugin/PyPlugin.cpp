@@ -910,6 +910,7 @@ void PyPlugin::BuildModuleMenu(const ModuleType type, wxMenu* menu, const FileTr
             wxFileName f(data->GetFolder());
             wxString filename=f.GetFullPath();
             wxString name=f.GetFullName();
+//            cbMessageBox(filename+_T("  ")+name);
             if(IsPythonFile(name))
             {
                 m_RunTarget=filename;

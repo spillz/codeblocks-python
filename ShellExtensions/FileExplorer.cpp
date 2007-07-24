@@ -268,11 +268,15 @@ bool FileExplorer::AddTreeItems(const wxTreeItemId &ti)
     VCSstatearray sa;
     bool is_vcs=false;
     if(m_show_vcs_state)
+    {
         if(wxFileName::DirExists(wxFileName(path,_T(".svn")).GetFullPath()))
         {
             sa=ParseSVNstate(path);
             is_vcs=true;
-        }
+        } else
+            if(ParseBZRstate(path,sa))
+                is_vcs=true;
+    }
 
     bool cont = dir.GetFirst(&filename,wxEmptyString,flags);
     while ( cont )
@@ -1019,73 +1023,63 @@ VCSstatearray FileExplorer::ParseSVNstate(const wxString &path)
 }
 
 
-//VCSstatearray FileExplorer::ParseBZRstate(const wxString &path)
-//{
-//    VCSstatearray sa;
-//    wxArrayString output;
-//    int hresult=::wxExecute(_T("bzr stat --short ")+path,output,wxEXEC_SYNC);
-//    if(hresult!=0)
-//        return sa;
-//    for(size_t i=0;i<output.GetCount();i++)
-//    {
-//        if(output[i].Len()<=7)
-//            break;
-//        VCSstate s;
-//        wxChar a=output[i][0];
-//        switch(a)
-//        {
-////Column 1: versioning / renames
-////  + File versioned
-////  - File unversioned
-////  R File renamed
-////  ? File unknown
-////  C File has conflicts
-////  P Entry for a pending merge (not a file)
-////
-////Column 2: Contents
-////  N File created
-////  D File deleted
-////  K File kind changed
-////  M File modified
-////
-////Column 3: Execute
-////  * The execute bit was changed
-//
-//            case ' ':
-//                s.state=fvsVcUpToDate;
-//                break;
-//            case '?':
-//                s.state=fvsVcNonControlled;
-//                break;
-//            case 'A':
-//                s.state=fvsVcAdded;
-//                break;
-//            case 'M':
-//                s.state=fvsVcModified;
-//                break;
-//            case 'C':
-//                s.state=fvsVcConflict;
-//                break;
-//            case 'D':
-//                s.state=fvsVcMissing;
-//                break;
-//            case 'I':
-//                s.state=fvsVcNonControlled;
-//                break;
-//            case 'X':
-//                s.state=fvsVcExternal;
-//                break;
-//            case '!':
-//                s.state=fvsVcMissing;
-//                break;
-//            case '~':
-//                s.state=fvsVcLockStolen;
-//                break;
-//        }
-//        wxFileName f(output[i].Mid(7));
-//        f.MakeAbsolute(path);
-//        s.path=f.GetFullPath();
-//        sa.Add(s);
-//    }
-//    return sa;
-//}
+bool FileExplorer::ParseBZRstate(const wxString &path, VCSstatearray &sa)
+{
+    wxArrayString output;
+    int hresult=::wxExecute(_T("bzr root ")+path,output,wxEXEC_SYNC);
+    if(hresult!=0)
+        return false;
+    wxString rpath=output[0];
+    hresult=::wxExecute(_T("bzr stat --short ")+path,output,wxEXEC_SYNC);
+    if(hresult!=0)
+        return false;
+    for(size_t i=0;i<output.GetCount();i++)
+    {
+        if(output[i].Len()<=4)
+            break;
+        VCSstate s;
+        wxChar a=output[i][0];
+        switch(a)
+        {
+            case '+':
+                s.state=fvsVcUpToDate;
+                break;
+            case '-':
+                s.state=fvsVcNonControlled;
+                break;
+            case 'C':
+                s.state=fvsVcConflict;
+                break;
+            case '?':
+                s.state=fvsVcNonControlled;
+                break;
+            case 'R':
+                s.state=fvsVcModified;
+                break;
+            case 'P': //pending merge
+                s.state=fvsVcOutOfDate;
+                break;
+            default:
+                a=output[i][1];
+                switch(a)
+                {
+                    case 'N': // created
+                        s.state=fvsVcAdded;
+                        break;
+                    case 'D': //deleted
+                        s.state=fvsVcMissing;
+                        break;
+                    case 'K': //kind changed
+                    case 'M': //modified
+                        s.state=fvsVcModified;
+                        break;
+                }
+        }
+        wxFileName f(output[i].Mid(4));
+        f.MakeAbsolute(rpath);
+        s.path=f.GetFullPath();
+//        cbMessageBox(output[i]+_T("\n")+s.path);
+        sa.Add(s);
+    }
+    return true;
+}

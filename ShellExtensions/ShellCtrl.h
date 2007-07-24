@@ -29,7 +29,6 @@
 //    wxString &newerrdata;
 //}
 
-
 class ShellManager;
 
 // This is a termnial control

@@ -18,6 +18,7 @@ END_EVENT_TABLE()
 
 IMPLEMENT_DYNAMIC_CLASS(ShellTermCtrl, wxTextCtrl)
 
+
 ShellTermCtrl::ShellTermCtrl(wxWindow* parent,wxWindowID id, ShellManager *shellmgr,
     const wxString& name,const wxString& value,const wxPoint& pos,const wxSize& size,long style)
     : wxTextCtrl(parent, id, value, pos, size, style)

@@ -92,7 +92,7 @@ int ID_SubMenu_20=wxNewId();
 
 // events handling
 BEGIN_EVENT_TABLE(ShellExtensions, cbPlugin)
-    EVT_MENU_RANGE(ID_ContextMenu_0,ID_ContextMenu_9,ShellExtensions::OnRunTarget)
+    EVT_MENU_RANGE(ID_ContextMenu_0,ID_ContextMenu_29,ShellExtensions::OnRunTarget)
     EVT_MENU_RANGE(ID_NoTargMenu_0, ID_NoTargMenu_9, ShellExtensions::OnRun)
     EVT_MENU_RANGE(ID_SubMenu_0, ID_SubMenu_20, ShellExtensions::OnRunTarget)
     EVT_MENU(ID_LangMenu_ShowConsole,ShellExtensions::OnShowConsole)

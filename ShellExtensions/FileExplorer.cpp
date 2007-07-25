@@ -267,6 +267,7 @@ bool FileExplorer::AddTreeItems(const wxTreeItemId &ti)
         flags|=wxDIR_HIDDEN;
     VCSstatearray sa;
     bool is_vcs=false;
+    bool is_cvs=false;
     if(m_show_vcs_state)
     {
         if(wxFileName::DirExists(wxFileName(path,_T(".svn")).GetFullPath()))
@@ -279,6 +280,12 @@ bool FileExplorer::AddTreeItems(const wxTreeItemId &ti)
             else
                 if(ParseHGstate(path,sa))
                     is_vcs=true;
+//                else
+//                    if(ParseCVSstate(path,sa))
+//                    {
+//                        is_vcs=true;
+//                        is_cvs=true;
+//                    }
     }
 
     bool cont = dir.GetFirst(&filename,wxEmptyString,flags);
@@ -291,7 +298,11 @@ bool FileExplorer::AddTreeItems(const wxTreeItemId &ti)
         if(wxFileName(path,filename).FileExists())
         {
             if(is_vcs)
+            {
                 itemstate=fvsVcUpToDate;
+//                if(is_cvs)
+//                    itemstate=fvsVcNonControlled;
+            }
             else
                 itemstate=fvsNormal;
             wxFileName fn(path,filename);
@@ -1131,4 +1142,53 @@ bool FileExplorer::ParseHGstate(const wxString &path, VCSstatearray &sa)
         sa.Add(s);
     }
     return true;
+}
+
+
+bool FileExplorer::ParseCVSstate(const wxString &path, VCSstatearray &sa)
+{
+    wxArrayString output;
+    wxString wdir=wxGetCwd();
+    wxSetWorkingDirectory(path);
+    int hresult=::wxExecute(_T("cvs stat -q -l  ."),output,wxEXEC_SYNC);
+    wxSetWorkingDirectory(wdir);
+//    if(hresult!=0)
+//        return false;
+    for(size_t i=0;i<output.GetCount();i++)
+    {
+        int ind1=output[i].Find(_T("File: "));
+        int ind2=output[i].Find(_T("Status: "));
+        if(ind1<0||ind2<0)
+            return false;
+        wxString state=output[i].Mid(ind2+8).Strip();
+        VCSstate s;
+        while(1)
+        {
+            if(state==_T("Up-to-date"))
+            {
+                s.state=fvsVcUpToDate;
+                break;
+            }
+            if(state==_T("Locally Modified"))
+            {
+                s.state=fvsVcModified;
+                break;
+            }
+            if(state==_T("Locally Added"))
+            {
+                s.state=fvsVcAdded;
+                break;
+            }
+            break;
+        }
+        wxFileName f(output[i].Mid(ind1+6,ind2+6-ind1).Strip());
+        f.MakeAbsolute(path);
+        s.path=f.GetFullPath();
+//        cbMessageBox(output[i]+_T("\n")+s.path);
+        sa.Add(s);
+    }
+    if(output.GetCount()>0)
+        return true;
+    else
+        return false;
 }

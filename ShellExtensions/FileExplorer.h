@@ -96,6 +96,10 @@ private:
     void OnRename(wxCommandEvent &event);
     void OnExpandAll(wxCommandEvent &event);
     void OnShowHidden(wxCommandEvent &event);
+    void OnParseCVS(wxCommandEvent &event);
+    void OnParseSVN(wxCommandEvent &event);
+    void OnParseHG(wxCommandEvent &event);
+    void OnParseBZR(wxCommandEvent &event);
     void OnUpButton(wxCommandEvent &event);
     void OnRefresh(wxCommandEvent &event);
     void OnBeginDragTreeItem(wxTreeEvent &event);
@@ -106,10 +110,10 @@ private:
     void WriteConfig();
     void ReadConfig();
 
-    VCSstatearray ParseSVNstate(const wxString &path);
     bool ParseBZRstate(const wxString &path, VCSstatearray &sa);
     bool ParseHGstate(const wxString &path, VCSstatearray &sa);
     bool ParseCVSstate(const wxString &path, VCSstatearray &sa);
+    bool ParseSVNstate(const wxString &path, VCSstatearray &sa);
     bool IsFilesOnly(wxArrayTreeItemIds tis);
     void FindFile(const wxString &findfilename, const wxTreeItemId &ti);
     void FocusFile(const wxTreeItemId &ti);
@@ -133,7 +137,11 @@ private:
     wxString m_dragtest;
     size_t m_findmatchcount;
     wxArrayString m_findmatch;
-    bool m_show_vcs_state;
+//    bool m_show_vcs_state;
+    bool m_parse_cvs;
+    bool m_parse_svn;
+    bool m_parse_hg;
+    bool m_parse_bzr;
     DECLARE_EVENT_TABLE()
 };
 

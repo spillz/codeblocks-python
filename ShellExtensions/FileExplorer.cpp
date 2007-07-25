@@ -25,6 +25,10 @@ int ID_FILEDELETE=wxNewId();
 int ID_FILERENAME=wxNewId();
 int ID_FILEEXPANDALL=wxNewId();
 int ID_FILESHOWHIDDEN=wxNewId();
+int ID_FILEPARSECVS=wxNewId();
+int ID_FILEPARSESVN=wxNewId();
+int ID_FILEPARSEHG=wxNewId();
+int ID_FILEPARSEBZR=wxNewId();
 int ID_FILE_UPBUTTON=wxNewId();
 int ID_FILEREFRESH=wxNewId();
 int ID_FILEADDTOPROJECT=wxNewId();
@@ -95,6 +99,10 @@ BEGIN_EVENT_TABLE(FileExplorer, wxPanel)
     EVT_MENU(ID_FILERENAME,FileExplorer::OnRename)
     EVT_MENU(ID_FILEEXPANDALL,FileExplorer::OnExpandAll)
     EVT_MENU(ID_FILESHOWHIDDEN,FileExplorer::OnShowHidden)
+    EVT_MENU(ID_FILEPARSECVS,FileExplorer::OnParseCVS)
+    EVT_MENU(ID_FILEPARSESVN,FileExplorer::OnParseSVN)
+    EVT_MENU(ID_FILEPARSEHG,FileExplorer::OnParseHG)
+    EVT_MENU(ID_FILEPARSEBZR,FileExplorer::OnParseBZR)
     EVT_MENU(ID_FILEREFRESH,FileExplorer::OnRefresh)
     EVT_MENU(ID_FILEADDTOPROJECT,FileExplorer::OnAddToProject)
     EVT_TREE_ITEM_EXPANDING(ID_FILETREE, FileExplorer::OnExpand)
@@ -114,7 +122,10 @@ FileExplorer::FileExplorer(wxWindow *parent,wxWindowID id,
     wxPanel(parent,id,pos,size,style, name)
 {
     m_show_hidden=false;
-    m_show_vcs_state=true;
+    m_parse_cvs=false;
+    m_parse_hg=false;
+    m_parse_bzr=true;
+    m_parse_svn=true;
     wxBoxSizer* bs = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer* bsh = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer* bshloc = new wxBoxSizer(wxHORIZONTAL);
@@ -268,25 +279,21 @@ bool FileExplorer::AddTreeItems(const wxTreeItemId &ti)
     VCSstatearray sa;
     bool is_vcs=false;
     bool is_cvs=false;
-    if(m_show_vcs_state)
-    {
-        if(wxFileName::DirExists(wxFileName(path,_T(".svn")).GetFullPath()))
-        {
-            sa=ParseSVNstate(path);
+    if(m_parse_svn)
+        if(ParseSVNstate(path,sa))
             is_vcs=true;
-        } else
-            if(ParseBZRstate(path,sa))
-                is_vcs=true;
-            else
-                if(ParseHGstate(path,sa))
-                    is_vcs=true;
-//                else
-//                    if(ParseCVSstate(path,sa))
-//                    {
-//                        is_vcs=true;
-//                        is_cvs=true;
-//                    }
-    }
+    if(m_parse_bzr)
+        if(ParseBZRstate(path,sa))
+            is_vcs=true;
+    if(m_parse_hg)
+        if(ParseHGstate(path,sa))
+            is_vcs=true;
+    if(m_parse_cvs)
+        if(ParseCVSstate(path,sa))
+        {
+            is_vcs=true;
+            is_cvs=true;
+        }
 
     bool cont = dir.GetFirst(&filename,wxEmptyString,flags);
     while ( cont )
@@ -297,12 +304,8 @@ bool FileExplorer::AddTreeItems(const wxTreeItemId &ti)
             itemstate=fvsFolder;
         if(wxFileName(path,filename).FileExists())
         {
-            if(is_vcs)
-            {
+            if(is_vcs&&!is_cvs)
                 itemstate=fvsVcUpToDate;
-//                if(is_cvs)
-//                    itemstate=fvsVcNonControlled;
-            }
             else
                 itemstate=fvsNormal;
             wxFileName fn(path,filename);
@@ -608,7 +611,13 @@ void FileExplorer::OnRightClick(wxTreeEvent &event)
         m_Popup->Append(ID_FILEMOVE,_T("&Move To..."));
         m_Popup->Append(ID_FILEDELETE,_T("D&elete"));
     }
-    m_Popup->AppendCheckItem(ID_FILESHOWHIDDEN,_T("Show &Hidden Files"))->Check(m_show_hidden);
+    wxMenu *viewpop=new wxMenu();
+    viewpop->AppendCheckItem(ID_FILESHOWHIDDEN,_T("Show &Hidden Files"))->Check(m_show_hidden);
+    viewpop->AppendCheckItem(ID_FILEPARSECVS,_T("CVS Decorators"))->Check(m_parse_cvs);
+    viewpop->AppendCheckItem(ID_FILEPARSESVN,_T("SVN Decorators"))->Check(m_parse_svn);
+    viewpop->AppendCheckItem(ID_FILEPARSEHG,_T("Hg Decorators"))->Check(m_parse_hg);
+    viewpop->AppendCheckItem(ID_FILEPARSEBZR,_T("Bzr Decorators"))->Check(m_parse_bzr);
+    m_Popup->AppendSubMenu(viewpop,_T("&View"));
     m_Popup->Append(ID_FILEREFRESH,_T("Re&fresh"));
     if(m_ticount>1)
     {
@@ -624,6 +633,7 @@ void FileExplorer::OnRightClick(wxTreeEvent &event)
         Manager::Get()->GetPluginManager()->AskPluginsForModuleMenu(mtUnknown, m_Popup, ftd);
     delete ftd;
     wxWindow::PopupMenu(m_Popup);
+    delete m_Popup;
 
 }
 
@@ -862,6 +872,30 @@ void FileExplorer::OnShowHidden(wxCommandEvent &event)
     Refresh(m_Tree->GetRootItem());
 }
 
+void FileExplorer::OnParseCVS(wxCommandEvent &event)
+{
+    m_parse_cvs=!m_parse_cvs;
+    Refresh(m_Tree->GetRootItem());
+}
+
+void FileExplorer::OnParseSVN(wxCommandEvent &event)
+{
+    m_parse_svn=!m_parse_svn;
+    Refresh(m_Tree->GetRootItem());
+}
+
+void FileExplorer::OnParseHG(wxCommandEvent &event)
+{
+    m_parse_hg=!m_parse_hg;
+    Refresh(m_Tree->GetRootItem());
+}
+
+void FileExplorer::OnParseBZR(wxCommandEvent &event)
+{
+    m_parse_bzr=!m_parse_bzr;
+    Refresh(m_Tree->GetRootItem());
+}
+
 void FileExplorer::OnUpButton(wxCommandEvent &event)
 {
     wxFileName loc(m_root);
@@ -978,13 +1012,14 @@ bool FileExplorer::IsFilesOnly(wxArrayTreeItemIds tis)
     return true;
 }
 
-VCSstatearray FileExplorer::ParseSVNstate(const wxString &path)
+bool FileExplorer::ParseSVNstate(const wxString &path, VCSstatearray &sa)
 {
-    VCSstatearray sa;
+    if(!wxFileName::DirExists(wxFileName(path,_T(".svn")).GetFullPath()))
+        return false;
     wxArrayString output;
     int hresult=::wxExecute(_T("svn stat -N ")+path,output,wxEXEC_SYNC);
     if(hresult!=0)
-        return sa;
+        return false;
     for(size_t i=0;i<output.GetCount();i++)
     {
         if(output[i].Len()<=7)
@@ -1033,7 +1068,7 @@ VCSstatearray FileExplorer::ParseSVNstate(const wxString &path)
 #endif
         sa.Add(s);
     }
-    return sa;
+    return true;
 }
 
 

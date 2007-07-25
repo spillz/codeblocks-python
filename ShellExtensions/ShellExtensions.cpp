@@ -296,6 +296,33 @@ void ShellExtensions::OnRunTarget(wxCommandEvent& event)
     commandstr.Replace(_T("$relpath"),wxFileName(m_RunTarget).GetFullPath());
     if(commandstr.Replace(_T("$mpaths"),m_RunTarget)>0)
         setdir=false;
+
+    // substitute user prompted values in the format: $inputstr{Enter your message}
+    int promptind=commandstr.Find(_T("$inputstr{"));
+    wxString substitution;
+    while(promptind>=0)
+    {
+        int promptend=commandstr.Mid(promptind+10).Find(_T("}"));
+        if(promptend<=0)
+        {
+            cbMessageBox(_T("Malformed $inputstr in command line -- no closing '}' found: ")+commandstr);
+            return;
+        }
+        else
+            promptend++;
+        wxTextEntryDialog ted(NULL,commandstr.Mid(promptind+10,promptend-1),consolename,_T(""),wxOK|wxCANCEL);
+        if(ted.ShowModal()==wxID_OK)
+            substitution=ted.GetValue();
+        else
+            return;
+        commandstr=commandstr.Left(promptind)+substitution+commandstr.Mid(promptind+10+promptend);
+        int nextind=commandstr.Mid(promptind+substitution.Len()).Find(_T("$inputstr"));
+        if(nextind>=0)
+            promptind+=nextind+substitution.Len();
+        else
+            promptind=-1;
+    }
+
     commandstr.Replace(_T("$interpreter"),wxFileName(m_ic.interps[m_interpnum].exec).GetShortPath());
     workingdir.Replace(_T("$parentdir"),wxFileName(m_RunTarget).GetPath());
     if(wxFileName::DirExists(m_RunTarget))

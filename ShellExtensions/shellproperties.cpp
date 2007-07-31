@@ -1,8 +1,7 @@
 #include "shellproperties.h"
 
 #include <wx/arrimpl.cpp> // this is a magic incantation which must be done!
-WX_DEFINE_OBJARRAY(ShellCommandMenuVec);
-WX_DEFINE_OBJARRAY(ShellCommandActionVec);
+//WX_DEFINE_OBJARRAY(ShellCommandMenuVec);
 WX_DEFINE_OBJARRAY(ShellCommandVec);
 
 wxString istr0(int i)
@@ -12,27 +11,23 @@ wxString istr0(int i)
 
 bool CommandCollection::WriteConfig()
 {
-    ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("InterpretedLangs"));
+    ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("ShellExtensions"));
     //cfg->Clear();
     int len=interps.GetCount();
-    cfg->Write(_T("InterpProps/numinterps"), len);
+    cfg->Write(_T("ShellCmds/numcmds"), len);
     for(int i=0;i<len;i++)
     {
         wxString istr=istr0(i);
-        cfg->Write(_T("InterpProps/I")+istr+_T("/name"), interps[i].name);
-        cfg->Write(_T("InterpProps/I")+istr+_T("/exec"), interps[i].exec);
-        cfg->Write(_T("InterpProps/I")+istr+_T("/ext"), interps[i].extensions);
-        int lenact = interps[i].actions.GetCount();
-        cfg->Write(_T("InterpProps/I")+istr+_T("/numactions"), lenact);
-        for(int j=0;j<lenact;j++)
-        {
-            wxString jstr=istr0(j);
-            cfg->Write(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/name"), interps[i].actions[j].name);
-            cfg->Write(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/command"), interps[i].actions[j].command);
-            cfg->Write(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/mode"), interps[i].actions[j].mode);
-            cfg->Write(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/workingdir"), interps[i].actions[j].wdir);
-            cfg->Write(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/envvarset"), interps[i].actions[j].envvarset);
-        }
+        cfg->Write(_T("ShellCmds/I")+istr+_T("/name"), interps[i].name);
+        cfg->Write(_T("ShellCmds/I")+istr+_T("/command"), interps[i].command);
+        cfg->Write(_T("ShellCmds/I")+istr+_T("/wdir"), interps[i].wdir);
+        cfg->Write(_T("ShellCmds/I")+istr+_T("/wildcards"), interps[i].wildcards);
+        cfg->Write(_T("ShellCmds/I")+istr+_T("/menu"), interps[i].menu);
+        cfg->Write(_T("ShellCmds/I")+istr+_T("/menupriority"), interps[i].menupriority);
+        cfg->Write(_T("ShellCmds/I")+istr+_T("/cmenu"), interps[i].cmenu);
+        cfg->Write(_T("ShellCmds/I")+istr+_T("/cmenupriority"), interps[i].cmenupriority);
+        cfg->Write(_T("ShellCmds/I")+istr+_T("/envvarset"), interps[i].envvarset);
+        cfg->Write(_T("ShellCmds/I")+istr+_T("/mode"), interps[i].mode);
     }
     return true;
 }
@@ -40,9 +35,9 @@ bool CommandCollection::WriteConfig()
 
 bool CommandCollection::ReadConfig()
 {
-    ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("InterpretedLangs"));
+    ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("ShellExtensions"));
     int len;
-    if(!cfg->Read(_T("InterpProps/numinterps"), &len))
+    if(!cfg->Read(_T("ShellCmds/numcmds"), &len))
     {
 //        cbMessageBox(_T("Warning: couldn't read interpreter config data"));
         return false;
@@ -51,44 +46,18 @@ bool CommandCollection::ReadConfig()
     {
         ShellCommand interp;
         wxString istr=istr0(i);
-        cfg->Read(_T("InterpProps/I")+istr+_T("/name"), &interp.name);
-        cfg->Read(_T("InterpProps/I")+istr+_T("/exec"), &interp.exec);
-        cfg->Read(_T("InterpProps/I")+istr+_T("/ext"), &interp.extensions);
-        int lenact;
-        cfg->Read(_T("InterpProps/I")+istr+_T("/numactions"), &lenact);
-        for(int j=0;j<lenact;j++)
-        {
-            ShellCommandAction a;
-            wxString jstr=istr0(j);
-            cfg->Read(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/name"), &a.name);
-            cfg->Read(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/command"), &a.command);
-            cfg->Read(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/mode"), &a.mode);
-            cfg->Read(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/workingdir"), &a.wdir);
-            cfg->Read(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/envvarset"), &a.envvarset);
-            interp.actions.Add(a);
-        }
+        cfg->Read(_T("ShellCmds/I")+istr+_T("/name"), &interp.name);
+        cfg->Read(_T("ShellCmds/I")+istr+_T("/command"), &interp.command);
+        cfg->Read(_T("ShellCmds/I")+istr+_T("/wdir"), &interp.wdir);
+        cfg->Read(_T("ShellCmds/I")+istr+_T("/wildcards"), &interp.wildcards);
+        cfg->Read(_T("ShellCmds/I")+istr+_T("/menu"), &interp.menu);
+        cfg->Read(_T("ShellCmds/I")+istr+_T("/menupriority"), &interp.menupriority);
+        cfg->Read(_T("ShellCmds/I")+istr+_T("/cmenu"), &interp.cmenu);
+        cfg->Read(_T("ShellCmds/I")+istr+_T("/cmenupriority"), &interp.cmenupriority);
+        cfg->Read(_T("ShellCmds/I")+istr+_T("/envvarset"), &interp.envvarset);
+        cfg->Read(_T("ShellCmds/I")+istr+_T("/mode"), &interp.mode);
         interps.Add(interp);
     }
     return true;
 }
-
-/*
-bool CommandCollection::ConvertExtsWildCard(const wxString &seplist)
-{
-}
-
-wxString CommandCollection::ConvertExtsWildCard()
-{
-}
-
-CommandCollection::CommandCollection()
-{
-    //ctor
-}
-
-CommandCollection::~CommandCollection()
-{
-    //dtor
-}
-*/
 

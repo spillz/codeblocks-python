@@ -215,42 +215,24 @@ void ShellExtensions::OnRunTarget(wxCommandEvent& event)
     bool console=false;
     if(ID>=ID_ContextMenu_0&&ID<=ID_ContextMenu_29)
     {
-        int actionnum=m_contextvec[ID-ID_ContextMenu_0].a;
-        m_interpnum=m_contextvec[ID-ID_ContextMenu_0].i;
-        commandstr=m_ic.interps[m_interpnum].actions[actionnum].command;
-        consolename=m_ic.interps[m_interpnum].name+_T(" ")+m_ic.interps[m_interpnum].actions[actionnum].name;
-        windowed=(m_ic.interps[m_interpnum].actions[actionnum].mode==_("W"));
-        console=(m_ic.interps[m_interpnum].actions[actionnum].mode==_("C"));
-        workingdir=m_ic.interps[m_interpnum].actions[actionnum].wdir;
+        m_interpnum=m_contextvec[ID-ID_ContextMenu_0];
+        commandstr=m_ic.interps[m_interpnum].command;
+        consolename=m_ic.interps[m_interpnum].name;
+        windowed=(m_ic.interps[m_interpnum].mode==_("W"));
+        console=(m_ic.interps[m_interpnum].mode==_("C"));
+        workingdir=m_ic.interps[m_interpnum].wdir;
     } else
     if(ID>=ID_SubMenu_0&&ID<=ID_SubMenu_20)
     {
-        wxMenu *m=m_LangMenu->FindItem(ID)->GetMenu(); // get pointer object to selected item in submenu
-        if(m==NULL)
-        {
-            cbMessageBox(_T("WARNING: Sub menu not found - cancelling command"));
-            return;
-        }
-        // need to figure out which interpeter we're using by matching the pointer to the parent of the selected item with pointers to our menus
-        for(m_interpnum=0;m_interpnum<m_ic.interps.size()&&m_interpnum<10;m_interpnum++)
-        {
-            if(m_LangMenu->FindItem(ID_Menu_0+m_interpnum)->GetSubMenu()==m) //compare pointer to submenu with known submenus and break out of loop if matched
-                break;
-        }
-        if(m_interpnum>=m_ic.interps.size()||m_interpnum>=10)
-        {
-            cbMessageBox(_T("WARNING: Sub menu not found - cancelling command"));
-            return;
-        }
-        int actionnum=ID-m->FindItemByPosition(0)->GetId();
-        commandstr=m_ic.interps[m_interpnum].actions[actionnum].command;
-        consolename=m_ic.interps[m_interpnum].name+_T(" ")+m_ic.interps[m_interpnum].actions[actionnum].name;
-        windowed=(m_ic.interps[m_interpnum].actions[actionnum].mode==_("W"));
-        console=(m_ic.interps[m_interpnum].actions[actionnum].mode==_("C"));
-        workingdir=m_ic.interps[m_interpnum].actions[actionnum].wdir;
-        m_wildcard=m_ic.interps[m_interpnum].extensions;
-        if(m_ic.interps[m_interpnum].actions[actionnum].command.Find(_T("$file"))>0 ||
-            m_ic.interps[m_interpnum].actions[actionnum].command.Find(_T("$path"))>0)
+        m_interpnum=m_contextvec[ID-ID_SubMenu_0];
+        commandstr=m_ic.interps[m_interpnum].command;
+        consolename=m_ic.interps[m_interpnum].name;
+        windowed=(m_ic.interps[m_interpnum].mode==_("W"));
+        console=(m_ic.interps[m_interpnum].mode==_("C"));
+        workingdir=m_ic.interps[m_interpnum].wdir;
+        m_wildcard=m_ic.interps[m_interpnum].wildcards;
+        if(m_ic.interps[m_interpnum].command.Find(_T("$file"))>0 ||
+            m_ic.interps[m_interpnum].command.Find(_T("$path"))>0)
         {
             OnSetTarget(event);
             if(!wxFileName::FileExists(m_RunTarget))
@@ -259,7 +241,7 @@ void ShellExtensions::OnRunTarget(wxCommandEvent& event)
                 return;
             }
         }
-        if(m_ic.interps[m_interpnum].actions[actionnum].command.Find(_T("$dir"))>0)
+        if(m_ic.interps[m_interpnum].command.Find(_T("$dir"))>0)
         {
             OnSetDirTarget(event);
             if(!wxFileName::DirExists(m_RunTarget))
@@ -270,7 +252,7 @@ void ShellExtensions::OnRunTarget(wxCommandEvent& event)
             if(m_RunTarget==_T(""))
                 return;
         }
-        if(m_ic.interps[m_interpnum].actions[actionnum].command.Find(_T("$mpaths"))>0)
+        if(m_ic.interps[m_interpnum].command.Find(_T("$mpaths"))>0)
         {
             OnSetMultiTarget(event);
             if(m_RunTarget==_T(""))
@@ -323,7 +305,7 @@ void ShellExtensions::OnRunTarget(wxCommandEvent& event)
             promptind=-1;
     }
 
-    commandstr.Replace(_T("$interpreter"),wxFileName(m_ic.interps[m_interpnum].exec).GetShortPath());
+    commandstr.Replace(_T("$interpreter"),wxFileName(m_ic.interps[m_interpnum].command).GetShortPath());
     workingdir.Replace(_T("$parentdir"),wxFileName(m_RunTarget).GetPath());
     if(wxFileName::DirExists(m_RunTarget))
         workingdir.Replace(_T("$dir"),wxFileName(m_RunTarget).GetFullPath());
@@ -394,7 +376,7 @@ void ShellExtensions::OnRun(wxCommandEvent& event)
         cbMessageBox(_T("Warning: Sub menu not found - cancelling command"));
         return;
     }
-    commandstr=m_ic.interps[m_interpnum].exec;
+    commandstr=m_ic.interps[m_interpnum].command;
     consolename=m_ic.interps[m_interpnum].name;
 
     wxExecute(commandstr,wxEXEC_ASYNC);
@@ -418,7 +400,7 @@ cbConfigurationPanel* ShellExtensions::GetConfigurationPanel(wxWindow* parent)
 //    MyDialog* dlg = new MyDialog(this, *m_pKeyProfArr, parent,
 //        wxT("Keybindings"), mode);
 
-    return new ConfigDialog(parent, this);
+    return new CmdConfigDialog(parent, this);
 }
 
 // destructor
@@ -498,37 +480,88 @@ int ShellExtensions::Configure()
 
 void ShellExtensions::CreateMenu()
 {
-    unsigned int j=0; //index to actions
-    for(unsigned int i=0;i<m_ic.interps.size()&&i<10;i++) //create at most 10 interpreter submenus
+    for(unsigned int i=0;i<m_ic.interps.size();i++)
     {
-        wxMenu *submenu=new wxMenu();
-        unsigned int maxj=j+m_ic.interps[i].actions.size();
-        if(maxj>20)
-            maxj=20;
-        unsigned int jstart=j;
-        for(;j<maxj;j++)
+        wxString tail;
+        if(m_ic.interps[i].command.Find(_T("$file"))>0||
+            m_ic.interps[i].command.Find(_T("$relfile"))>0||
+            m_ic.interps[i].command.Find(_T("$dir"))>0||
+            m_ic.interps[i].command.Find(_T("$dir"))>0||
+            m_ic.interps[i].command.Find(_T("$reldir"))>0||
+            m_ic.interps[i].command.Find(_T("$path"))>0||
+            m_ic.interps[i].command.Find(_T("$relpath"))>0||
+            m_ic.interps[i].command.Find(_T("$fname"))>0||
+            m_ic.interps[i].command.Find(_T("$fext"))>0||
+            m_ic.interps[i].command.Find(_T("$mpaths"))>0)
+            tail=_T("...");
+        wxString menuloc=m_ic.interps[i].menu;
+        if(menuloc==_T("."))
+            continue;
+        wxString newmenutext=menuloc.BeforeFirst('/');
+        wxMenu *menu=m_LangMenu;
+        while(menuloc.Find('/')!=wxNOT_FOUND)
         {
-            wxString tail;
-            if(m_ic.interps[i].actions[j-jstart].command.Find(_T("$file"))>0||
-                m_ic.interps[i].actions[j-jstart].command.Find(_T("$dir"))>0||
-                m_ic.interps[i].actions[j-jstart].command.Find(_T("$path"))>0||
-                m_ic.interps[i].actions[j-jstart].command.Find(_T("$mpaths"))>0)
-                tail=_T("...");
-            submenu->Append(ID_SubMenu_0+j,m_ic.interps[i].actions[j-jstart].name+tail,_T(""));
+            menuloc=menuloc.AfterFirst('/');
+            wxMenu *submenu=NULL;
+            wxMenuItem *mi=menu->FindItem(menu->FindItem(newmenutext));
+            if(mi)
+                submenu=mi->GetSubMenu();
+            if(!submenu)
+            {
+                submenu=new wxMenu();
+                menu->Append(wxID_ANY,newmenutext,submenu); //TODO: insert into correct position determined by priority
+            }
+            menu=submenu;
+            newmenutext=menuloc.BeforeFirst('/');
         }
-        m_LangMenu->Append(ID_Menu_0+i,m_ic.interps[i].name,submenu);
+        if(menuloc.IsEmpty())
+            menu->Append(ID_SubMenu_0+i,m_ic.interps[i].name);
+        else
+            menu->Append(ID_SubMenu_0+i,menuloc);
     }
-    m_LangMenu->Append(ID_LangMenu_ShowConsole,_T("Toggle I/O console"),_T(""),wxITEM_CHECK);
+    m_LangMenu->Append(ID_LangMenu_ShowConsole,_T("Toggle Shell Extensions I/O Window"),_T(""),wxITEM_CHECK);
 }
+
+void ShellExtensions::AddModuleMenuEntry(wxMenu *modmenu,int entrynum)
+{
+    wxString menuloc=m_ic.interps[entrynum].cmenu;
+    if(menuloc==_T("."))
+        return;
+    wxString newmenutext=menuloc.BeforeFirst('/');
+    wxMenu *menu=modmenu;
+    while(menuloc.Find('/')!=wxNOT_FOUND)
+    {
+        menuloc=menuloc.AfterFirst('/');
+        wxMenu *submenu=NULL;
+        wxMenuItem *mi=menu->FindItem(menu->FindItem(newmenutext));
+        if(mi)
+            submenu=mi->GetSubMenu();
+        if(!submenu)
+        {
+            submenu=new wxMenu();
+            menu->Append(wxID_ANY,newmenutext,submenu); //TODO: insert into correct position determined by priority
+        }
+        menu=submenu;
+        newmenutext=menuloc.BeforeFirst('/');
+    }
+    if(menuloc.IsEmpty())
+        menu->Append(ID_ContextMenu_0+entrynum,m_ic.interps[entrynum].name);
+    else
+        menu->Append(ID_ContextMenu_0+entrynum,menuloc);
+}
+
 
 void ShellExtensions::UpdateMenu()
 {
     //delete the old menu items
     if(m_LangMenu)
     {
-        for(unsigned int i=0;i<m_ic.interps.size();i++)
-            m_LangMenu->Destroy(ID_Menu_0+i);
-        m_LangMenu->Destroy(ID_LangMenu_ShowConsole);
+//        for(unsigned int i=0;i<m_ic.interps.Len();i++)
+//            m_LangMenu->Destroy(ID_SubMenu_0+i);
+//        m_LangMenu->Destroy(ID_LangMenu_ShowConsole);
+        size_t count=m_LangMenu->GetMenuItemCount();
+        for(size_t i=0;i<count;i++)
+            m_LangMenu->Destroy(m_LangMenu->FindItemByPosition(0));
         CreateMenu();
     }
 }
@@ -573,24 +606,21 @@ void ShellExtensions::BuildModuleMenu(const ModuleType type, wxMenu* menu, const
                     size_t sep_pos=menu->GetMenuItemCount();
                     size_t added=0;
                     for(unsigned int i=0;i<m_ic.interps.size();i++)
-                        if(WildCardListMatch(m_ic.interps[i].extensions,name))
+                        if(WildCardListMatch(m_ic.interps[i].wildcards,name))
                         {
                             m_RunTarget=filename;
-                            for(unsigned int j=0;j<m_ic.interps[i].actions.size();j++)
+                            if(m_ic.interps[i].command.Find(_T("$file"))>=0 ||
+                                m_ic.interps[i].command.Find(_T("$relfile"))>=0 ||
+                                m_ic.interps[i].command.Find(_T("$fname"))>=0 ||
+                                m_ic.interps[i].command.Find(_T("$fext"))>=0 ||
+                                m_ic.interps[i].command.Find(_T("$path"))>=0 ||
+                                m_ic.interps[i].command.Find(_T("$relpath"))>=0 ||
+                                m_ic.interps[i].command.Find(_T("$mpaths"))>=0)
                             {
-                                if(m_ic.interps[i].actions[j].command.Find(_T("$file"))>=0 ||
-                                    m_ic.interps[i].actions[j].command.Find(_T("$relfile"))>=0 ||
-                                    m_ic.interps[i].actions[j].command.Find(_T("$fname"))>=0 ||
-                                    m_ic.interps[i].actions[j].command.Find(_T("$fext"))>=0 ||
-                                    m_ic.interps[i].actions[j].command.Find(_T("$path"))>=0 ||
-                                    m_ic.interps[i].actions[j].command.Find(_T("$relpath"))>=0 ||
-                                    m_ic.interps[i].actions[j].command.Find(_T("$mpaths"))>=0)
-                                {
-                                    wxString menutext=m_ic.interps[i].name+_T(" ")+m_ic.interps[i].actions[j].name;
-                                    m_contextvec.push_back(ShellCommandMenuRef(i,j));
-                                    menu->Append(ID_ContextMenu_0+added,menutext,_T(""));
-                                    added++;
-                                }
+                                wxString menutext=m_ic.interps[i].name;
+                                m_contextvec.Add(i);
+                                AddModuleMenuEntry(menu,i);
+                                added++;
                             }
                         }
                     if(added>0)
@@ -608,25 +638,22 @@ void ShellExtensions::BuildModuleMenu(const ModuleType type, wxMenu* menu, const
         size_t sep_pos=menu->GetMenuItemCount();
         size_t added=0;
         for(unsigned int i=0;i<m_ic.interps.size();i++)
-            if(WildCardListMatch(m_ic.interps[i].extensions,name))
+            if(WildCardListMatch(m_ic.interps[i].wildcards,name))
             {
                 m_RunTarget=filename;
-                for(unsigned int j=0;j<m_ic.interps[i].actions.size();j++)
-                {
-                    if(m_ic.interps[i].actions[j].command.Find(_T("$file"))>=0 ||
-                        m_ic.interps[i].actions[j].command.Find(_T("$relfile"))>=0 ||
-                        m_ic.interps[i].actions[j].command.Find(_T("$fname"))>=0 ||
-                        m_ic.interps[i].actions[j].command.Find(_T("$fext"))>=0 ||
-                        m_ic.interps[i].actions[j].command.Find(_T("$path"))>=0 ||
-                        m_ic.interps[i].actions[j].command.Find(_T("$relpath"))>=0 ||
-                        m_ic.interps[i].actions[j].command.Find(_T("$mpaths"))>=0)
+                    if(m_ic.interps[i].command.Find(_T("$file"))>=0 ||
+                        m_ic.interps[i].command.Find(_T("$relfile"))>=0 ||
+                        m_ic.interps[i].command.Find(_T("$fname"))>=0 ||
+                        m_ic.interps[i].command.Find(_T("$fext"))>=0 ||
+                        m_ic.interps[i].command.Find(_T("$path"))>=0 ||
+                        m_ic.interps[i].command.Find(_T("$relpath"))>=0 ||
+                        m_ic.interps[i].command.Find(_T("$mpaths"))>=0)
                     {
-                        wxString menutext=m_ic.interps[i].name+_T(" ")+m_ic.interps[i].actions[j].name;
-                        m_contextvec.push_back(ShellCommandMenuRef(i,j));
-                        menu->Append(ID_ContextMenu_0+added,menutext,_T(""));
+                        wxString menutext=m_ic.interps[i].name;
+                        m_contextvec.Add(i);
+                        AddModuleMenuEntry(menu,i);
                         added++;
                     }
-                }
             }
         if(added>0)
             menu->InsertSeparator(sep_pos);
@@ -642,24 +669,21 @@ void ShellExtensions::BuildModuleMenu(const ModuleType type, wxMenu* menu, const
                 wxString filename=f.GetFullPath();
                 wxString name=f.GetFullName();
                 for(unsigned int i=0;i<m_ic.interps.size();i++)
-                    if(WildCardListMatch(m_ic.interps[i].extensions,name))
+                    if(WildCardListMatch(m_ic.interps[i].wildcards,name))
                     {
                         m_RunTarget=filename;
-                        for(unsigned int j=0;j<m_ic.interps[i].actions.size();j++)
+                        if(m_ic.interps[i].command.Find(_T("$file"))>=0 ||
+                            m_ic.interps[i].command.Find(_T("$relfile"))>=0 ||
+                            m_ic.interps[i].command.Find(_T("$fname"))>=0 ||
+                            m_ic.interps[i].command.Find(_T("$fext"))>=0 ||
+                            m_ic.interps[i].command.Find(_T("$path"))>=0 ||
+                            m_ic.interps[i].command.Find(_T("$relpath"))>=0 ||
+                            m_ic.interps[i].command.Find(_T("$mpaths"))>=0)
                         {
-                            if(m_ic.interps[i].actions[j].command.Find(_T("$file"))>=0 ||
-                                m_ic.interps[i].actions[j].command.Find(_T("$relfile"))>=0 ||
-                                m_ic.interps[i].actions[j].command.Find(_T("$fname"))>=0 ||
-                                m_ic.interps[i].actions[j].command.Find(_T("$fext"))>=0 ||
-                                m_ic.interps[i].actions[j].command.Find(_T("$path"))>=0 ||
-                                m_ic.interps[i].actions[j].command.Find(_T("$relpath"))>=0 ||
-                                m_ic.interps[i].actions[j].command.Find(_T("$mpaths"))>=0)
-                            {
-                                wxString menutext=m_ic.interps[i].name+_T(" ")+m_ic.interps[i].actions[j].name;
-                                m_contextvec.push_back(ShellCommandMenuRef(i,j));
-                                menu->Append(ID_ContextMenu_0+added,menutext,_T(""));
-                                added++;
-                            }
+                            wxString menutext=m_ic.interps[i].name;
+                            m_contextvec.Add(i);
+                            AddModuleMenuEntry(menu,i);
+                            added++;
                         }
                     }
             }
@@ -669,22 +693,19 @@ void ShellExtensions::BuildModuleMenu(const ModuleType type, wxMenu* menu, const
                 wxString filename=f.GetFullPath();
                 wxString name=f.GetFullName();
                 for(unsigned int i=0;i<m_ic.interps.size();i++)
-                    if(WildCardListMatch(m_ic.interps[i].extensions,name))
+                    if(WildCardListMatch(m_ic.interps[i].wildcards,name))
                     {
                         m_RunTarget=filename;
-                        for(unsigned int j=0;j<m_ic.interps[i].actions.size();j++)
+                        if(m_ic.interps[i].command.Find(_T("$dir"))>=0 ||
+                            m_ic.interps[i].command.Find(_T("$reldir"))>=0 ||
+                            m_ic.interps[i].command.Find(_T("$path"))>=0 ||
+                            m_ic.interps[i].command.Find(_T("$relpath"))>=0 ||
+                            m_ic.interps[i].command.Find(_T("$mpaths"))>=0)
                         {
-                            if(m_ic.interps[i].actions[j].command.Find(_T("$dir"))>=0 ||
-                                m_ic.interps[i].actions[j].command.Find(_T("$reldir"))>=0 ||
-                                m_ic.interps[i].actions[j].command.Find(_T("$path"))>=0 ||
-                                m_ic.interps[i].actions[j].command.Find(_T("$relpath"))>=0 ||
-                                m_ic.interps[i].actions[j].command.Find(_T("$mpaths"))>=0)
-                            {
-                                wxString menutext=m_ic.interps[i].name+_T(" ")+m_ic.interps[i].actions[j].name;
-                                m_contextvec.push_back(ShellCommandMenuRef(i,j));
-                                menu->Append(ID_ContextMenu_0+added,menutext,_T(""));
-                                added++;
-                            }
+                            wxString menutext=m_ic.interps[i].name;
+                            m_contextvec.Add(i);
+                            AddModuleMenuEntry(menu,i);
+                            added++;
                         }
                     }
             }
@@ -696,11 +717,11 @@ void ShellExtensions::BuildModuleMenu(const ModuleType type, wxMenu* menu, const
                     bool match=true; // all selected items must have names that match the wildcard for this grouping
                     wxString pathlist=paths;
                     wxString ipath=paths.BeforeFirst('*'); // '*' separated list
-                    if(m_ic.interps[i].extensions!=_T(""));
+                    if(m_ic.interps[i].wildcards!=_T(""));
                         while(match && pathlist!=_T(""))
                         {
                             wxString name=wxFileName(ipath).GetFullName();
-                            if(ipath!=_T("") && !WildCardListMatch(m_ic.interps[i].extensions,ipath))
+                            if(ipath!=_T("") && !WildCardListMatch(m_ic.interps[i].wildcards,ipath))
                                 match=false;
                             pathlist=pathlist.AfterFirst('*');
                             ipath=pathlist.BeforeFirst('*');
@@ -709,15 +730,12 @@ void ShellExtensions::BuildModuleMenu(const ModuleType type, wxMenu* menu, const
                     {
                         m_RunTarget=paths;
                         //TODO: need a m_TargetParent to allow the FileExplorer to define the parent of a selection (usually the root of the fileexplorer view?)
-                        for(unsigned int j=0;j<m_ic.interps[i].actions.size();j++)
+                        if(m_ic.interps[i].command.Find(_T("$mpaths"))>=0)
                         {
-                            if(m_ic.interps[i].actions[j].command.Find(_T("$mpaths"))>=0)
-                            {
-                                wxString menutext=m_ic.interps[i].name+_T(" ")+m_ic.interps[i].actions[j].name;
-                                m_contextvec.push_back(ShellCommandMenuRef(i,j));
-                                menu->Append(ID_ContextMenu_0+added,menutext,_T(""));
-                                added++;
-                            }
+                            wxString menutext=m_ic.interps[i].name;
+                            m_contextvec.Add(i);
+                            AddModuleMenuEntry(menu,i);
+                            added++;
                         }
                     }
                 }

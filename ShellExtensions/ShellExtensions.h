@@ -20,7 +20,7 @@
 #include <sdk.h>
 #include <cbplugin.h> // for "class cbPlugin"
 #include "shellproperties.h"
-#include "ConfigDialog.h"
+#include "CmdConfigDialog.h"
 #include "ShellCtrl.h"
 #include "FileExplorer.h"
 
@@ -126,6 +126,7 @@ class ShellExtensions : public cbPlugin
     public:
         void UpdateMenu();
         void CreateMenu();
+        void AddModuleMenuEntry(wxMenu *modmenu,int entrynum);
         void ShowConsole();
         void HideConsole();
         CommandCollection m_ic; //object holding interpreter properties

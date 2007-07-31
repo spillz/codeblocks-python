@@ -86,12 +86,12 @@
 			<Add option="`wx-config --libs`" />
 			<Add directory="$(#cb)/devel" />
 		</Linker>
-		<Unit filename="ConfigDialog.cpp">
+		<Unit filename="CmdConfigDialog.cpp">
 			<Option target="default" />
 			<Option target="se-plugin" />
 			<Option target="detachable" />
 		</Unit>
-		<Unit filename="ConfigDialog.h">
+		<Unit filename="CmdConfigDialog.h">
 			<Option target="default" />
 			<Option target="se-plugin" />
 			<Option target="detachable" />
@@ -165,6 +165,12 @@
 		<Extensions>
 			<code_completion />
 			<envvars />
+			<wxsmith version="1">
+				<gui name="wxWidgets" src="" main="" init_handlers="necessary" language="CPP" />
+				<resources>
+					<wxPanel wxs="wxsmith/CmdConfigDialog.wxs" src="CmdConfigDialog.cpp" hdr="CmdConfigDialog.h" name="CmdConfigDialog" language="CPP" />
+				</resources>
+			</wxsmith>
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

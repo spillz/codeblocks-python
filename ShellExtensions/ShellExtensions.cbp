@@ -100,8 +100,8 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
-		<Unit filename="ConfigDialog.cpp" />
-		<Unit filename="ConfigDialog.h" />
+		<Unit filename="CmdConfigDialog.cpp" />
+		<Unit filename="CmdConfigDialog.h" />
 		<Unit filename="FileExplorer.cpp" />
 		<Unit filename="FileExplorer.h" />
 		<Unit filename="Resources\dialogs.fbp" />

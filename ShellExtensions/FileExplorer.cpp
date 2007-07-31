@@ -261,6 +261,7 @@ void FileExplorer::Refresh(wxTreeItemId ti)
 
 bool FileExplorer::AddTreeItems(const wxTreeItemId &ti)
 {
+    m_Tree->Freeze();
     m_Tree->DeleteChildren(ti);
     wxString path=GetFullPath(ti);
 
@@ -337,6 +338,7 @@ bool FileExplorer::AddTreeItems(const wxTreeItemId &ti)
         cont = dir.GetNext(&filename);
     }
     m_Tree->SortChildren(ti);
+    m_Tree->Thaw();
     return true;
 }
 

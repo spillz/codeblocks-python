@@ -1074,6 +1074,19 @@ bool FileExplorer::ParseSVNstate(const wxString &path, VCSstatearray &sa)
 
 bool FileExplorer::ParseBZRstate(const wxString &path, VCSstatearray &sa)
 {
+    wxString parent=path;
+    while(true)
+    {
+        if(wxFileName::DirExists(wxFileName(parent,_T(".bzr")).GetFullPath()))
+            break;
+        wxString oldparent=parent;
+        parent=wxFileName(parent).GetPath(0);
+        if(oldparent==parent||parent.IsEmpty())
+            return false;
+//        cbMessageBox(parent);
+    }
+    if(parent.IsEmpty())
+        return false;
     wxArrayString output;
     int hresult=::wxExecute(_T("bzr root ")+path,output,wxEXEC_SYNC);
     if(hresult!=0)

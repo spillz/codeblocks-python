@@ -432,7 +432,7 @@ void FileExplorer::OnExpand(wxTreeEvent &event)
 
 void FileExplorer::ReadConfig()
 {
-    ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("InterpretedLangs"));
+    ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("ShellExtensions"));
     int len;
     cfg->Read(_T("FileExplorer/RootList/Len"), &len);
     for(int i=0;i<len;i++)
@@ -458,7 +458,7 @@ void FileExplorer::ReadConfig()
 
 void FileExplorer::WriteConfig()
 {
-    ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("InterpretedLangs"));
+    ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("ShellExtensions"));
     //cfg->Clear();
     int count=static_cast<int>(m_Loc->GetCount());
     cfg->Write(_T("FileExplorer/RootList/Len"), count);

@@ -69,8 +69,8 @@ bool CommandCollection::ImportLegacyConfig()
     {
         return false;
     }
-    if(cbMessageBox(_T("Do you want to convert your old style shell extensions/interpreted langs commands to new style Shell Extension commands?"),_T("Shell Extension Plugin Legacy Import"),wxYES_NO)==wxNO)
-        return false;
+//    if(cbMessageBox(_T("Do you want to convert your old style shell extensions/interpreted langs commands to new style Shell Extension commands?"),_T("Shell Extension Plugin Legacy Import"),wxYES_NO)==wxNO)
+//        return false;
     for(int i=0;i<len;i++)
     {
         wxString istr=istr0(i);

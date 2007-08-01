@@ -433,7 +433,7 @@ void FileExplorer::OnExpand(wxTreeEvent &event)
 void FileExplorer::ReadConfig()
 {
     ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("ShellExtensions"));
-    int len;
+    int len=0;
     cfg->Read(_T("FileExplorer/RootList/Len"), &len);
     for(int i=0;i<len;i++)
     {
@@ -442,6 +442,7 @@ void FileExplorer::ReadConfig()
         cfg->Read(ref, &loc);
         m_Loc->Append(loc);
     }
+    len=0;
     cfg->Read(_T("FileExplorer/WildMask/Len"), &len);
     for(int i=0;i<len;i++)
     {

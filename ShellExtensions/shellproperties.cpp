@@ -35,7 +35,7 @@ bool CommandCollection::WriteConfig()
 bool CommandCollection::ReadConfig()
 {
     ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("ShellExtensions"));
-    int len;
+    int len=0;
     if(!cfg->Read(_T("ShellCmds/numcmds"), &len))
     {
 //        cbMessageBox(_T("Warning: couldn't read interpreter config data"));

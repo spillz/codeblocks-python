@@ -262,6 +262,7 @@ void FileExplorer::Refresh(wxTreeItemId ti)
 bool FileExplorer::AddTreeItems(const wxTreeItemId &ti)
 {
     m_Tree->Freeze();
+    m_Tree->Freeze();
     m_Tree->DeleteChildren(ti);
     wxString path=GetFullPath(ti);
 
@@ -1082,7 +1083,7 @@ bool FileExplorer::ParseBZRstate(const wxString &path, VCSstatearray &sa)
         if(wxFileName::DirExists(wxFileName(parent,_T(".bzr")).GetFullPath()))
             break;
         wxString oldparent=parent;
-        parent=wxFileName(parent).GetPath(0);
+        parent=wxFileName(parent).GetPath();
         if(oldparent==parent||parent.IsEmpty())
             return false;
 //        cbMessageBox(parent);
@@ -1090,11 +1091,12 @@ bool FileExplorer::ParseBZRstate(const wxString &path, VCSstatearray &sa)
     if(parent.IsEmpty())
         return false;
     wxArrayString output;
-    int hresult=::wxExecute(_T("bzr root ")+path,output,wxEXEC_SYNC);
-    if(hresult!=0)
-        return false;
-    wxString rpath=output[0];
-    hresult=::wxExecute(_T("bzr stat --short ")+path,output,wxEXEC_SYNC);
+//    int hresult=::wxExecute(_T("bzr root ")+path,output,wxEXEC_SYNC);
+//    if(hresult!=0)
+//        return false;
+//    wxString rpath=output[0];
+    wxString rpath=parent;
+    int hresult=::wxExecute(_T("bzr stat --short ")+path,output,wxEXEC_SYNC);
     if(hresult!=0)
         return false;
     for(size_t i=0;i<output.GetCount();i++)
@@ -1111,9 +1113,9 @@ bool FileExplorer::ParseBZRstate(const wxString &path, VCSstatearray &sa)
             case '-':
                 s.state=fvsVcNonControlled;
                 break;
-            case 'C':
-                s.state=fvsVcConflict;
-                break;
+//            case 'C':
+//                s.state=fvsVcConflict;
+//                break;
             case '?':
                 s.state=fvsVcNonControlled;
                 break;
@@ -1123,22 +1125,23 @@ bool FileExplorer::ParseBZRstate(const wxString &path, VCSstatearray &sa)
             case 'P': //pending merge
                 s.state=fvsVcOutOfDate;
                 break;
-            default:
-                a=output[i][1];
-                switch(a)
-                {
-                    case 'N': // created
-                        s.state=fvsVcAdded;
-                        break;
-                    case 'D': //deleted
-                        s.state=fvsVcMissing;
-                        break;
-                    case 'K': //kind changed
-                    case 'M': //modified
-                        s.state=fvsVcModified;
-                        break;
-                }
         }
+        a=output[i][1];
+        switch(a)
+        {
+            case 'N': // created
+                s.state=fvsVcAdded;
+                break;
+            case 'D': //deleted
+                s.state=fvsVcMissing;
+                break;
+            case 'K': //kind changed
+            case 'M': //modified
+                s.state=fvsVcModified;
+                break;
+        }
+        if(output[i][0]=='C')
+            s.state=fvsVcConflict;
         wxFileName f(output[i].Mid(4));
         f.MakeAbsolute(rpath);
         s.path=f.GetFullPath();

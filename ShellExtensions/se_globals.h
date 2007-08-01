@@ -9,6 +9,10 @@
 
 #include <sdk.h>
 
+wxString GetParentDir(const wxString &path);
+
+bool DirIsChildOf(const wxString &path, const wxString &child);
+
 bool WildCardListMatch(wxString list, wxString name);
 
 bool PromptSaveOpenFile(wxString message, wxFileName path);

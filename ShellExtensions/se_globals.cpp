@@ -1,5 +1,27 @@
 #include "se_globals.h"
 
+wxString GetParentDir(const wxString &path)
+{
+    wxString parent=wxFileName(parent).GetPath(0);
+    if(path==parent||parent.IsEmpty())
+        return wxEmptyString;
+    else
+        return parent;
+}
+
+bool DirIsChildOf(const wxString &path, const wxString &child)
+{
+    wxString parent=path;
+    while(!parent.IsEmpty())
+    {
+        if(wxFileName(path).SameAs(parent))
+            return true;
+        parent=GetParentDir(parent);
+    }
+    return false;
+}
+
+
 bool WildCardListMatch(wxString list, wxString name)
 {
     if(list==_T("")) //any empty list matches everything by default

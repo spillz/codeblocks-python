@@ -166,6 +166,14 @@ bool FileExplorer::SetRootFolder(wxString root)
 {
     if(root[root.Len()-1]!=wxFileName::GetPathSeparator())
         root=root+wxFileName::GetPathSeparator();
+#ifdef __WXMSW__
+    wxFileName fnroot=wxFileName(root);
+    if(fnroot.GetVolume().IsEmpty())
+    {
+        fnroot.SetVolume(wxFileName(::wxGetCwd()).GetVolume());
+        root=fnroot.GetFullPath();//(wxPATH_GET_VOLUME|wxPATH_GET_SEPARATOR)+fnroot.GetFullName();
+    }
+#endif
     wxDir dir(root);
     if (!dir.IsOpened())
     {

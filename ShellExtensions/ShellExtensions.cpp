@@ -419,6 +419,7 @@ void ShellExtensions::OnAttach()
 	// (see: does not need) this plugin...
 
 	m_ic.ReadConfig();
+	m_ic.ImportLegacyConfig();
 
 	m_pipeoutput=true;
 

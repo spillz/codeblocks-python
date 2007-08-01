@@ -61,3 +61,51 @@ bool CommandCollection::ReadConfig()
     return true;
 }
 
+bool CommandCollection::ImportLegacyConfig()
+{
+    ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("InterpretedLangs"));
+    int len=0;
+    if(!cfg->Read(_T("InterpProps/numinterps"), &len))
+    {
+        return false;
+    }
+    if(cbMessageBox(_T("Do you want to convert your old style shell extensions/interpreted langs commands to new style Shell Extension commands?"),_T("Shell Extension Plugin Legacy Import"),wxYES_NO)==wxNO)
+        return false;
+    for(int i=0;i<len;i++)
+    {
+        wxString istr=istr0(i);
+        wxString name,exec,extensions;
+        cfg->Read(_T("InterpProps/I")+istr+_T("/name"), &name);
+        cfg->Read(_T("InterpProps/I")+istr+_T("/exec"), &exec);
+        cfg->Read(_T("InterpProps/I")+istr+_T("/ext"), &extensions);
+        int lenact=0;
+        cfg->Read(_T("InterpProps/I")+istr+_T("/numactions"), &lenact);
+        for(int j=0;j<lenact;j++)
+        {
+            ShellCommand interp;
+            wxString jstr=istr0(j);
+            wxString aname,command,mode,wdir,envvarset;
+            cfg->Read(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/name"), &aname);
+            cfg->Read(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/command"), &command);
+            cfg->Read(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/mode"), &mode);
+            cfg->Read(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/workingdir"), &wdir);
+            cfg->Read(_T("InterpProps/I")+istr+_T("/actions/A")+jstr+_T("/envvarset"), &envvarset);
+            interp.name=name+_T(" ")+aname;
+            interp.wildcards=extensions;
+            interp.command=command;
+            interp.command.Replace(_T("$interpreter"),exec);
+            interp.wdir=wdir;
+            interp.menu=name+_T("/")+aname;
+            interp.cmenu=name+_T("/")+aname;
+            interp.cmenupriority=0;
+            interp.menupriority=0;
+            interp.envvarset=envvarset;
+            interp.mode=mode;
+            interps.Add(interp);
+        }
+    }
+    cfg->Clear();
+    WriteConfig();
+    return true;
+}
+

@@ -47,6 +47,7 @@ class CommandCollection
 public:
     bool WriteConfig(); //TODO: pass handle to config manager
     bool ReadConfig(); // ditto
+    bool ImportLegacyConfig();
     ShellCommandVec interps;
 };
 

@@ -496,7 +496,7 @@ void ShellExtensions::CreateMenu()
             m_ic.interps[i].command.Find(_T("$mpaths"))>0)
             tail=_T("...");
         wxString menuloc=m_ic.interps[i].menu;
-        if(menuloc==_T("."))
+        if(menuloc.StartsWith(_T(".")))
             continue;
         wxString newmenutext=menuloc.BeforeFirst('/');
         wxMenu *menu=m_LangMenu;

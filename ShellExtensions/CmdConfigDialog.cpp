@@ -89,7 +89,7 @@ CmdConfigDialog::CmdConfigDialog( wxWindow* parent, ShellExtensions* plugin)
 
 	m_commandname = new wxTextCtrl( this, ID_COMMANDNAME, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer21->Add( m_commandname, 2, wxALL, 1 );
-
+	m_commandname->SetToolTip(_T("Set a name to easily identify the command in this list. The name is also displayed in the Shell Console notebook when the command is executed (if you select that option)"));
 	bSizer20->Add( bSizer21, 0, wxEXPAND, 5 );
 
 	wxBoxSizer* bSizer211;
@@ -101,6 +101,7 @@ CmdConfigDialog::CmdConfigDialog( wxWindow* parent, ShellExtensions* plugin)
 	bSizer20->Add( bSizer211, 0, wxEXPAND, 5 );
 
 	m_command = new wxTextCtrl( this, ID_COMMAND, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_command->SetToolTip(_T("This is the command line that will be executed by the Shell. The following variable substitions are accepted:\n\n$relfile,$file: respectively the relative and absolute name of a selected file\n$reldir, $dir: respectively the relative and absolute name of a selected directory\n$relpath,$path: the relative and absolute name of the selected file or directory\n$mpaths: a list of selected files or directories (absolute paths only)\n$fname,$fext: the name without extension and the extension without name of a selected file\n$inputstr{prompt}: prompts the user to enter a string of text which is subsituted into the command line\n\nRight clicking on a file, directory or multiple paths in the Project Tree, File Explorer or Editor Pane will only populate if this command handles that type of object.\nTo use relative path names make sure you set the working directory appropriately (typically use $parentdir)\nYou can also use global, project and codeblocks special variables"));
 	bSizer20->Add( m_command, 0, wxALL|wxEXPAND, 1 );
 
 	wxBoxSizer* bSizer214;
@@ -110,12 +111,15 @@ CmdConfigDialog::CmdConfigDialog( wxWindow* parent, ShellExtensions* plugin)
 	bSizer214->Add( m_staticText28, 0, wxALIGN_CENTER|wxALL, 5 );
 
 	m_wildcards = new wxTextCtrl( this, ID_WILDCARDS, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_wildcards->SetToolTip(_T("The context menu will only be populated with this command if the file or directory selected matches the semi-colon separated list of wildcards. For example you could specify \"*.cpp;*.h;makefile.*;Makefile.*\" to handle C++ sources, headers and makefiles. Leave this blank to handle all file/directory types"));
+
 	bSizer214->Add( m_wildcards, 1, wxALL, 1 );
 
 	m_staticText112 = new wxStaticText( this, wxID_ANY, wxT("Working Directory:"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer214->Add( m_staticText112, 0, wxALIGN_CENTER|wxALL, 5 );
 
 	m_workdir = new wxTextCtrl( this, ID_WORKDIR, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_workdir->SetToolTip(_T("This is the working directory for executing the command. Two context specific variables may be available:\n1. If you have specified $dir in the command line then you can use $dir here also.\n2. $parentdir is available for $relfile, $file, $reldir, $dir, $relpath, $path, $fname, $fext and is the absolute path of the directory containing the item.\nYou can also use codeblocks variables, project variables and global variables"));
 	bSizer214->Add( m_workdir, 1, wxALL, 1 );
 
 	bSizer20->Add( bSizer214, 0, wxEXPAND, 5 );
@@ -127,6 +131,7 @@ CmdConfigDialog::CmdConfigDialog( wxWindow* parent, ShellExtensions* plugin)
 	bSizer212->Add( m_staticText13, 0, wxALIGN_CENTER|wxALL, 5 );
 
 	m_menuloc = new wxTextCtrl( this, ID_MENULOC, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_menuloc->SetToolTip(_T("This field controls the appearance of the command in the main \"Extensions\" menu.\nSpecify the nested structure as a path: for example submenu1/submenu2/itemname\nIf you leave itemname blank the command name will be used. If you specify a period as the first character of the field, the command will not be shown in the Extensions menu."));
 	bSizer212->Add( m_menuloc, 1, wxALL, 1 );
 
 	m_staticText16 = new wxStaticText( this, wxID_ANY, wxT("Priority"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -144,6 +149,7 @@ CmdConfigDialog::CmdConfigDialog( wxWindow* parent, ShellExtensions* plugin)
 	bSizer2121->Add( m_staticText131, 0, wxALIGN_CENTER|wxALL, 5 );
 
 	m_cmenuloc = new wxTextCtrl( this, ID_CMENULOC, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	m_cmenuloc->SetToolTip(_T("This field controls the appearance of the command in context menus offered when you right click files or directories in the File Explorer, files in the Project Manager and file in the Editor pane.\nSpecify the nested structure as a path: for example submenu1/submenu2/itemname\nIf you leave itemname blank the command name will be used. If you specify a period as the first character of the field, the command will not be shown in any context menu."));
 	bSizer2121->Add( m_cmenuloc, 1, wxALL, 1 );
 
 	m_staticText161 = new wxStaticText( this, wxID_ANY, wxT("Priority"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -163,6 +169,7 @@ CmdConfigDialog::CmdConfigDialog( wxWindow* parent, ShellExtensions* plugin)
 	wxString m_modeChoices[] = { wxT("Windowed Console Notepage"), wxT("Code::Blocks Console"), wxT("Standard Shell") };
 	int m_modeNChoices = sizeof( m_modeChoices ) / sizeof( wxString );
 	m_mode = new wxChoice( this, ID_MODE, wxDefaultPosition, wxDefaultSize, m_modeNChoices, m_modeChoices, 0 );
+	m_mode->SetToolTip(_T("Select how the command is spawned:\n1. Windowed Console Notepage: redirects input and output to the Shell Extensions Dockable Notebook\n2. Code::Blocks Console: Runs as an external app in a terminal window, reports elapsed time and pause after execution.\n3. Standard Shell execution: will either spawn the command in a standard terminal window (win32), or spawn the command hidden (linux)."));
 	bSizer213->Add( m_mode, 0, wxALL|wxEXPAND, 1 );
 
 	m_staticText1111 = new wxStaticText( this, wxID_ANY, wxT("Env Vars:"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -315,7 +322,7 @@ void CmdConfigDialog::Copy(wxCommandEvent &event)
 void CmdConfigDialog::Delete(wxCommandEvent &event)
 {
     if(m_activeinterp>=0 && m_ic.interps.GetCount()>0)
-        if (cbMessageBox(_("Are you sure you want to remove this command group?"), _("Remove"), wxICON_QUESTION | wxYES_NO) == wxID_YES)
+//        if (cbMessageBox(_("Are you sure you want to remove this command?"), _("Remove"), wxICON_QUESTION | wxYES_NO) == wxID_YES)
         {
             m_ic.interps.RemoveAt(m_activeinterp);
             m_commandlist->Delete(m_activeinterp);

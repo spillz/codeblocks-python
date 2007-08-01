@@ -442,6 +442,10 @@ void FileExplorer::ReadConfig()
         cfg->Read(ref, &wild);
         m_WildCards->Append(wild);
     }
+    cfg->Read(_T("FileExplorer/ParseCVS"), &m_parse_cvs);
+    cfg->Read(_T("FileExplorer/ParseSVN"), &m_parse_svn);
+    cfg->Read(_T("FileExplorer/ParseHG"), &m_parse_bzr);
+    cfg->Read(_T("FileExplorer/ParseBZR"), &m_parse_hg);
 }
 
 void FileExplorer::WriteConfig()
@@ -462,6 +466,10 @@ void FileExplorer::WriteConfig()
         wxString ref=wxString::Format(_T("FileExplorer/WildMask/I%i"),i);
         cfg->Write(ref, m_WildCards->GetString(i));
     }
+    cfg->Write(_T("FileExplorer/ParseCVS"), m_parse_cvs);
+    cfg->Write(_T("FileExplorer/ParseSVN"), m_parse_svn);
+    cfg->Write(_T("FileExplorer/ParseHG"), m_parse_bzr);
+    cfg->Write(_T("FileExplorer/ParseBZR"), m_parse_hg);
 }
 
 void FileExplorer::OnEnterWild(wxCommandEvent &event)
@@ -877,6 +885,7 @@ void FileExplorer::OnShowHidden(wxCommandEvent &event)
 void FileExplorer::OnParseCVS(wxCommandEvent &event)
 {
     m_parse_cvs=!m_parse_cvs;
+    //cfg->Clear();
     Refresh(m_Tree->GetRootItem());
 }
 

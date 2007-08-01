@@ -262,7 +262,6 @@ void FileExplorer::Refresh(wxTreeItemId ti)
 bool FileExplorer::AddTreeItems(const wxTreeItemId &ti)
 {
     m_Tree->Freeze();
-    m_Tree->Freeze();
     m_Tree->DeleteChildren(ti);
     wxString path=GetFullPath(ti);
 

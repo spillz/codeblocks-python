@@ -24,6 +24,7 @@ int ID_FILEMOVE=wxNewId();
 int ID_FILEDELETE=wxNewId();
 int ID_FILERENAME=wxNewId();
 int ID_FILEEXPANDALL=wxNewId();
+int ID_FILESETTINGS=wxNewId();
 int ID_FILESHOWHIDDEN=wxNewId();
 int ID_FILEPARSECVS=wxNewId();
 int ID_FILEPARSESVN=wxNewId();
@@ -98,6 +99,7 @@ BEGIN_EVENT_TABLE(FileExplorer, wxPanel)
     EVT_MENU(ID_FILEDELETE,FileExplorer::OnDelete)
     EVT_MENU(ID_FILERENAME,FileExplorer::OnRename)
     EVT_MENU(ID_FILEEXPANDALL,FileExplorer::OnExpandAll)
+    EVT_MENU(ID_FILESETTINGS,FileExplorer::OnSettings)
     EVT_MENU(ID_FILESHOWHIDDEN,FileExplorer::OnShowHidden)
     EVT_MENU(ID_FILEPARSECVS,FileExplorer::OnParseCVS)
     EVT_MENU(ID_FILEPARSESVN,FileExplorer::OnParseSVN)
@@ -145,10 +147,10 @@ FileExplorer::FileExplorer(wxWindow *parent,wxWindowID id,
 
     SetImages();
     ReadConfig();
-    if(m_Loc->GetCount()>0)
+    if(m_Loc->GetCount()>m_favdirs.GetCount())
     {
-        m_Loc->Select(0);
-        m_root=m_Loc->GetString(0);
+        m_Loc->Select(m_favdirs.GetCount());
+        m_root=m_Loc->GetString(m_favdirs.GetCount());
     } else
     {
         m_root=wxFileName::GetPathSeparator();
@@ -269,6 +271,7 @@ void FileExplorer::Refresh(wxTreeItemId ti)
 
 bool FileExplorer::AddTreeItems(const wxTreeItemId &ti)
 {
+    wxString wildcard=m_WildCards->GetValue();
     m_Tree->Freeze();
     m_Tree->DeleteChildren(ti);
     wxString path=GetFullPath(ti);
@@ -334,7 +337,7 @@ bool FileExplorer::AddTreeItems(const wxTreeItemId &ti)
             }
             if(deli>=0)
                 sa.RemoveAt(deli);
-            wxString wildcard=m_WildCards->GetValue();
+//            cbMessageBox(filename);
             if(!WildCardListMatch(wildcard,filename))
                 match=false;
         }
@@ -434,6 +437,18 @@ void FileExplorer::ReadConfig()
 {
     ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("ShellExtensions"));
     int len=0;
+    cfg->Read(_T("FileExplorer/FavRootList/Len"), &len);
+    for(int i=0;i<len;i++)
+    {
+        wxString ref=wxString::Format(_T("FileExplorer/FavRootList/I%i"),i);
+        wxString loc;
+        FavoriteDir fav;
+        cfg->Read(ref+_T("/alias"), &fav.alias);
+        cfg->Read(ref+_T("/path"), &fav.path);
+        m_Loc->Append(fav.alias);
+        m_favdirs.Add(fav);
+    }
+    len=0;
     cfg->Read(_T("FileExplorer/RootList/Len"), &len);
     for(int i=0;i<len;i++)
     {
@@ -461,12 +476,20 @@ void FileExplorer::WriteConfig()
 {
     ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("ShellExtensions"));
     //cfg->Clear();
-    int count=static_cast<int>(m_Loc->GetCount());
+    int count=static_cast<int>(m_favdirs.GetCount());
+    cfg->Write(_T("FileExplorer/FavRootList/Len"), count);
+    for(int i=0;i<count;i++)
+    {
+        wxString ref=wxString::Format(_T("FileExplorer/FavRootList/I%i"),i);
+        cfg->Write(ref+_T("/alias"), m_favdirs[i].alias);
+        cfg->Write(ref+_T("/path"), m_favdirs[i].path);
+    }
+    count=static_cast<int>(m_Loc->GetCount())-static_cast<int>(m_favdirs.GetCount());
     cfg->Write(_T("FileExplorer/RootList/Len"), count);
     for(int i=0;i<count;i++)
     {
         wxString ref=wxString::Format(_T("FileExplorer/RootList/I%i"),i);
-        cfg->Write(ref, m_Loc->GetString(i));
+        cfg->Write(ref, m_Loc->GetString(m_favdirs.GetCount()+i));
     }
     count=static_cast<int>(m_Loc->GetCount());
     cfg->Write(_T("FileExplorer/WildMask/Len"), count);
@@ -485,6 +508,18 @@ void FileExplorer::OnEnterWild(wxCommandEvent &event)
 {
     wxString wild=m_WildCards->GetValue();
     Refresh(m_Tree->GetRootItem());
+    for(size_t i=0;i<m_WildCards->GetCount();i++)
+    {
+        wxString cmp;
+        cmp=m_WildCards->GetString(i);
+        if(cmp==wild)
+        {
+            m_WildCards->Delete(i);
+            m_WildCards->Insert(wild,0);
+            m_WildCards->SetSelection(0);
+            return;
+        }
+    }
     m_WildCards->Insert(wild,0);
     if(m_WildCards->GetCount()>10)
         m_WildCards->Delete(10);
@@ -507,23 +542,76 @@ void FileExplorer::OnEnterLoc(wxCommandEvent &event)
     wxString loc=m_Loc->GetValue();
     if(!SetRootFolder(loc))
         return;
-    m_Loc->Insert(m_root,0);
-    if(m_Loc->GetCount()>10)
-        m_Loc->Delete(10);
-    m_Loc->SetSelection(0);
+    for(size_t i=0;i<m_Loc->GetCount();i++)
+    {
+        wxString cmp;
+        if(i<m_favdirs.GetCount())
+            cmp=m_favdirs[i].path;
+        else
+            cmp=m_Loc->GetString(i);
+        if(cmp==m_root)
+        {
+            if(i>=m_favdirs.GetCount())
+            {
+                m_Loc->Delete(i);
+                m_Loc->Insert(m_root,m_favdirs.GetCount());
+            }
+            m_Loc->SetSelection(m_favdirs.GetCount());
+            return;
+        }
+    }
+    m_Loc->Insert(m_root,m_favdirs.GetCount());
+    if(m_Loc->GetCount()>10+m_favdirs.GetCount())
+        m_Loc->Delete(10+m_favdirs.GetCount());
+    m_Loc->SetSelection(m_favdirs.GetCount());
 }
 
 void FileExplorer::OnChooseLoc(wxCommandEvent &event)
 {
-    wxString loc=m_Loc->GetValue();
+    wxString loc;
+    if(event.GetInt()>=static_cast<int>(m_favdirs.GetCount()))
+        loc=m_Loc->GetValue();
+    else
+        loc=m_favdirs[event.GetInt()].path;
     if(!SetRootFolder(loc))
-    {
         return;
+    if(event.GetInt()>=static_cast<int>(m_favdirs.GetCount()))
+    {
+        m_Loc->Delete(event.GetInt());
+        m_Loc->Insert(m_root,m_favdirs.GetCount());
+        m_Loc->SetSelection(m_favdirs.GetCount());
     }
-    m_Loc->Delete(event.GetInt());
-    m_Loc->Insert(m_root,0);
-    m_Loc->SetSelection(0);
+    else
+    {
+        for(size_t i=m_favdirs.GetCount();i<m_Loc->GetCount();i++)
+        {
+            wxString cmp;
+            cmp=m_Loc->GetString(i);
+            if(cmp==m_root)
+            {
+                m_Loc->Delete(i);
+                m_Loc->Insert(m_root,m_favdirs.GetCount());
+                m_Loc->SetSelection(event.GetInt());
+                return;
+            }
+        }
+        m_Loc->Insert(m_root,m_favdirs.GetCount());
+        if(m_Loc->GetCount()>10+m_favdirs.GetCount())
+            m_Loc->Delete(10+m_favdirs.GetCount());
+        m_Loc->SetSelection(event.GetInt());
+    }
 }
+
+void FileExplorer::OnSetLoc(wxCommandEvent &event)
+{
+    wxString loc=GetFullPath(m_selectti[0]); //SINGLE: m_Tree->GetSelection()
+    if(!SetRootFolder(loc))
+        return;
+    m_Loc->Insert(m_root,m_favdirs.GetCount());
+    if(m_Loc->GetCount()>10+m_favdirs.GetCount())
+        m_Loc->Delete(10+m_favdirs.GetCount());
+}
+
 
 void FileExplorer::OnOpenInEditor(wxCommandEvent &event)
 {
@@ -631,6 +719,7 @@ void FileExplorer::OnRightClick(wxTreeEvent &event)
         m_Popup->Append(ID_FILEDELETE,_T("D&elete"));
     }
     wxMenu *viewpop=new wxMenu();
+    viewpop->Append(ID_FILESETTINGS,_T("General Settings..."));
     viewpop->AppendCheckItem(ID_FILESHOWHIDDEN,_T("Show &Hidden Files"))->Check(m_show_hidden);
     viewpop->AppendCheckItem(ID_FILEPARSECVS,_T("CVS Decorators"))->Check(m_parse_cvs);
     viewpop->AppendCheckItem(ID_FILEPARSESVN,_T("SVN Decorators"))->Check(m_parse_svn);
@@ -656,16 +745,6 @@ void FileExplorer::OnRightClick(wxTreeEvent &event)
 
 }
 
-void FileExplorer::OnSetLoc(wxCommandEvent &event)
-{
-    wxString loc=GetFullPath(m_selectti[0]); //SINGLE: m_Tree->GetSelection()
-    if(!SetRootFolder(loc))
-        return;
-    m_Loc->Insert(m_root,0);
-    if(m_Loc->GetCount()>10)
-        m_Loc->Delete(10);
-}
-
 void FileExplorer::OnNewFile(wxCommandEvent &event)
 {
 //    cbMessageBox(_T("Not Implemented"));
@@ -674,7 +753,17 @@ void FileExplorer::OnNewFile(wxCommandEvent &event)
 
 void FileExplorer::OnAddFavorite(wxCommandEvent &event)
 {
-
+    FavoriteDir fav;
+    fav.path=GetFullPath(m_selectti[0]);
+    if(fav.path[fav.path.Len()-1]!=wxFileName::GetPathSeparator())
+        fav.path=fav.path+wxFileName::GetPathSeparator();
+    wxTextEntryDialog ted(NULL,_T("Enter an alias for this directory:"),_T("Add Favorite Directory"),fav.path);
+    if(ted.ShowModal()!=wxID_OK)
+        return;
+    wxString name=ted.GetValue();
+    fav.alias=name;
+    m_favdirs.Insert(fav,0);
+    m_Loc->Insert(name,0);
 }
 
 void FileExplorer::OnNewFolder(wxCommandEvent &event)
@@ -883,6 +972,11 @@ void FileExplorer::OnExpandAll(wxCommandEvent &event)
 //    #ifndef __WXMSW__
 ////    m_Tree->ExpandAll(m_Tree->GetSelection());
 //    #endif
+}
+
+void FileExplorer::OnSettings(wxCommandEvent &event)
+{
+    cbMessageBox(_T("Coming soon: a way to manage favorite directories, wildcard filters and miscellaneous settings"));
 }
 
 void FileExplorer::OnShowHidden(wxCommandEvent &event)

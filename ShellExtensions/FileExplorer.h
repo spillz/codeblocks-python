@@ -95,6 +95,7 @@ private:
     void OnDelete(wxCommandEvent &event);
     void OnRename(wxCommandEvent &event);
     void OnExpandAll(wxCommandEvent &event);
+    void OnSettings(wxCommandEvent &event);
     void OnShowHidden(wxCommandEvent &event);
     void OnParseCVS(wxCommandEvent &event);
     void OnParseSVN(wxCommandEvent &event);

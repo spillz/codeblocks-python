@@ -6,7 +6,6 @@
 
 
 #include <wx/arrimpl.cpp> // this is a magic incantation which must be done!
-WX_DEFINE_OBJARRAY(FavoriteDirs);
 WX_DEFINE_OBJARRAY(VCSstatearray);
 
 int ID_FILETREE=wxNewId();

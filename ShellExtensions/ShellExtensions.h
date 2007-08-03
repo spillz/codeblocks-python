@@ -126,7 +126,7 @@ class ShellExtensions : public cbPlugin
     public:
         void UpdateMenu();
         void CreateMenu();
-        void AddModuleMenuEntry(wxMenu *modmenu,int entrynum);
+        void AddModuleMenuEntry(wxMenu *modmenu,int entrynum, int idref);
         void ShowConsole();
         void HideConsole();
         CommandCollection m_ic; //object holding interpreter properties

@@ -13,19 +13,11 @@
 
 #include <sdk.h>
 
+#include "FileExplorerSettings.h"
 
 class Expansion;
 
 typedef std::vector<Expansion*> ExpList;
-
-class FavoriteDir
-{
-public:
-    wxString alias;
-    wxString path;
-};
-
-WX_DECLARE_OBJARRAY(FavoriteDir, FavoriteDirs);
 
 class VCSstate
 {

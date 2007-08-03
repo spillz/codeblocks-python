@@ -48,26 +48,27 @@ int ID_ContextMenu_26=wxNewId();
 int ID_ContextMenu_27=wxNewId();
 int ID_ContextMenu_28=wxNewId();
 int ID_ContextMenu_29=wxNewId();
-int ID_Menu_0=wxNewId();
-int ID_Menu_1=wxNewId();
-int ID_Menu_2=wxNewId();
-int ID_Menu_3=wxNewId();
-int ID_Menu_4=wxNewId();
-int ID_Menu_5=wxNewId();
-int ID_Menu_6=wxNewId();
-int ID_Menu_7=wxNewId();
-int ID_Menu_8=wxNewId();
-int ID_Menu_9=wxNewId();
-int ID_NoTargMenu_0=wxNewId();
-int ID_NoTargMenu_1=wxNewId();
-int ID_NoTargMenu_2=wxNewId();
-int ID_NoTargMenu_3=wxNewId();
-int ID_NoTargMenu_4=wxNewId();
-int ID_NoTargMenu_5=wxNewId();
-int ID_NoTargMenu_6=wxNewId();
-int ID_NoTargMenu_7=wxNewId();
-int ID_NoTargMenu_8=wxNewId();
-int ID_NoTargMenu_9=wxNewId();
+int ID_ContextMenu_30=wxNewId();
+int ID_ContextMenu_31=wxNewId();
+int ID_ContextMenu_32=wxNewId();
+int ID_ContextMenu_33=wxNewId();
+int ID_ContextMenu_34=wxNewId();
+int ID_ContextMenu_35=wxNewId();
+int ID_ContextMenu_36=wxNewId();
+int ID_ContextMenu_37=wxNewId();
+int ID_ContextMenu_38=wxNewId();
+int ID_ContextMenu_39=wxNewId();
+int ID_ContextMenu_40=wxNewId();
+int ID_ContextMenu_41=wxNewId();
+int ID_ContextMenu_42=wxNewId();
+int ID_ContextMenu_43=wxNewId();
+int ID_ContextMenu_44=wxNewId();
+int ID_ContextMenu_45=wxNewId();
+int ID_ContextMenu_46=wxNewId();
+int ID_ContextMenu_47=wxNewId();
+int ID_ContextMenu_48=wxNewId();
+int ID_ContextMenu_49=wxNewId();
+
 int ID_SubMenu_0=wxNewId();
 int ID_SubMenu_1=wxNewId();
 int ID_SubMenu_2=wxNewId();
@@ -89,12 +90,40 @@ int ID_SubMenu_17=wxNewId();
 int ID_SubMenu_18=wxNewId();
 int ID_SubMenu_19=wxNewId();
 int ID_SubMenu_20=wxNewId();
+int ID_SubMenu_21=wxNewId();
+int ID_SubMenu_22=wxNewId();
+int ID_SubMenu_23=wxNewId();
+int ID_SubMenu_24=wxNewId();
+int ID_SubMenu_25=wxNewId();
+int ID_SubMenu_26=wxNewId();
+int ID_SubMenu_27=wxNewId();
+int ID_SubMenu_28=wxNewId();
+int ID_SubMenu_29=wxNewId();
+int ID_SubMenu_30=wxNewId();
+int ID_SubMenu_31=wxNewId();
+int ID_SubMenu_32=wxNewId();
+int ID_SubMenu_33=wxNewId();
+int ID_SubMenu_34=wxNewId();
+int ID_SubMenu_35=wxNewId();
+int ID_SubMenu_36=wxNewId();
+int ID_SubMenu_37=wxNewId();
+int ID_SubMenu_38=wxNewId();
+int ID_SubMenu_39=wxNewId();
+int ID_SubMenu_40=wxNewId();
+int ID_SubMenu_41=wxNewId();
+int ID_SubMenu_42=wxNewId();
+int ID_SubMenu_43=wxNewId();
+int ID_SubMenu_44=wxNewId();
+int ID_SubMenu_45=wxNewId();
+int ID_SubMenu_46=wxNewId();
+int ID_SubMenu_47=wxNewId();
+int ID_SubMenu_48=wxNewId();
+int ID_SubMenu_49=wxNewId();
 
 // events handling
 BEGIN_EVENT_TABLE(ShellExtensions, cbPlugin)
-    EVT_MENU_RANGE(ID_ContextMenu_0,ID_ContextMenu_29,ShellExtensions::OnRunTarget)
-    EVT_MENU_RANGE(ID_NoTargMenu_0, ID_NoTargMenu_9, ShellExtensions::OnRun)
-    EVT_MENU_RANGE(ID_SubMenu_0, ID_SubMenu_20, ShellExtensions::OnRunTarget)
+    EVT_MENU_RANGE(ID_ContextMenu_0,ID_ContextMenu_49,ShellExtensions::OnRunTarget)
+    EVT_MENU_RANGE(ID_SubMenu_0, ID_SubMenu_49, ShellExtensions::OnRunTarget)
     EVT_MENU(ID_LangMenu_ShowConsole,ShellExtensions::OnShowConsole)
     EVT_UPDATE_UI(ID_LangMenu_ShowConsole, ShellExtensions::OnUpdateUI)
 END_EVENT_TABLE()
@@ -140,17 +169,17 @@ void ShellExtensions::OnSettings(wxCommandEvent& event)
 
 void ShellExtensions::OnSubMenuSelect(wxUpdateUIEvent& event)
 {
-    int num=event.GetId()-ID_Menu_0;
-    if(num>=0 && num<=9)
-    {
-        m_interpnum=num;
-        if(num==1)
-        {
-        wxString a;
-        a<<_T("Sub menu")<<m_interpnum<<_T(" opened");
-        cbMessageBox(a);
-        }
-    }
+//    int num=event.GetId()-ID_Menu_0;
+//    if(num>=0 && num<=9)
+//    {
+//        m_interpnum=num;
+//        if(num==1)
+//        {
+//        wxString a;
+//        a<<_T("Sub menu")<<m_interpnum<<_T(" opened");
+//        cbMessageBox(a);
+//        }
+//    }
 }
 
 void ShellExtensions::OnSetTarget(wxCommandEvent& event)
@@ -213,7 +242,7 @@ void ShellExtensions::OnRunTarget(wxCommandEvent& event)
     wxString workingdir;
     bool windowed=false;
     bool console=false;
-    if(ID>=ID_ContextMenu_0&&ID<=ID_ContextMenu_29)
+    if(ID>=ID_ContextMenu_0&&ID<=ID_ContextMenu_49)
     {
         m_interpnum=m_contextvec[ID-ID_ContextMenu_0];
         commandstr=m_ic.interps[m_interpnum].command;
@@ -222,9 +251,9 @@ void ShellExtensions::OnRunTarget(wxCommandEvent& event)
         console=(m_ic.interps[m_interpnum].mode==_("C"));
         workingdir=m_ic.interps[m_interpnum].wdir;
     } else
-    if(ID>=ID_SubMenu_0&&ID<=ID_SubMenu_20)
+    if(ID>=ID_SubMenu_0&&ID<=ID_SubMenu_49)
     {
-        m_interpnum=m_contextvec[ID-ID_SubMenu_0];
+        m_interpnum=ID-ID_SubMenu_0;
         commandstr=m_ic.interps[m_interpnum].command;
         consolename=m_ic.interps[m_interpnum].name;
         windowed=(m_ic.interps[m_interpnum].mode==_("W"));
@@ -261,7 +290,7 @@ void ShellExtensions::OnRunTarget(wxCommandEvent& event)
     }
     else
     {
-        LogMessage(wxString::Format(_T("WARNING: Unprocessed ShellCommand Menu Message: ID %i, IDbase %i, IDend %i, num items on menu %i"),ID,ID_ContextMenu_0,ID_ContextMenu_29,(int)m_contextvec.size()));
+        LogMessage(wxString::Format(_T("WARNING: Unprocessed ShellCommand Menu Message: ID %i, IDbase %i, IDend %i, num items on menu %i"),ID,ID_ContextMenu_0,ID_ContextMenu_49,(int)m_contextvec.size()));
         return;
     }
 
@@ -362,25 +391,25 @@ void ShellExtensions::OnRunTarget(wxCommandEvent& event)
 // DEPRECATED - NO LONGER REQUIRED
 void ShellExtensions::OnRun(wxCommandEvent& event)
 {
-    int ID=event.GetId();
-    wxString commandstr;
-    wxString consolename;
-    wxMenu *m=m_LangMenu->FindItem(ID)->GetMenu(); // get pointer object to selected item in submenu
-    for(m_interpnum=0;m_interpnum<m_ic.interps.size()&&m_interpnum<10;m_interpnum++)
-    {
-        if(m_LangMenu->FindItem(ID_Menu_0+m_interpnum)->GetSubMenu()==m) //compare pointer to submenu with known submenus and break out if loop if matched
-            break;
-    }
-    if(m_interpnum>=m_ic.interps.size()||m_interpnum>=10)
-    {
-        cbMessageBox(_T("Warning: Sub menu not found - cancelling command"));
-        return;
-    }
-    commandstr=m_ic.interps[m_interpnum].command;
-    consolename=m_ic.interps[m_interpnum].name;
-
-    wxExecute(commandstr,wxEXEC_ASYNC);
-//    m_shellmgr->LaunchProcess(commandstr,consolename,0);
+//    int ID=event.GetId();
+//    wxString commandstr;
+//    wxString consolename;
+//    wxMenu *m=m_LangMenu->FindItem(ID)->GetMenu(); // get pointer object to selected item in submenu
+//    for(m_interpnum=0;m_interpnum<m_ic.interps.size()&&m_interpnum<10;m_interpnum++)
+//    {
+//        if(m_LangMenu->FindItem(ID_Menu_0+m_interpnum)->GetSubMenu()==m) //compare pointer to submenu with known submenus and break out if loop if matched
+//            break;
+//    }
+//    if(m_interpnum>=m_ic.interps.size()||m_interpnum>=10)
+//    {
+//        cbMessageBox(_T("Warning: Sub menu not found - cancelling command"));
+//        return;
+//    }
+//    commandstr=m_ic.interps[m_interpnum].command;
+//    consolename=m_ic.interps[m_interpnum].name;
+//
+//    wxExecute(commandstr,wxEXEC_ASYNC);
+////    m_shellmgr->LaunchProcess(commandstr,consolename,0);
 }
 
 // constructor
@@ -523,7 +552,7 @@ void ShellExtensions::CreateMenu()
     m_LangMenu->Append(ID_LangMenu_ShowConsole,_T("Toggle Shell Extensions I/O Window"),_T(""),wxITEM_CHECK);
 }
 
-void ShellExtensions::AddModuleMenuEntry(wxMenu *modmenu,int entrynum)
+void ShellExtensions::AddModuleMenuEntry(wxMenu *modmenu,int entrynum, int idref)
 {
     wxString menuloc=m_ic.interps[entrynum].cmenu;
     if(menuloc==_T("."))
@@ -546,9 +575,9 @@ void ShellExtensions::AddModuleMenuEntry(wxMenu *modmenu,int entrynum)
         newmenutext=menuloc.BeforeFirst('/');
     }
     if(menuloc.IsEmpty())
-        menu->Append(ID_ContextMenu_0+entrynum,m_ic.interps[entrynum].name);
+        menu->Append(ID_ContextMenu_0+idref,m_ic.interps[entrynum].name);
     else
-        menu->Append(ID_ContextMenu_0+entrynum,menuloc);
+        menu->Append(ID_ContextMenu_0+idref,menuloc);
 }
 
 
@@ -620,7 +649,7 @@ void ShellExtensions::BuildModuleMenu(const ModuleType type, wxMenu* menu, const
                             {
                                 wxString menutext=m_ic.interps[i].name;
                                 m_contextvec.Add(i);
-                                AddModuleMenuEntry(menu,i);
+                                AddModuleMenuEntry(menu,i,added);
                                 added++;
                             }
                         }
@@ -652,7 +681,7 @@ void ShellExtensions::BuildModuleMenu(const ModuleType type, wxMenu* menu, const
                     {
                         wxString menutext=m_ic.interps[i].name;
                         m_contextvec.Add(i);
-                        AddModuleMenuEntry(menu,i);
+                        AddModuleMenuEntry(menu,i,added);
                         added++;
                     }
             }
@@ -683,7 +712,7 @@ void ShellExtensions::BuildModuleMenu(const ModuleType type, wxMenu* menu, const
                         {
                             wxString menutext=m_ic.interps[i].name;
                             m_contextvec.Add(i);
-                            AddModuleMenuEntry(menu,i);
+                            AddModuleMenuEntry(menu,i,added);
                             added++;
                         }
                     }
@@ -705,7 +734,7 @@ void ShellExtensions::BuildModuleMenu(const ModuleType type, wxMenu* menu, const
                         {
                             wxString menutext=m_ic.interps[i].name;
                             m_contextvec.Add(i);
-                            AddModuleMenuEntry(menu,i);
+                            AddModuleMenuEntry(menu,i,added);
                             added++;
                         }
                     }
@@ -735,7 +764,7 @@ void ShellExtensions::BuildModuleMenu(const ModuleType type, wxMenu* menu, const
                         {
                             wxString menutext=m_ic.interps[i].name;
                             m_contextvec.Add(i);
-                            AddModuleMenuEntry(menu,i);
+                            AddModuleMenuEntry(menu,i,added);
                             added++;
                         }
                     }

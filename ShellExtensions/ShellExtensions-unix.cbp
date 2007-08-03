@@ -109,11 +109,20 @@
 		</Unit>
 		<Unit filename="FileExplorerSettings.cpp">
 			<Option target="se-plugin" />
+			<Option target="default" />
+			<Option target="detachable" />
 		</Unit>
 		<Unit filename="FileExplorerSettings.h">
 			<Option target="se-plugin" />
+			<Option target="default" />
+			<Option target="detachable" />
 		</Unit>
 		<Unit filename="Resources/dialogs.fbp" />
+		<Unit filename="Resources/fileexplorersettings.xrc">
+			<Option target="default" />
+			<Option target="se-plugin" />
+			<Option target="detachable" />
+		</Unit>
 		<Unit filename="Resources/il_resources.xrc">
 			<Option target="se-library" />
 			<Option target="se-plugin" />

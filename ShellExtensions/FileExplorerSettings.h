@@ -33,7 +33,6 @@ class FileBrowserSettings : public wxDialog
 		wxButton* idbrowsepath;
 		wxButton* idok;
 		wxButton* idcancel;
-		FavoriteDirs m_favdirs;
 
 		void New(wxCommandEvent &event);
 		void Delete(wxCommandEvent &event);
@@ -41,8 +40,11 @@ class FileBrowserSettings : public wxDialog
 		void OnDown(wxCommandEvent &event);
 		void ChangeSelection(wxCommandEvent &event);
 		void NameChange(wxCommandEvent &event);
+        void OnOk(wxCommandEvent &event);
 
 	public:
+        int m_selected;
+		FavoriteDirs m_favdirs;
 		FileBrowserSettings( const FavoriteDirs &favdirs, wxWindow* parent, int id = wxID_ANY, wxPoint pos = wxDefaultPosition, wxSize size = wxSize( 500,400 ), int style = wxTAB_TRAVERSAL );
     DECLARE_EVENT_TABLE()
 };

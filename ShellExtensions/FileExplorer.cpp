@@ -718,7 +718,7 @@ void FileExplorer::OnRightClick(wxTreeEvent &event)
         m_Popup->Append(ID_FILEDELETE,_T("D&elete"));
     }
     wxMenu *viewpop=new wxMenu();
-    viewpop->Append(ID_FILESETTINGS,_T("General Settings..."));
+    viewpop->Append(ID_FILESETTINGS,_T("Manage Favorite Directories..."));
     viewpop->AppendCheckItem(ID_FILESHOWHIDDEN,_T("Show &Hidden Files"))->Check(m_show_hidden);
     viewpop->AppendCheckItem(ID_FILEPARSECVS,_T("CVS Decorators"))->Check(m_parse_cvs);
     viewpop->AppendCheckItem(ID_FILEPARSESVN,_T("SVN Decorators"))->Check(m_parse_svn);
@@ -975,7 +975,18 @@ void FileExplorer::OnExpandAll(wxCommandEvent &event)
 
 void FileExplorer::OnSettings(wxCommandEvent &event)
 {
-    cbMessageBox(_T("Coming soon: a way to manage favorite directories, wildcard filters and miscellaneous settings"));
+    FileBrowserSettings fbs(m_favdirs,NULL);
+    if(fbs.ShowModal()==wxID_OK)
+    {
+        size_t count=m_favdirs.GetCount();
+        for(size_t i=0;i<count;i++)
+            m_Loc->Delete(0);
+        m_favdirs=fbs.m_favdirs;
+        count=m_favdirs.GetCount();
+        for(size_t i=0;i<count;i++)
+            m_Loc->Insert(m_favdirs[i].alias,i);
+    }
+
 }
 
 void FileExplorer::OnShowHidden(wxCommandEvent &event)

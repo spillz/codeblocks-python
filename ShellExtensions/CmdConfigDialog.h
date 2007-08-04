@@ -41,6 +41,9 @@
 #define ID_CMENULOCPRIORITY 1013
 #define ID_MODE 1014
 #define ID_ENVVARS 1015
+#define ID_IMPORT 1016
+#define ID_EXPORT 1017
+
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class CmdConfigDialog
@@ -80,6 +83,8 @@ class CmdConfigDialog : public cbConfigurationPanel
         void NameChange(wxCommandEvent &event);
         void OnUp(wxCommandEvent &event);
         void OnDown(wxCommandEvent &event);
+        void OnImport(wxCommandEvent &event);
+        void OnExport(wxCommandEvent &event);
         void SetDialogItems();
         void GetDialogItems();
 		wxStaticText* m_staticText27;

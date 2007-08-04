@@ -65,7 +65,7 @@ bool CommandCollection::ExportConfig(const wxString &filename)
     wxFile file(filename, wxFile::write);
     if(!file.IsOpened())
         return false;
-    file.Write(_T("##Shell Extensions Plugin (v0.2) Command Export##"));
+    file.Write(_T("##Shell Extensions Plugin (v0.2) Command Export##\n"));
     int len=interps.GetCount();
     for(int i=0;i<len;i++)
     {
@@ -94,13 +94,16 @@ wxString readconfigdata(wxString &configstr)
 
 bool CommandCollection::ImportConfig(const wxString &filename)
 {
-    wxFile file(filename, wxFile::write);
+    wxFile file(filename, wxFile::read);
     if(!file.IsOpened())
         return false;
     wxString import=cbReadFileContents(file);
+    cbMessageBox(import);
     import.Replace(_T("\r\n"),_T("\n"));
     import.Replace(_T("\r"),_T("\n"));
+    cbMessageBox(import);
     import=import.AfterFirst('\n');
+    cbMessageBox(import);
     while(!import.IsEmpty())
     {
         ShellCommand s;

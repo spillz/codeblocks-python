@@ -29,6 +29,8 @@ BEGIN_EVENT_TABLE(CmdConfigDialog, wxPanel)
   EVT_BUTTON(ID_DOWN, CmdConfigDialog::OnDown)
   EVT_LISTBOX(ID_COMMANDLIST, CmdConfigDialog::ChangeSelection)
   EVT_TEXT(ID_COMMANDNAME, CmdConfigDialog::NameChange)
+  EVT_BUTTON(ID_EXPORT, CmdConfigDialog::OnExport)
+  EVT_BUTTON(ID_IMPORT, CmdConfigDialog::OnImport)
 END_EVENT_TABLE()
 
 
@@ -48,6 +50,9 @@ CmdConfigDialog::CmdConfigDialog( wxWindow* parent, ShellExtensions* plugin)
 
 	wxBoxSizer* bSizer43;
 	bSizer43 = new wxBoxSizer( wxVERTICAL );
+
+	wxBoxSizer* bSizer_toprow;
+	bSizer_toprow = new wxBoxSizer( wxHORIZONTAL );
 
 	m_staticText27 = new wxStaticText( this, wxID_ANY, wxT("Known Commands"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer43->Add( m_staticText27, 0, wxALL, 5 );
@@ -76,6 +81,14 @@ CmdConfigDialog::CmdConfigDialog( wxWindow* parent, ShellExtensions* plugin)
 
 	m_butdown = new wxButton( this, ID_DOWN, wxT("Down"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer11->Add( m_butdown, 0, wxRIGHT|wxLEFT, 5 );
+
+	bSizer11->Add( 0, 10, 1, wxALL, 5 );
+
+	wxButton *m_butimport = new wxButton( this, ID_IMPORT, wxT("Import..."), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer11->Add( m_butimport, 0, wxRIGHT|wxLEFT, 5 );
+
+	wxButton *m_butexport = new wxButton( this, ID_EXPORT, wxT("Export..."), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer11->Add( m_butexport, 0, wxRIGHT|wxLEFT, 5 );
 
 	bSizer40->Add( bSizer11, 0, wxEXPAND, 5 );
 
@@ -362,5 +375,32 @@ void CmdConfigDialog::OnDown(wxCommandEvent &event)
         m_commandlist->Insert(interp.name,m_activeinterp);
         m_commandlist->Select(m_activeinterp);
     }
+}
+
+void CmdConfigDialog::OnImport(wxCommandEvent &event)
+{
+    #ifdef __WXMSW__
+    wxFileDialog fd(NULL, _T("Import: Select File"),_T(""),_T(""),_T("*.*"),wxFD_OPEN|wxFD_FILE_MUST_EXIST);
+    #else
+    wxFileDialog fd(NULL, _T("Import: Select File"),_T(""),_T(""),_T("*"),wxFD_OPEN|wxFD_FILE_MUST_EXIST);
+    #endif
+    int prevlistsize=m_ic.interps.GetCount();
+    if(fd.ShowModal()!=wxID_OK)
+        return;
+    m_ic.ImportConfig(fd.GetPath());
+    for(unsigned int i=prevlistsize;i<m_ic.interps.GetCount();i++)
+        m_commandlist->Append(m_ic.interps[i].name);
+}
+
+void CmdConfigDialog::OnExport(wxCommandEvent &event)
+{
+    #ifdef __WXMSW__
+    wxFileDialog fd(NULL, _T("Export: Choose a Filename"),_T(""),_T(""),_T("*.*"),wxFD_SAVE);
+    #else
+    wxFileDialog fd(NULL, _T("Export: Choose a Filename"),_T(""),_T(""),_T("*"),wxFD_SAVE);
+    #endif
+    if(fd.ShowModal()!=wxID_OK)
+        return;
+    m_ic.ExportConfig(fd.GetPath());
 }
 

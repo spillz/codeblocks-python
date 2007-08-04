@@ -63,7 +63,7 @@
 					<Add option="-DCBIL_TEARAWAY" />
 				</Compiler>
 				<ExtraCommands>
-					<Add after="zip -j9 $(#cb)/devel/share/codeblocks/ShellExtensions.zip manifest.xml Resources/fileexplorersettings.xrc" />
+					<Add after="zip -j9 $(#cb)/devel/share/codeblocks/shellextensions.zip manifest.xml Resources/fileexplorersettings.xrc" />
 				</ExtraCommands>
 			</Target>
 		</Build>

@@ -469,6 +469,7 @@ void FileExplorer::ReadConfig()
     cfg->Read(_T("FileExplorer/ParseSVN"), &m_parse_svn);
     cfg->Read(_T("FileExplorer/ParseHG"), &m_parse_bzr);
     cfg->Read(_T("FileExplorer/ParseBZR"), &m_parse_hg);
+    cfg->Read(_T("FileExplorer/ShowHidenFiles"), &m_show_hidden);
 }
 
 void FileExplorer::WriteConfig()
@@ -501,6 +502,7 @@ void FileExplorer::WriteConfig()
     cfg->Write(_T("FileExplorer/ParseSVN"), m_parse_svn);
     cfg->Write(_T("FileExplorer/ParseHG"), m_parse_bzr);
     cfg->Write(_T("FileExplorer/ParseBZR"), m_parse_hg);
+    cfg->Write(_T("FileExplorer/ShowHidenFiles"), m_show_hidden);
 }
 
 void FileExplorer::OnEnterWild(wxCommandEvent &event)
@@ -718,7 +720,7 @@ void FileExplorer::OnRightClick(wxTreeEvent &event)
         m_Popup->Append(ID_FILEDELETE,_T("D&elete"));
     }
     wxMenu *viewpop=new wxMenu();
-    viewpop->Append(ID_FILESETTINGS,_T("Manage Favorite Directories..."));
+    viewpop->Append(ID_FILESETTINGS,_T("Favorite Directories..."));
     viewpop->AppendCheckItem(ID_FILESHOWHIDDEN,_T("Show &Hidden Files"))->Check(m_show_hidden);
     viewpop->AppendCheckItem(ID_FILEPARSECVS,_T("CVS Decorators"))->Check(m_parse_cvs);
     viewpop->AppendCheckItem(ID_FILEPARSESVN,_T("SVN Decorators"))->Check(m_parse_svn);
@@ -1207,15 +1209,10 @@ bool FileExplorer::ParseBZRstate(const wxString &path, VCSstatearray &sa)
         parent=wxFileName(parent).GetPath();
         if(oldparent==parent||parent.IsEmpty())
             return false;
-//        cbMessageBox(parent);
     }
     if(parent.IsEmpty())
         return false;
     wxArrayString output;
-//    int hresult=::wxExecute(_T("bzr root ")+path,output,wxEXEC_SYNC);
-//    if(hresult!=0)
-//        return false;
-//    wxString rpath=output[0];
     wxString rpath=parent;
     int hresult=::wxExecute(_T("bzr stat --short ")+path,output,wxEXEC_SYNC);
     if(hresult!=0)
@@ -1266,7 +1263,6 @@ bool FileExplorer::ParseBZRstate(const wxString &path, VCSstatearray &sa)
         wxFileName f(output[i].Mid(4));
         f.MakeAbsolute(rpath);
         s.path=f.GetFullPath();
-//        cbMessageBox(output[i]+_T("\n")+s.path);
         sa.Add(s);
     }
     return true;
@@ -1275,6 +1271,18 @@ bool FileExplorer::ParseBZRstate(const wxString &path, VCSstatearray &sa)
 
 bool FileExplorer::ParseHGstate(const wxString &path, VCSstatearray &sa)
 {
+    wxString parent=path;
+    while(true)
+    {
+        if(wxFileName::DirExists(wxFileName(parent,_T(".hg")).GetFullPath()))
+            break;
+        wxString oldparent=parent;
+        parent=wxFileName(parent).GetPath();
+        if(oldparent==parent||parent.IsEmpty())
+            return false;
+    }
+    if(parent.IsEmpty())
+        return false;
     wxArrayString output;
     wxString wdir=wxGetCwd();
     wxSetWorkingDirectory(path);
@@ -1312,7 +1320,6 @@ bool FileExplorer::ParseHGstate(const wxString &path, VCSstatearray &sa)
         wxFileName f(output[i].Mid(2));
         f.MakeAbsolute(path);
         s.path=f.GetFullPath();
-//        cbMessageBox(output[i]+_T("\n")+s.path);
         sa.Add(s);
     }
     return true;
@@ -1358,7 +1365,6 @@ bool FileExplorer::ParseCVSstate(const wxString &path, VCSstatearray &sa)
         wxFileName f(output[i].Mid(ind1+6,ind2+6-ind1).Strip());
         f.MakeAbsolute(path);
         s.path=f.GetFullPath();
-//        cbMessageBox(output[i]+_T("\n")+s.path);
         sa.Add(s);
     }
     if(output.GetCount()>0)

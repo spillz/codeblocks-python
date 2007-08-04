@@ -1061,7 +1061,6 @@ bool FileExplorer::IsInSelection(const wxTreeItemId &ti)
 void FileExplorer::OnEndDragTreeItem(wxTreeEvent &event)
 {
 //    SetCursor(wxCursor(wxCROSS_CURSOR));
-//    cbMessageBox(_T("Dragged ")+m_dragtest+_T(" to ")+m_Tree->GetItemText(event.GetItem()));
     if(m_Tree->GetItemImage(event.GetItem())!=fvsFolder) //can only copy to folders
         return;
     for(int i=0;i<m_ticount;i++)

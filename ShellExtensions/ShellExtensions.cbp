@@ -42,7 +42,7 @@
 					<Add directory="$(#wx.lib)\gcc_dll$(WX_CFG)" />
 				</Linker>
 				<ExtraCommands>
-					<Add after="zip -j9 $(#cb)\devel\share\codeblocks\ShellExtensions.zip manifest.xml" />
+					<Add after="zip -j9 $(#cb)\devel\share\codeblocks\ShellExtensions.zip manifest.xml Resources\fileexplorersettings.xrc" />
 				</ExtraCommands>
 				<Environment>
 					<Variable name="WX_SUFFIX" value="u" />
@@ -86,7 +86,7 @@
 					<Add directory="$(#wx.lib)\gcc_dll$(WX_CFG)" />
 				</Linker>
 				<ExtraCommands>
-					<Add after="zip -j9 $(#cb)\devel\share\codeblocks\ShellExtensions.zip manifest.xml" />
+					<Add after="zip -j9 $(#cb)\devel\share\codeblocks\ShellExtensions.zip manifest.xml Resources\fileexplorersettings.xrc" />
 				</ExtraCommands>
 				<Environment>
 					<Variable name="WX_SUFFIX" value="u" />
@@ -104,7 +104,10 @@
 		<Unit filename="CmdConfigDialog.h" />
 		<Unit filename="FileExplorer.cpp" />
 		<Unit filename="FileExplorer.h" />
+		<Unit filename="FileExplorerSettings.cpp" />
+		<Unit filename="FileExplorerSettings.h" />
 		<Unit filename="Resources\dialogs.fbp" />
+		<Unit filename="Resources\fileexplorersettings.xrc" />
 		<Unit filename="ShellCtrl.cpp" />
 		<Unit filename="ShellCtrl.h" />
 		<Unit filename="ShellExtensions.cpp" />

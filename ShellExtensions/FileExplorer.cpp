@@ -660,7 +660,7 @@ void FileExplorer::OnActivate(wxTreeEvent &event)
     {
         wxString msg;
         msg.Printf(_("Could not open file '%s'.\nNo handler registered for this type of file."), filename.c_str());
-        LOG_ERROR(msg);
+        LogMessage(msg);
 //        em->Open(filename); //should never need to open the file from here
     }
     else if (plugin->OpenFile(filename) != 0)
@@ -668,7 +668,7 @@ void FileExplorer::OnActivate(wxTreeEvent &event)
         const PluginInfo* info = Manager::Get()->GetPluginManager()->GetPluginInfo(plugin);
         wxString msg;
         msg.Printf(_("Could not open file '%s'.\nThe registered handler (%s) could not open it."), filename.c_str(), info ? info->title.c_str() : wxString(_("<Unknown plugin>")).c_str());
-        LOG_ERROR(msg);
+        LogMessage(msg);
     }
 
 //    if(!em->IsOpen(file))

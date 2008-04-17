@@ -20,6 +20,7 @@ BEGIN_EVENT_TABLE(FileBrowserSettings, wxDialog)
   EVT_BUTTON(XRCID("iddelete"), FileBrowserSettings::Delete)
   EVT_BUTTON(XRCID("idup"), FileBrowserSettings::OnUp)
   EVT_BUTTON(XRCID("iddown"), FileBrowserSettings::OnDown)
+  EVT_BUTTON(XRCID("idbrowsepath"), FileBrowserSettings::OnBrowse)
   EVT_BUTTON(wxID_OK, FileBrowserSettings::OnOk)
 //  EVT_BUTTON(XRCID("idcancel"), FileBrowserSettings::OnCancel)
   EVT_LISTBOX(XRCID("idfavlist"), FileBrowserSettings::ChangeSelection)
@@ -157,4 +158,16 @@ void FileBrowserSettings::OnOk(wxCommandEvent &event)
     m_favdirs[m_selected].alias=idalias->GetValue();
     m_favdirs[m_selected].path=idpath->GetValue();
     EndModal(wxID_OK);
+}
+
+void FileBrowserSettings::OnBrowse(wxCommandEvent &event)
+{
+    // todo: change to a dir picker
+    wxDirDialog *dd=new wxDirDialog(NULL,_T("Choose a Directory"));
+    dd->SetPath(idpath->GetValue());
+    if(dd->ShowModal()==wxID_OK)
+    {
+        idpath->SetValue(dd->GetPath());
+    }
+    delete dd;
 }

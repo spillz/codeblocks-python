@@ -7,7 +7,7 @@
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="default">
-				<Option output="$(#cb)\devel\share\codeblocks\plugins\ShellExtensions.dll" prefix_auto="1" extension_auto="1" />
+				<Option output="$(#cb)\devel\share\codeblocks\plugins\ShellExtensions" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="$(#cb)\devel" />
 				<Option object_output=".objs\default" />
 				<Option type="3" />
@@ -51,7 +51,7 @@
 				</Environment>
 			</Target>
 			<Target title="cbtearaway">
-				<Option output="$(#cb)\devel\share\codeblocks\plugins\ShellExtensions.dll" prefix_auto="1" extension_auto="1" />
+				<Option output="$(#cb)\devel\share\codeblocks\plugins\ShellExtensions" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="$(#cb)\devel" />
 				<Option object_output=".objs\tearaway" />
 				<Option type="3" />
@@ -95,9 +95,9 @@
 					<Variable name="WX_CFG" value="" />
 				</Environment>
 			</Target>
-			<Target title="nightly">
-				<Option output="c:\cbnightly\share\codeblocks\plugins\ShellExtensions.dll" prefix_auto="1" extension_auto="1" />
-				<Option working_dir="c:\cbnightly" />
+			<Target title="release">
+				<Option output="$(#CB_BINARY)\share\codeblocks\plugins\ShellExtensions" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="$(#CB_BINARY)" />
 				<Option object_output=".objs\nightly" />
 				<Option type="3" />
 				<Option compiler="gcc" />
@@ -126,14 +126,16 @@
 					<Add directory="$(#wx.lib)\gcc_dll$(WX_CFG)\msw$(WX_SUFFIX)" />
 				</Compiler>
 				<Linker>
-					<Add library="c:\CBNightly\codeblocks.dll" />
-					<Add library="C:\CBNightly\wxmsw28u_gcc_cb.dll" />
+					<Add library="$(#CB_BINARY)\codeblocks.dll" />
+					<Add library="$(#CB_BINARY)\wxmsw28u_gcc_cb.dll" />
 					<Add directory="$(#cb)\devel" />
 					<Add directory="$(#wx.lib)\gcc_dll$(WX_CFG)" />
 				</Linker>
 				<ExtraCommands>
-					<Add after="zip -j9 c:\cbnightly\share\codeblocks\ShellExtensions.zip manifest.xml Resources\fileexplorersettings.xrc" />
-					<Add after="strip c:\cbnightly\share\codeblocks\plugins\ShellExtensions.dll" />
+					<Add after='zip -j9 &quot;$(#CB_BINARY)\share\codeblocks\ShellExtensions.zip&quot; manifest.xml Resources\fileexplorersettings.xrc' />
+					<Add after='strip &quot;$(#CB_BINARY)\share\codeblocks\plugins\ShellExtensions.dll&quot;' />
+					<Add after='zip -j9 &quot;$(#CB_BINARY)\share\codeblocks\ShellExtensions.cbplugin&quot; &quot;$(#CB_BINARY)\share\codeblocks\plugins\ShellExtensions.dll&quot; &quot;$(#CB_BINARY)\share\codeblocks\ShellExtensions.zip&quot;' />
+					<Mode after="always" />
 				</ExtraCommands>
 				<Environment>
 					<Variable name="WX_SUFFIX" value="u" />
@@ -168,6 +170,7 @@
 		<Extensions>
 			<code_completion />
 			<envvars />
+			<debugger />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

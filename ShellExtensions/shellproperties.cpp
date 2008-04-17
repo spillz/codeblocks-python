@@ -98,12 +98,9 @@ bool CommandCollection::ImportConfig(const wxString &filename)
     if(!file.IsOpened())
         return false;
     wxString import=cbReadFileContents(file);
-    cbMessageBox(import);
     import.Replace(_T("\r\n"),_T("\n"));
     import.Replace(_T("\r"),_T("\n"));
-    cbMessageBox(import);
     import=import.AfterFirst('\n');
-    cbMessageBox(import);
     while(!import.IsEmpty())
     {
         ShellCommand s;

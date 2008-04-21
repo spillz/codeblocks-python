@@ -70,25 +70,22 @@ typedef void (wxEvtHandler::*PyNotifyUIEventFunction)(PyNotifyUIEvent&);
     wxStaticCastEvent( PyNotifyUIEventFunction, & fn ), (wxObject *) NULL ),
 
 
-/////////////////////////////////////////////////////////////////////////////////////
-// PyJob: An abstract class for a python job to be run by an interpreter instance.
-// The job is defined in the pure virtual method operator(). The job should try to
-// restrict itself to writing to its own non-GUI data members for thread safety.
-// For intensive tasks, PyJob should release the interpreter lock from time to time.
-// The PyJob starts in a released state. before making any API calls, call Lock
-// you must release the lock with Release before returning.
-/////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
+// PyJob: An abstract class for a python job to be 
+// run by an interpreter instance. The job is defined 
+// in the pure virtual method operator(). The job 
+// should try to restrict itself to writing to its 
+// own non-GUI data members for thread safety.
+//////////////////////////////////////////////////////
 class PyJob: public wxThread
 {
 public:
     virtual bool operator()();
-    PyJob(wxWindow *p, int id, bool selfdestroy=true);
-    void Lock();
-    void Release();
+    PyJob(PyInstance *pyinst, wxWindow *p, int id, bool selfdestroy=true);
     virtual ~PyJob();
 protected:
     virtual void *Entry();
-    PyInstance *jobowner;
+    PyInstance *pyinst;
     wxWindow *parent;
     int id;
     bool finished;
@@ -101,9 +98,12 @@ WX_DECLARE_LIST(PyJob, PyJobQueue);
 
 /////////////////////////////////////////////////////////////////////////////////////
 // PyInstance: The interface to an instance of a running interpreter
+// each instantance launches an external python process then
+// connects via some sort of socket interface (xml-rpc currently)
 // The interface maintains a queue of jobs for the interpreter,
-// which are run in sequence by a single worker thread.
-// Consequently jobs must not interact with live objects on the main thread.
+// which are run in sequence as worker threads. a job is a single/multiple
+// xml-rpc method request
+// jobs must not interact with objects, esp. gui objects, on the main thread.
 /////////////////////////////////////////////////////////////////////////////////////
 class PyInstance: public wxEvtHandler
 {
@@ -111,20 +111,21 @@ public:
     PyInstance();
     PyInstance(const PyInstance &copy)
     {
-        tstate=copy.tstate;
+        m_paused=false;
         m_queue=copy.m_queue;
     }
     ~PyInstance();
-    void Lock();
-    void Release();
     void EvalString(char *str, bool wait=true);
     void Kill(bool force=false) {}
     bool AddJob(PyJob *job);
     void OnJobNotify(PyNotifyUIEvent &event);
     void PauseJobs();
-    PyThreadState *tstate;
+    void ClearJobs();
+private:
     PyJobQueue m_queue;
     bool m_paused;
+    wxProcess *m_proc;
+    XmlRpcClient *m_client;
     //void AttachExtension(); //attach a python extension table as an import for this interpreter
     DECLARE_EVENT_TABLE();
 };
@@ -145,6 +146,8 @@ protected:
 private:
     PyInstanceCollection m_Interpreters;
     static std::auto_ptr<PyMgr> theSingleInstance;
+// todo: create an xmlrpc server?
+
 };
 
 

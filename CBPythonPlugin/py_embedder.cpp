@@ -83,16 +83,16 @@ END_EVENT_TABLE()
 
 PyInstance::PyInstance()
 {
-    PyEval_AcquireLock();
-    tstate=Py_NewInterpreter();
-    PyEval_ReleaseLock();
+    // create python process
+    // create xmlrpc client
+    // get & store methods from the xmlrpc server
+    // set running state flag
 }
 
 PyInstance::~PyInstance()
 {
-    PyEval_AcquireLock();
-    Py_EndInterpreter(tstate);
-    PyEval_ReleaseLock();
+    // check if any running jobs, kill them
+    // kill python process if still running
 }
 
 bool PyInstance::AddJob(PyJob *job)
@@ -138,21 +138,9 @@ void PyInstance::OnJobNotify(PyNotifyUIEvent &event)
     }
 }
 
-
-// Not sure about this locking stuff...
-void PyInstance::Lock()
-{
-    PyEval_AcquireThread(tstate);
-}
-
 void PyInstance::EvalString(char *str, bool wait)
 {
     PyRun_SimpleString(str);
-}
-
-void PyInstance::Release()
-{
-    PyEval_ReleaseThread(tstate);
 }
 
 PyMgr::PyMgr()
@@ -229,8 +217,8 @@ int main2(int argc, char** argv)
 
 int main1(int argc, char** argv)
 {
-//	cout << "Starting python shell..." << endl;
-	exec_interactive_interpreter(argc, argv);
+//    cout << "Starting python shell..." << endl;
+    exec_interactive_interpreter(argc, argv);
 
-	return 0;
+    return 0;
 }

@@ -5,8 +5,9 @@
 #include <wx/app.h>
 #include <wx/dynarray.h>
 
-#include <memory>
-#include <Python.h>
+//#include <memory>
+#include <iostream>
+#include "XmlRpc.h"
 
 class PyJob;
 class PyInstance;
@@ -71,10 +72,10 @@ typedef void (wxEvtHandler::*PyNotifyUIEventFunction)(PyNotifyUIEvent&);
 
 
 //////////////////////////////////////////////////////
-// PyJob: An abstract class for a python job to be 
-// run by an interpreter instance. The job is defined 
-// in the pure virtual method operator(). The job 
-// should try to restrict itself to writing to its 
+// PyJob: An abstract class for a python job to be
+// run by an interpreter instance. The job is defined
+// in the pure virtual method operator(). The job
+// should try to restrict itself to writing to its
 // own non-GUI data members for thread safety.
 //////////////////////////////////////////////////////
 class PyJob: public wxThread
@@ -108,11 +109,24 @@ WX_DECLARE_LIST(PyJob, PyJobQueue);
 class PyInstance: public wxEvtHandler
 {
 public:
-    PyInstance();
+    PyInstance(const wxString &hostaddress, int port)
+    {
+      m_port=port;
+      m_hostaddress=hostaddress;
+      // Use introspection API to look up the supported methods
+      m_client = new XmlRpc::XmlRpcClient(hostaddress.char_str(), port);
+      XmlRpc::XmlRpcValue noArgs, result;
+      if (m_client->execute("system.listMethods", noArgs, result))
+        std::cout << "\nMethods:\n " << result << "\n\n";
+      else
+        std::cout << "Error calling 'listMethods'\n\n";
+    }
     PyInstance(const PyInstance &copy)
     {
-        m_paused=false;
+        m_paused=copy.m_paused;
         m_queue=copy.m_queue;
+        m_hostaddress=copy.m_hostaddress;
+        m_port=copy.m_port;
     }
     ~PyInstance();
     void EvalString(char *str, bool wait=true);
@@ -123,9 +137,11 @@ public:
     void ClearJobs();
 private:
     PyJobQueue m_queue;
-    bool m_paused;
-    wxProcess *m_proc;
-    XmlRpcClient *m_client;
+    bool m_paused; //if paused is true, new jobs in the queue will not be processed automatically
+    wxString m_hostaddress; //address for python server process
+    int m_port; // port number for server
+    wxProcess *m_proc; // external python process
+    XmlRpc::XmlRpcClient *m_client;
     //void AttachExtension(); //attach a python extension table as an import for this interpreter
     DECLARE_EVENT_TABLE();
 };

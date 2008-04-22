@@ -33,7 +33,8 @@ PyNotifyUIEvent::PyNotifyUIEvent(int id, PyInstance *inst, JobStates js) : wxEve
 //////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////
 
-PyJob::PyJob(wxWindow *p, int id, bool selfdestroy):wxThread(wxTHREAD_JOINABLE)
+PyJob::PyJob(PyInstance *pyinst, wxWindow *p, int id, bool selfdestroy):
+wxThread(wxTHREAD_JOINABLE)
 {
     parent=p;
     this->id=id;
@@ -49,25 +50,15 @@ PyJob::~PyJob()
 
 void *PyJob::Entry()
 {
-    PyNotifyUIEvent pe(id,jobowner,PYSTATE_STARTEDJOB);
-    ::wxPostEvent(jobowner,pe);
+    PyNotifyUIEvent pe(id,pyinst,PYSTATE_STARTEDJOB);
+    ::wxPostEvent(pyinst,pe);
     if((*this)())
         pe.SetState(PYSTATE_FINISHEDJOB);
     else
         pe.SetState(PYSTATE_ABORTEDJOB);
-    ::wxPostEvent(jobowner,pe);
+    ::wxPostEvent(pyinst,pe);
     Exit();
     return NULL;
-}
-
-void PyJob::Lock()
-{
-    jobowner->Lock();
-}
-
-void PyJob::Release()
-{
-    jobowner->Release();
 }
 
 
@@ -81,13 +72,13 @@ BEGIN_EVENT_TABLE(PyInstance, wxEvtHandler)
     EVT_PY_NOTIFY_UI(wxID_ANY, PyInstance::OnJobNotify)
 END_EVENT_TABLE()
 
-PyInstance::PyInstance()
-{
-    // create python process
-    // create xmlrpc client
-    // get & store methods from the xmlrpc server
-    // set running state flag
-}
+//PyInstance::PyInstance()
+//{
+//    // create python process
+//    // create xmlrpc client
+//    // get & store methods from the xmlrpc server
+//    // set running state flag
+//}
 
 PyInstance::~PyInstance()
 {
@@ -140,24 +131,21 @@ void PyInstance::OnJobNotify(PyNotifyUIEvent &event)
 
 void PyInstance::EvalString(char *str, bool wait)
 {
-    PyRun_SimpleString(str);
+//    PyRun_SimpleString(str);
 }
 
 PyMgr::PyMgr()
 {
-    Py_Initialize();// need to init threads?
-    PyEval_InitThreads();
 }
 
 PyMgr::~PyMgr()
 {
     m_Interpreters.Empty();
-    Py_Finalize();
 }
 
 PyInstance *PyMgr::LaunchInterpreter()
 {
-    PyInstance *p=new PyInstance();
+    PyInstance *p=new PyInstance(_("localhost"),8000);
     if(!p)
         return p;
     m_Interpreters.Add(p);
@@ -175,50 +163,50 @@ std::auto_ptr<PyMgr> PyMgr::theSingleInstance;
 
 void exec_pycode(const char* code)
 {
-  PyRun_SimpleString(code);
+//  PyRun_SimpleString(code);
 }
 
 void exec_interactive_interpreter(int argc, char** argv)
 {
-  Py_Initialize();
-  Py_Main(argc, argv);
-  Py_Finalize();
+//  Py_Initialize();
+//  Py_Main(argc, argv);
+//  Py_Finalize();
 }
 
 void process_expression(char* filename,int num,char** exp)
 {
-    FILE*       exp_file;
-    // Initialize a global variable for
-    // display of expression results
-    PyRun_SimpleString("x = 0");
-    // Open and execute the file of
-    // functions to be made available
-    // to user expressions
-    exp_file = fopen(filename, "r");
-//    PyRun_SimpleFile(exp_file, exp);
-    // Iterate through the expressions
-    // and execute them
-    while(num--) {
-        PyRun_SimpleString(*exp++);
-        PyRun_SimpleString("print x");
-    }
+//    FILE*       exp_file;
+//    // Initialize a global variable for
+//    // display of expression results
+//    PyRun_SimpleString("x = 0");
+//    // Open and execute the file of
+//    // functions to be made available
+//    // to user expressions
+//    exp_file = fopen(filename, "r");
+////    PyRun_SimpleFile(exp_file, exp);
+//    // Iterate through the expressions
+//    // and execute them
+//    while(num--) {
+//        PyRun_SimpleString(*exp++);
+//        PyRun_SimpleString("print x");
+//    }
 }
 
-int main2(int argc, char** argv)
-{
-    Py_Initialize();
-    if(argc != 3) {
-        printf("Usage: \%s FILENAME EXPRESSION+\n");
-        return 1;
-    }
-    process_expression(argv[1], argc - 1, argv + 2);
-    return 0;
-}
-
-int main1(int argc, char** argv)
-{
-//    cout << "Starting python shell..." << endl;
-    exec_interactive_interpreter(argc, argv);
-
-    return 0;
-}
+//int main2(int argc, char** argv)
+//{
+//    Py_Initialize();
+//    if(argc != 3) {
+//        printf("Usage: \%s FILENAME EXPRESSION+\n");
+//        return 1;
+//    }
+//    process_expression(argv[1], argc - 1, argv + 2);
+//    return 0;
+//}
+//
+//int main1(int argc, char** argv)
+//{
+////    cout << "Starting python shell..." << endl;
+//    exec_interactive_interpreter(argc, argv);
+//
+//    return 0;
+//}

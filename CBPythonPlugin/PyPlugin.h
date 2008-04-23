@@ -70,6 +70,7 @@ class PyPlugin : public cbDebuggerPlugin
 		virtual void Next();
 		virtual void Step();
 		virtual void Stop();
+		virtual void Break() {}
         bool IsRunning() const { return false; } /** Is the plugin currently debugging? */
         int GetExitCode() const { return 0; }
 // Misc Plugin Virtuals
@@ -154,7 +155,7 @@ class PyPlugin : public cbDebuggerPlugin
         wxString m_debugfile; // file and line of current debug code position
         wxString m_debugline;
 
-        SimpleTextLog *m_DebugLog; // pointer to the text log (initialized with OnAttach)
+//        SimpleTextLog *m_DebugLog; // pointer to the text log (initialized with OnAttach)
         int m_DebugLogPageIndex; //page index of the debug log
 
         DebuggerWatch *m_WatchDlg;

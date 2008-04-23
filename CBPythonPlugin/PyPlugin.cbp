@@ -7,7 +7,7 @@
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="default">
-				<Option output="$(#cb)\devel\share\codeblocks\plugins\PyPlugin.dll" prefix_auto="1" extension_auto="1" />
+				<Option output="$(#cb)\devel\share\codeblocks\plugins\PyPlugin" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="$(#cb)\devel" />
 				<Option type="3" />
 				<Option compiler="gcc" />
@@ -46,7 +46,7 @@
 				</ExtraCommands>
 			</Target>
 			<Target title="experimental">
-				<Option output="$(#cb)\devel\share\codeblocks\plugins\PyPlugin.dll" prefix_auto="1" extension_auto="1" />
+				<Option output="$(#cb)\devel\share\codeblocks\plugins\PyPlugin" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="$(#cb)\devel" />
 				<Option type="3" />
 				<Option compiler="gcc" />
@@ -73,22 +73,35 @@
 					<Add directory="$(#cb.include)\wxscintilla\include" />
 					<Add directory="$(#wx.include)" />
 					<Add directory="$(#wx.lib)\gcc_dll\mswu" />
-					<Add directory="$(#py.include)" />
+					<Add directory="$(#xmlrpc.include)" />
 				</Compiler>
 				<Linker>
 					<Add library="codeblocks" />
 					<Add library="wxmsw28u" />
-					<Add library="libpython25" />
+					<Add library="libxmlrpc" />
+					<Add library="kernel32" />
+					<Add library="user32" />
+					<Add library="gdi32" />
+					<Add library="winspool" />
+					<Add library="comdlg32" />
+					<Add library="advapi32" />
+					<Add library="shell32" />
+					<Add library="ole32" />
+					<Add library="oleaut32" />
+					<Add library="uuid" />
+					<Add library="odbc32" />
+					<Add library="odbccp32" />
+					<Add library="Ws2_32" />
 					<Add directory="$(#cb)\devel" />
 					<Add directory="$(#wx.lib)\gcc_dll" />
-					<Add directory="$(#py.lib)" />
+					<Add directory="$(#xmlrpc.lib)" />
 				</Linker>
 				<ExtraCommands>
 					<Add after="zip -j9 $(#cb)\devel\share\codeblocks\PyPlugin.zip manifest.xml resources\*.xrc resources\images\*.png resources\images\16x16\*.png" />
 				</ExtraCommands>
 			</Target>
 			<Target title="nightly">
-				<Option output="c:\cbnightly\share\codeblocks\plugins\PyPlugin.dll" prefix_auto="1" extension_auto="1" />
+				<Option output="c:\cbnightly\share\codeblocks\plugins\PyPlugin" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="c:\cbnightly" />
 				<Option type="3" />
 				<Option compiler="gcc" />

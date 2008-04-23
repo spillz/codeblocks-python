@@ -81,9 +81,9 @@ typedef void (wxEvtHandler::*PyNotifyUIEventFunction)(PyNotifyUIEvent&);
 class PyJob: public wxThread
 {
 public:
-    virtual bool operator()();
     PyJob(PyInstance *pyinst, wxWindow *p, int id, bool selfdestroy=true);
     virtual ~PyJob();
+    bool operator()() {return false;}
 protected:
     virtual void *Entry();
     PyInstance *pyinst;

@@ -4,6 +4,7 @@
 #include <wx/wx.h>
 #include <wx/app.h>
 #include <wx/dynarray.h>
+#include <wx/process.h>
 
 //#include <memory>
 #include <iostream>
@@ -20,6 +21,9 @@ BEGIN_DECLARE_EVENT_TYPES()
 DECLARE_EVENT_TYPE(wxEVT_PY_NOTIFY_INTERPRETER, -1)
 DECLARE_EVENT_TYPE(wxEVT_PY_NOTIFY_UI, -1)
 END_DECLARE_EVENT_TYPES()
+
+int ID_PY_PROC=wxNewId();
+
 
 // Events sent from the UI to an intepreter request for shutdown
 class PyNotifyIntepreterEvent: public wxEvent
@@ -121,6 +125,23 @@ public:
       else
         std::cout << "Error calling 'listMethods'\n\n";
     }
+
+    long LaunchProcess(wxString processcmd, bool ParseLinks, bool LinkClicks, const wxString &LinkRegex)
+    {
+        if(!m_proc_dead)
+            return -1;
+        if(m_proc) //this should never happen
+            m_proc->Detach(); //self cleanup
+        m_proc=new wxProcess(this,ID_PY_PROC);
+        m_proc->Redirect();
+        m_proc_id=wxExecute(processcmd,wxEXEC_ASYNC,m_proc);
+        if(m_proc_id>0)
+        {
+            m_proc_dead=false;
+            m_proc_killlevel=0;
+        }
+        return m_proc_id;
+    }
     PyInstance(const PyInstance &copy)
     {
         m_paused=copy.m_paused;
@@ -130,17 +151,41 @@ public:
     }
     ~PyInstance();
     void EvalString(char *str, bool wait=true);
-    void Kill(bool force=false) {}
+    long GetPid() {if(m_proc) return m_proc_id; else return -1;}
+    void KillProcess(bool force=false)
+    {
+        if(m_proc_dead)
+            return;
+        long pid=GetPid();
+        if(m_proc_killlevel==0)
+        {
+            m_proc_killlevel=1;
+            if(wxProcess::Exists(pid))
+                wxProcess::Kill(pid,wxSIGTERM);
+            return;
+        }
+        if(m_proc_killlevel==1)
+        {
+            if(wxProcess::Exists(pid))
+            {
+//                cbMessageBox(_T("Forcing..."));
+                wxProcess::Kill(pid,wxSIGKILL);
+            }
+        }
+    }
     bool AddJob(PyJob *job);
     void OnJobNotify(PyNotifyUIEvent &event);
     void PauseJobs();
     void ClearJobs();
 private:
+    wxProcess *m_proc; // external python process
+    long m_proc_id;
+    int  m_proc_killlevel;
+    bool m_proc_dead;
     PyJobQueue m_queue;
     bool m_paused; //if paused is true, new jobs in the queue will not be processed automatically
     wxString m_hostaddress; //address for python server process
     int m_port; // port number for server
-    wxProcess *m_proc; // external python process
     XmlRpc::XmlRpcClient *m_client;
     //void AttachExtension(); //attach a python extension table as an import for this interpreter
     DECLARE_EVENT_TABLE();

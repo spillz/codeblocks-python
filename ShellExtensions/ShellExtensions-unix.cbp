@@ -12,13 +12,13 @@
 				<Option type="3" />
 				<Option compiler="gcc" />
 				<Option parameters="--personality=debug" />
-				<Option host_application="$(#cb)/devel/cb" />
+				<Option host_application="$(#cb)/devel/codeblocks" />
 				<Compiler>
 					<Add option="-Wall" />
 					<Add option="-g" />
 				</Compiler>
 				<ExtraCommands>
-					<Add after="zip -j9 $(#cb)/devel/share/codeblocks/ShellExtensions.zip manifest.xml Resources/fileexplorersettings.xrc" />
+					<Add after="zip -j9 $(#cb)/devel/share/codeblocks/shellextensions.zip manifest.xml Resources/fileexplorersettings.xrc" />
 				</ExtraCommands>
 			</Target>
 			<Target title="se-library">
@@ -47,7 +47,7 @@
 					<Add library="$(#cb)/devel/se-common.so" />
 				</Linker>
 				<ExtraCommands>
-					<Add after="zip -j9 $(#cb)/devel/share/codeblocks/ShellExtensions.zip manifest.xml" />
+					<Add after="zip -j9 $(#cb)/devel/share/codeblocks/shellextensions.zip manifest.xml" />
 				</ExtraCommands>
 			</Target>
 			<Target title="detachable">
@@ -181,6 +181,7 @@
 					<wxPanel wxs="wxsmith/CmdConfigDialog.wxs" src="CmdConfigDialog.cpp" hdr="CmdConfigDialog.h" name="CmdConfigDialog" language="CPP" />
 				</resources>
 			</wxsmith>
+			<debugger />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

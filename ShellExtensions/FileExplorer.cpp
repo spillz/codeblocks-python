@@ -529,6 +529,8 @@ void FileExplorer::OnEnterWild(wxCommandEvent &event)
 
 void FileExplorer::OnChooseWild(wxCommandEvent &event)
 {
+    // Beware on win32 that if user opens drop down, then types a wildcard the combo box
+    // event will contain a -1 selection and an empty string item. Harmless in current code.
     Refresh(m_Tree->GetRootItem());
     wxString wild=m_WildCards->GetValue();
     m_WildCards->Delete(m_WildCards->GetSelection());
@@ -570,6 +572,11 @@ void FileExplorer::OnEnterLoc(wxCommandEvent &event)
 void FileExplorer::OnChooseLoc(wxCommandEvent &event)
 {
     wxString loc;
+    // on WIN32 if the user opens the drop down, but then types a path instead, this event
+    // fires with an empty string, so we have no choice but to return null. This event
+    // doesn't happen on Linux (the drop down closes when the user starts typing)
+    if(event.GetInt()<0)
+        return;
     if(event.GetInt()>=static_cast<int>(m_favdirs.GetCount()))
         loc=m_Loc->GetValue();
     else

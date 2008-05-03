@@ -157,11 +157,7 @@ class PyPlugin : public cbDebuggerPlugin
         wxString m_debugfile; // file and line of current debug code position
         wxString m_debugline;
 
-<<<<<<< .mine
         TextCtrlLogger *m_DebugLog; // pointer to the text log (initialized with OnAttach)
-=======
-//        SimpleTextLog *m_DebugLog; // pointer to the text log (initialized with OnAttach)
->>>>>>> .r124
         int m_DebugLogPageIndex; //page index of the debug log
 
         DebuggerWatch *m_WatchDlg;

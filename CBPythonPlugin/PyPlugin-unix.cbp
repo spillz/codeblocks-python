@@ -64,20 +64,23 @@
 			<Add directory="/usr/include/$py" />
 			<Add directory="/usr/include/codeblocks" />
 			<Add directory="/usr/include/codeblocks/wxscintilla/include" />
+			<Add directory="/home/damien/src/xmlrpc++0.7/include" />
 		</Compiler>
 		<Linker>
 			<Add option="`wx-config --libs`" />
+			<Add library="libXmlRpc" />
 			<Add directory="$(#cb)/devel" />
+			<Add directory="/home/damien/src/xmlrpc++0.7/lib" />
 		</Linker>
 		<Unit filename="CodeBrowsingSamples/browse.py" />
 		<Unit filename="CodeBrowsingSamples/cb_py_interpreter_code.py" />
 		<Unit filename="ConfigDialog.cpp" />
 		<Unit filename="ConfigDialog.h" />
 		<Unit filename="PyEvalJob.cpp">
-			<Option target="experimental" />
+			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="PyEvalJob.h">
-			<Option target="experimental" />
+			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="PyPlugin.cpp" />
 		<Unit filename="PyPlugin.h" />
@@ -85,17 +88,13 @@
 		<Unit filename="dialogs.cpp" />
 		<Unit filename="dialogs.h" />
 		<Unit filename="manifest.xml" />
-		<Unit filename="pdb2.py" />
+		<Unit filename="pdb2.py">
+			<Option target="default" />
+		</Unit>
 		<Unit filename="py_embedder.cpp">
 			<Option target="experimental" />
 		</Unit>
 		<Unit filename="py_embedder.h">
-			<Option target="experimental" />
-		</Unit>
-		<Unit filename="pydebugtermctrl.cpp">
-			<Option target="experimental" />
-		</Unit>
-		<Unit filename="pydebugtermctrl.h">
 			<Option target="experimental" />
 		</Unit>
 		<Extensions>

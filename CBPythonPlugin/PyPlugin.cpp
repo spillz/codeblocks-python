@@ -374,35 +374,20 @@ void PyPlugin::OnTimer(wxTimerEvent& event)
                 }
                 if(!debugoutputmode) // in standard debug mode, only log flow control information (clearer)
                 {
-<<<<<<< .mine
                     m_DebugLog->Append(cmd.cmdtext);
                     m_DebugLog->Append(logout);
-=======
-//                    m_DebugLog->AddLog(cmd.cmdtext,false);
-//                    m_DebugLog->AddLog(logout,false);
->>>>>>> .r124
                 }
             }
             if(debugoutputmode) //in debug output mode, dump everything to the debugger log
             {
-<<<<<<< .mine
                 m_DebugLog->Append(cmd.cmdtext);
                 m_DebugLog->Append(logout);
-=======
-//                m_DebugLog->AddLog(cmd.cmdtext,false);
-//                m_DebugLog->AddLog(logout,false);
->>>>>>> .r124
             } else
             {
                 if(cmd.type==DBGCMDTYPE_USERCOMMAND)
                 {
-<<<<<<< .mine
                     m_DebugLog->Append(cmd.cmdtext);
                     m_DebugLog->Append(logout);
-=======
-//                    m_DebugLog->AddLog(cmd.cmdtext,false);
-//                    m_DebugLog->AddLog(logout,false);
->>>>>>> .r124
                 }
             }
             reprompt.GetMatch(&start,&len);
@@ -654,11 +639,7 @@ void PyPlugin::OnRunPiped(wxCommandEvent &event)
 void PyPlugin::OnTerminatePipedProcess(wxProcessEvent &event)
 {
     wxMessageBox(_("Debug Terminated"));
-<<<<<<< .mine
     m_DebugLog->Append(_T("\n*** SESSION TERMINATED ***"));
-=======
-//    m_DebugLog->AddLog(_T("\n*** SESSION TERMINATED ***"),false);
->>>>>>> .r124
     ClearActiveMarkFromAllEditors();
     m_DebuggerActive=false;
     m_TimerPollDebugger.Stop();
@@ -778,15 +759,9 @@ void PyPlugin::OnAttach()
     this->ReadPluginConfig();
     this->UpdateConfig();
 //    m_HasDebugLog = Manager::Get()->GetConfigManager(_T("debugger"))->ReadBool(_T("debug_log"), false);
-<<<<<<< .mine
 //    MessageManager* msgMan = Manager::Get()->GetMessageManager();
     m_DebugLog = new TextCtrlLogger(true);
 //    m_DebugLogPageIndex = msgMan->AddLog(m_DebugLog, _("PyDebugger"));
-=======
-//    MessageManager* msgMan = Manager::Get()->GetMessageManager();
-//    m_DebugLog = new SimpleTextLog(true);
-//    m_DebugLogPageIndex = msgMan->AddLog(m_DebugLog, _("PyDebugger"));
->>>>>>> .r124
     m_WatchDlg = new DebuggerWatch(Manager::Get()->GetAppWindow(), this);
 
     CodeBlocksLogEvent evtlog(cbEVT_ADD_LOG_WINDOW,m_DebugLog, _("PyDebugger"));
@@ -828,14 +803,9 @@ void PyPlugin::OnRelease(bool appShutDown)
     }
     m_WatchDlg = 0L;
 
-<<<<<<< .mine
     CodeBlocksLogEvent evt(cbEVT_REMOVE_LOG_WINDOW,m_DebugLog);
     Manager::Get()->ProcessEvent(evt);
 	delete m_DebugLog;
-=======
-//    Manager::Get()->GetMessageManager()->RemoveLog(m_DebugLog);
-//	m_DebugLog->Destroy();
->>>>>>> .r124
 }
 
 int PyPlugin::Configure()

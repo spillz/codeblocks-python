@@ -83,7 +83,75 @@ END_EVENT_TABLE()
 PyInstance::~PyInstance()
 {
     // check if any running jobs, kill them
+    // delete the client
+    delete m_client;
     // kill python process if still running
+}
+
+PyInstance::PyInstance(const wxString &hostaddress, int port)
+{
+  m_port=port;
+  m_hostaddress=hostaddress;
+  // Launch process
+  LaunchProcess(_T("python pyinterp.py")); //TODO: The command for the interpreter process should come from the manager (and be stored in a config file)
+  // Setup XMLRPC client and use introspection API to look up the supported methods
+  m_client = new XmlRpc::XmlRpcClient(hostaddress.char_str(), port);
+  XmlRpc::XmlRpcValue noArgs, result;
+  if (m_client->execute("system.listMethods", noArgs, result))
+    std::cout << "\nMethods:\n " << result << "\n\n";
+  else
+    std::cout << "Error calling 'listMethods'\n\n";
+}
+
+long PyInstance::LaunchProcess(wxString processcmd)
+{
+    if(!m_proc_dead)
+        return -1;
+    if(m_proc) //this should never happen
+        m_proc->Detach(); //self cleanup
+    m_proc=new wxProcess(this,ID_PY_PROC);
+    m_proc->Redirect();
+    m_proc_id=wxExecute(processcmd,wxEXEC_ASYNC,m_proc);
+    if(m_proc_id>0)
+    {
+        m_proc_dead=false;
+        m_proc_killlevel=0;
+    }
+    return m_proc_id;
+}
+
+PyInstance::PyInstance(const PyInstance &copy)
+{
+    m_paused=copy.m_paused;
+    m_queue=copy.m_queue;
+    m_hostaddress=copy.m_hostaddress;
+    m_port=copy.m_port;
+    m_proc=copy.m_proc;
+    m_proc_id=copy.m_proc_id;
+    m_proc_killlevel=copy.m_proc_killlevel;
+    m_proc_dead=copy.m_proc_dead;
+}
+
+void PyInstance::KillProcess(bool force)
+{
+    if(m_proc_dead)
+        return;
+    long pid=GetPid();
+    if(m_proc_killlevel==0)
+    {
+        m_proc_killlevel=1;
+        if(wxProcess::Exists(pid))
+            wxProcess::Kill(pid,wxSIGTERM);
+        return;
+    }
+    if(m_proc_killlevel==1)
+    {
+        if(wxProcess::Exists(pid))
+        {
+//                cbMessageBox(_T("Forcing..."));
+            wxProcess::Kill(pid,wxSIGKILL);
+        }
+    }
 }
 
 bool PyInstance::AddJob(PyJob *job)
@@ -161,52 +229,3 @@ PyMgr &PyMgr::Get()
 
 std::auto_ptr<PyMgr> PyMgr::theSingleInstance;
 
-void exec_pycode(const char* code)
-{
-//  PyRun_SimpleString(code);
-}
-
-void exec_interactive_interpreter(int argc, char** argv)
-{
-//  Py_Initialize();
-//  Py_Main(argc, argv);
-//  Py_Finalize();
-}
-
-void process_expression(char* filename,int num,char** exp)
-{
-//    FILE*       exp_file;
-//    // Initialize a global variable for
-//    // display of expression results
-//    PyRun_SimpleString("x = 0");
-//    // Open and execute the file of
-//    // functions to be made available
-//    // to user expressions
-//    exp_file = fopen(filename, "r");
-////    PyRun_SimpleFile(exp_file, exp);
-//    // Iterate through the expressions
-//    // and execute them
-//    while(num--) {
-//        PyRun_SimpleString(*exp++);
-//        PyRun_SimpleString("print x");
-//    }
-}
-
-//int main2(int argc, char** argv)
-//{
-//    Py_Initialize();
-//    if(argc != 3) {
-//        printf("Usage: \%s FILENAME EXPRESSION+\n");
-//        return 1;
-//    }
-//    process_expression(argv[1], argc - 1, argv + 2);
-//    return 0;
-//}
-//
-//int main1(int argc, char** argv)
-//{
-////    cout << "Starting python shell..." << endl;
-//    exec_interactive_interpreter(argc, argv);
-//
-//    return 0;
-//}

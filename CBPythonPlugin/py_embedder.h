@@ -5,6 +5,7 @@
 #include <wx/app.h>
 #include <wx/dynarray.h>
 #include <wx/process.h>
+#include <wx/process.h>
 
 //#include <memory>
 #include <iostream>
@@ -23,7 +24,6 @@ DECLARE_EVENT_TYPE(wxEVT_PY_NOTIFY_UI, -1)
 END_DECLARE_EVENT_TYPES()
 
 int ID_PY_PROC=wxNewId();
-
 
 // Events sent from the UI to an intepreter request for shutdown
 class PyNotifyIntepreterEvent: public wxEvent
@@ -113,66 +113,13 @@ WX_DECLARE_LIST(PyJob, PyJobQueue);
 class PyInstance: public wxEvtHandler
 {
 public:
-    PyInstance(const wxString &hostaddress, int port)
-    {
-      m_port=port;
-      m_hostaddress=hostaddress;
-      // Use introspection API to look up the supported methods
-      m_client = new XmlRpc::XmlRpcClient(hostaddress.char_str(), port);
-      XmlRpc::XmlRpcValue noArgs, result;
-      if (m_client->execute("system.listMethods", noArgs, result))
-        std::cout << "\nMethods:\n " << result << "\n\n";
-      else
-        std::cout << "Error calling 'listMethods'\n\n";
-    }
-
-    long LaunchProcess(wxString processcmd, bool ParseLinks, bool LinkClicks, const wxString &LinkRegex)
-    {
-        if(!m_proc_dead)
-            return -1;
-        if(m_proc) //this should never happen
-            m_proc->Detach(); //self cleanup
-        m_proc=new wxProcess(this,ID_PY_PROC);
-        m_proc->Redirect();
-        m_proc_id=wxExecute(processcmd,wxEXEC_ASYNC,m_proc);
-        if(m_proc_id>0)
-        {
-            m_proc_dead=false;
-            m_proc_killlevel=0;
-        }
-        return m_proc_id;
-    }
-    PyInstance(const PyInstance &copy)
-    {
-        m_paused=copy.m_paused;
-        m_queue=copy.m_queue;
-        m_hostaddress=copy.m_hostaddress;
-        m_port=copy.m_port;
-    }
+    PyInstance(const wxString &hostaddress, int port);
+    long LaunchProcess(wxString processcmd);
+    PyInstance(const PyInstance &copy);
     ~PyInstance();
     void EvalString(char *str, bool wait=true);
     long GetPid() {if(m_proc) return m_proc_id; else return -1;}
-    void KillProcess(bool force=false)
-    {
-        if(m_proc_dead)
-            return;
-        long pid=GetPid();
-        if(m_proc_killlevel==0)
-        {
-            m_proc_killlevel=1;
-            if(wxProcess::Exists(pid))
-                wxProcess::Kill(pid,wxSIGTERM);
-            return;
-        }
-        if(m_proc_killlevel==1)
-        {
-            if(wxProcess::Exists(pid))
-            {
-//                cbMessageBox(_T("Forcing..."));
-                wxProcess::Kill(pid,wxSIGKILL);
-            }
-        }
-    }
+    void KillProcess(bool force=false);
     bool AddJob(PyJob *job);
     void OnJobNotify(PyNotifyUIEvent &event);
     void PauseJobs();

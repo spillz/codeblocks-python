@@ -30,7 +30,7 @@ private:
     wxString m_stderr;
     wxMutex m_outmutex;
     wxMutex m_errmutex;
-    PyMethodDef PyCBMethods[3];
+//    PyMethodDef PyCBMethods[3];
 };
 
 

@@ -1,6 +1,8 @@
+# client-side test program for interp.py
+
 import xmlrpclib
 
-s = xmlrpclib.Server('http://localhost:800')
+s = xmlrpclib.ServerProxy('http://localhost:800')
 # Print list of available methods
 print s.system.listMethods()
 s.end()

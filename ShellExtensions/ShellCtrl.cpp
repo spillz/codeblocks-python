@@ -400,14 +400,14 @@ void ShellManager::OnUserInput(wxKeyEvent& ke)
 }
 
 ShellManager::ShellManager(wxWindow* parent)
-    : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL | wxCLIP_CHILDREN)
+    : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL/* | wxCLIP_CHILDREN*/)
 {
     m_synctimer.SetOwner(this, ID_SHELLPOLLTIMER);
     wxBoxSizer* bs = new wxBoxSizer(wxVERTICAL);
 //#ifdef CBIL_TEARAWAY
 //    m_nb = new TearawayNotebook(this, ID_SHELLMGR, wxDefaultPosition, wxDefaultSize, wxFNB_X_ON_TAB|wxNB_TOP);
 //#else
-    m_nb = new wxFlatNotebook(this, ID_SHELLMGR, wxDefaultPosition, wxDefaultSize, wxFNB_X_ON_TAB|wxNB_TOP);
+    m_nb = new wxFlatNotebook(this, ID_SHELLMGR, wxDefaultPosition, wxDefaultSize, wxFNB_X_ON_TAB|wxFNB_NO_X_BUTTON);
 //#endif
     bs->Add(m_nb, 1, wxEXPAND | wxALL);
     SetAutoLayout(TRUE);

@@ -97,6 +97,12 @@
 		<Unit filename="py_embedder.h">
 			<Option target="experimental" />
 		</Unit>
+		<Unit filename="python/interp.py">
+			<Option target="experimental" />
+		</Unit>
+		<Unit filename="python/interp_client.py">
+			<Option target="experimental" />
+		</Unit>
 		<Extensions>
 			<code_completion />
 			<envvars />

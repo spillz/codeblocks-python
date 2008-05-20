@@ -25,7 +25,6 @@
 					<Add option="-DHAVE_W32API_H" />
 					<Add option="-D__WXMSW__" />
 					<Add option="-DWXUSINGDLL" />
-					<Add option="-DTIXML_USE_STL" />
 					<Add option="-DcbDEBUG" />
 					<Add option="-DCB_PRECOMP" />
 					<Add option="-DWX_PRECOMP" />
@@ -64,7 +63,6 @@
 					<Add option="-DHAVE_W32API_H" />
 					<Add option="-D__WXMSW__" />
 					<Add option="-DWXUSINGDLL" />
-					<Add option="-DTIXML_USE_STL" />
 					<Add option="-DcbDEBUG" />
 					<Add option="-DCB_PRECOMP" />
 					<Add option="-DWX_PRECOMP" />
@@ -79,7 +77,20 @@
 					<Add library="codeblocks" />
 					<Add library="wxmsw28u" />
 					<Add library="libxmlrpc" />
-					<Add library="..\..\..\XMLRPC\lib\libxmlrpc.a" />
+					<Add library="xmlrpc" />
+					<Add library="kernel32" />
+					<Add library="user32" />
+					<Add library="gdi32" />
+					<Add library="winspool" />
+					<Add library="comdlg32" />
+					<Add library="advapi32" />
+					<Add library="shell32" />
+					<Add library="ole32" />
+					<Add library="oleaut32" />
+					<Add library="uuid" />
+					<Add library="odbc32" />
+					<Add library="odbccp32" />
+					<Add library="ws2_32" />
 					<Add directory="$(#cb)\devel" />
 					<Add directory="$(#wx.lib)\gcc_dll" />
 					<Add directory="$(#xmlrpc.lib)" />
@@ -106,7 +117,6 @@
 					<Add option="-DHAVE_W32API_H" />
 					<Add option="-D__WXMSW__" />
 					<Add option="-DWXUSINGDLL" />
-					<Add option="-DTIXML_USE_STL" />
 					<Add option="-DcbDEBUG" />
 					<Add option="-DCB_PRECOMP" />
 					<Add option="-DWX_PRECOMP" />
@@ -132,12 +142,6 @@
 			<Add option="-DCB_PRECOMP" />
 			<Add option="-DWX_PRECOMP" />
 		</Compiler>
-		<Unit filename="CodeBrowsingSamples\browse.py">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="CodeBrowsingSamples\cb_py_interpreter_code.py">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
 		<Unit filename="ConfigDialog.cpp" />
 		<Unit filename="ConfigDialog.h" />
 		<Unit filename="PyPlugin.cpp" />
@@ -157,6 +161,12 @@
 			<Option target="experimental" />
 		</Unit>
 		<Unit filename="py_embedder.h">
+			<Option target="experimental" />
+		</Unit>
+		<Unit filename="python\interp.py">
+			<Option target="experimental" />
+		</Unit>
+		<Unit filename="python\interp_client.py">
 			<Option target="experimental" />
 		</Unit>
 		<Extensions>

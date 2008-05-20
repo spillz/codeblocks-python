@@ -805,12 +805,13 @@ void PyPlugin::OnRelease(bool appShutDown)
 
     CodeBlocksLogEvent evt(cbEVT_REMOVE_LOG_WINDOW,m_DebugLog);
     Manager::Get()->ProcessEvent(evt);
-	delete m_DebugLog;
+    m_DebugLog = 0L;
+
 }
 
 int PyPlugin::Configure()
 {
-	//create and display the configuration dialog for your plugin
+	//create and display the configuration dialog for the plugin
 	cbConfigurationDialog dlg(Manager::Get()->GetAppWindow(), wxID_ANY, _("Python Language Properties"));
 	cbConfigurationPanel* panel = GetConfigurationPanel(&dlg);
 	if (panel)

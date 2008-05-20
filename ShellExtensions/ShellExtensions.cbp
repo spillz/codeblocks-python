@@ -25,7 +25,6 @@
 					<Add option="-DHAVE_W32API_H" />
 					<Add option="-D__WXMSW__" />
 					<Add option="-DWXUSINGDLL" />
-					<Add option="-DTIXML_USE_STL" />
 					<Add option="-DcbDEBUG" />
 					<Add option="-DCB_PRECOMP" />
 					<Add option="-DWX_PRECOMP" />
@@ -69,7 +68,6 @@
 					<Add option="-DHAVE_W32API_H" />
 					<Add option="-D__WXMSW__" />
 					<Add option="-DWXUSINGDLL" />
-					<Add option="-DTIXML_USE_STL" />
 					<Add option="-DcbDEBUG" />
 					<Add option="-DCB_PRECOMP" />
 					<Add option="-DWX_PRECOMP" />
@@ -114,7 +112,6 @@
 					<Add option="-DHAVE_W32API_H" />
 					<Add option="-D__WXMSW__" />
 					<Add option="-DWXUSINGDLL" />
-					<Add option="-DTIXML_USE_STL" />
 					<Add option="-DcbDEBUG" />
 					<Add option="-DCB_PRECOMP" />
 					<Add option="-DWX_PRECOMP" />

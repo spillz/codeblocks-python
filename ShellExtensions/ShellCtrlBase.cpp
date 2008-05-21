@@ -78,12 +78,13 @@ bool ShellManager::QueryClose(ShellCtrlBase* sh)
 }
 
 
-long ShellManager::LaunchProcess(const wxString &processcmd, const wxString &name, const wxArrayString &options)
+long ShellManager::LaunchProcess(const wxString &processcmd, const wxString &name, const wxString &type, const wxArrayString &options)
 {
     int id=wxNewId();
-    // TODO: Need to figure out what type of object is being requested
-    ShellCtrlBase *shell=new ShellCtrlBase(m_nb,id,name,this);
-    long procid=shell->LaunchProcess(processcmd,ParseLinks,LinkClicks,LinkRegex);
+    ShellCtrlBase *shell=GlobalShellRegistry.CreateControl(type,m_nb,id,name,this);
+    if(!shell)
+        return -1;
+    long procid=shell->LaunchProcess(processcmd,options);
     if(procid>0)
     {
         if(!m_synctimer.IsRunning())
@@ -92,7 +93,7 @@ long ShellManager::LaunchProcess(const wxString &processcmd, const wxString &nam
     else
     {
         cbMessageBox(_T("process launch failed."));
-        delete shell;
+        delete shell; //TODO: GlobalShellRegistry.FreeControl() ???
         return -1;
     }
     m_nb->AddPage(shell,name);
@@ -159,14 +160,14 @@ void ShellManager::OnPollandSyncOutput(wxTimerEvent& te)
 {
     for(int i=0;i<m_nb->GetPageCount();i++)
     {
-        GetPage(i)->ReadStream();
+        GetPage(i)->SyncOutput();
     }
 }
 
 void ShellManager::OnUserInput(wxKeyEvent& ke)
-{
-    ShellCtrlBase *sh=(ShellCtrlBase*)m_nb->GetCurrentPage();
-    sh->OnUserInput(ke);
+{ //TODO: This shouldn't be necessary as individual pages will have the focus
+//    ShellCtrlBase *sh=(ShellCtrlBase*)m_nb->GetCurrentPage();
+//    sh->OnUserInput(ke);
 }
 
 ShellManager::ShellManager(wxWindow* parent)

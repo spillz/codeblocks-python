@@ -1,16 +1,19 @@
 #ifndef SHELLCTRL_H
 #define SHELLCTRL_H
 
+#include <map>
+
+
 #include <wx/wxprec.h>
 
 #ifndef WX_PRECOMP
     #include <wx/wx.h>
 #endif
 
+
 #include <wx/process.h>
 #include <wx/wxFlatNotebook/wxFlatNotebook.h>
 #include <sdk.h>
-#include <vector>
 
 // CLASSES DEFINED IN THIS LIBRARY
 class ShellManager; //Manages the collection of Shell Control Widgets allowing user interaction with external processes within a tabbed notepage - usually the main app (or some plugin) will declare a global instance of this manager. See the full declaration below for more detail
@@ -23,9 +26,9 @@ typedef ShellCtrlBase*(*fnCreate)(); //typedef defining function to create a cus
 typedef void(*fnFree)(ShellCtrlBase*); //typedef defining function to free a custom shell control widget
 
 //Every type of shell control has the following registration info
-class ShellRegInfo
+struct ShellRegInfo
 {
-    wxString name; //unique name of the type
+//    wxString name; //unique name of the type
     fnCreate create; //static function call needed to create instance on the heap
     fnFree free; //static function call needed to free instance
 };
@@ -35,11 +38,27 @@ class ShellRegInfo
 // within this library
 class ShellRegistry
 {
-    bool Register(const wxString &name, fnCreate create, fnFree free); //register/deregister are called by the plugin registrant instance
+public:
+    bool Register(const wxString &name, fnCreate create, fnFree free) //register/deregister are called by the plugin registrant instance
+    {
+        std::map<wxString, ShellRegInfo>::iterator it;
+        if(m_reginfo.find(name)!=m_reginfo.end())
+            return false;
+        ShellRegInfo sri;
+        sri.create=create;
+        sri.free=free;
+        m_reginfo[name]=sri;
+        return true;
+    }
     bool Deregister(const wxString &name);
-    ShellCtrlBase *CreateControl(const wxString &type,wxWindow* parent, int id, const wxString &windowname, ShellManager *shellmgr=NULL); //TODO: returns null if type doesn't exist in registry
+    ShellCtrlBase *CreateControl(const wxString &type,wxWindow* parent, int id, const wxString &windowname, ShellManager *shellmgr=NULL)
+    {
+        std::map<wxString, ShellRegInfo>::iterator it;
+        return NULL;
+    }
     ShellCtrlBase *FreeControl(const wxString &type);
-    std::vector<ShellRegInfo> m_reginfo;
+//    std::vector<ShellRegInfo> m_reginfo;
+    std::map<wxString, ShellRegInfo> m_reginfo;
 };
 
 extern ShellRegistry GlobalShellRegistry; //defined in shellctrlbase.cpp, but accessible to all linking libraries
@@ -130,7 +149,7 @@ class ShellManager : public wxPanel
     public:
         ShellManager(wxWindow* parent);
         ~ShellManager(); //virtual??
-        long LaunchProcess(const wxString &processcmd, const wxString &name, const wxArrayString &options);
+        long LaunchProcess(const wxString &processcmd, const wxString &name, const wxString &type, const wxArrayString &options);
         void KillProcess(int id);
         void KillWindow(int id);
         ShellCtrlBase *GetPage(size_t i);

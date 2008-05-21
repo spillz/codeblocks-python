@@ -139,6 +139,30 @@
 					<Variable name="WX_CFG" value="" />
 				</Environment>
 			</Target>
+			<Target title="lib">
+				<Option output="ShelCtrl" prefix_auto="1" extension_auto="1" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Option createDefFile="1" />
+				<Option createStaticLib="1" />
+				<Compiler>
+					<Add directory="$(#cb.include)" />
+					<Add directory="$(#cb.include)\wxscintilla\include" />
+					<Add directory="$(#cb)\include\wxFlatNotebook\include" />
+					<Add directory="$(#wx.include)" />
+					<Add directory="$(#wx.lib)\gcc_dll$(WX_CFG)\msw$(WX_SUFFIX)" />
+				</Compiler>
+				<Linker>
+					<Add library="codeblocks" />
+					<Add library="wxmsw28$(WX_SUFFIX)" />
+					<Add directory="$(#cb)\devel" />
+					<Add directory="$(#wx.lib)\gcc_dll$(WX_CFG)" />
+				</Linker>
+				<Environment>
+					<Variable name="WX_SUFFIX" value="u" />
+					<Variable name="WX_CFG" value="" />
+				</Environment>
+			</Target>
 		</Build>
 		<VirtualTargets>
 			<Add alias="All" targets="default;" />
@@ -146,24 +170,102 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
-		<Unit filename="CmdConfigDialog.cpp" />
-		<Unit filename="CmdConfigDialog.h" />
-		<Unit filename="FileExplorer.cpp" />
-		<Unit filename="FileExplorer.h" />
-		<Unit filename="FileExplorerSettings.cpp" />
-		<Unit filename="FileExplorerSettings.h" />
-		<Unit filename="Resources\dialogs.fbp" />
-		<Unit filename="Resources\fileexplorersettings.xrc" />
-		<Unit filename="ShellCtrl.cpp" />
-		<Unit filename="ShellCtrl.h" />
-		<Unit filename="ShellExtensions.cpp" />
-		<Unit filename="ShellExtensions.h" />
-		<Unit filename="manifest.xml" />
-		<Unit filename="pyeval.py" />
-		<Unit filename="se_globals.cpp" />
-		<Unit filename="se_globals.h" />
-		<Unit filename="shellproperties.cpp" />
-		<Unit filename="shellproperties.h" />
+		<Unit filename="CmdConfigDialog.cpp">
+			<Option target="default" />
+			<Option target="cbtearaway" />
+			<Option target="release" />
+		</Unit>
+		<Unit filename="CmdConfigDialog.h">
+			<Option target="default" />
+			<Option target="cbtearaway" />
+			<Option target="release" />
+		</Unit>
+		<Unit filename="FileExplorer.cpp">
+			<Option target="default" />
+			<Option target="cbtearaway" />
+			<Option target="release" />
+		</Unit>
+		<Unit filename="FileExplorer.h">
+			<Option target="default" />
+			<Option target="cbtearaway" />
+			<Option target="release" />
+		</Unit>
+		<Unit filename="FileExplorerSettings.cpp">
+			<Option target="default" />
+			<Option target="cbtearaway" />
+			<Option target="release" />
+		</Unit>
+		<Unit filename="FileExplorerSettings.h">
+			<Option target="default" />
+			<Option target="cbtearaway" />
+			<Option target="release" />
+		</Unit>
+		<Unit filename="Resources\dialogs.fbp">
+			<Option target="default" />
+			<Option target="cbtearaway" />
+			<Option target="release" />
+		</Unit>
+		<Unit filename="Resources\fileexplorersettings.xrc">
+			<Option target="default" />
+			<Option target="cbtearaway" />
+			<Option target="release" />
+		</Unit>
+		<Unit filename="ShellCtrl.cpp">
+			<Option target="default" />
+			<Option target="cbtearaway" />
+			<Option target="release" />
+		</Unit>
+		<Unit filename="ShellCtrl.h">
+			<Option target="default" />
+			<Option target="cbtearaway" />
+			<Option target="release" />
+		</Unit>
+		<Unit filename="ShellCtrlBase.cpp">
+			<Option target="lib" />
+		</Unit>
+		<Unit filename="ShellCtrlBase.h">
+			<Option target="lib" />
+		</Unit>
+		<Unit filename="ShellExtensions.cpp">
+			<Option target="default" />
+			<Option target="cbtearaway" />
+			<Option target="release" />
+		</Unit>
+		<Unit filename="ShellExtensions.h">
+			<Option target="default" />
+			<Option target="cbtearaway" />
+			<Option target="release" />
+		</Unit>
+		<Unit filename="manifest.xml">
+			<Option target="default" />
+			<Option target="cbtearaway" />
+			<Option target="release" />
+		</Unit>
+		<Unit filename="pyeval.py">
+			<Option target="default" />
+			<Option target="cbtearaway" />
+			<Option target="release" />
+		</Unit>
+		<Unit filename="se_globals.cpp">
+			<Option target="default" />
+			<Option target="cbtearaway" />
+			<Option target="release" />
+		</Unit>
+		<Unit filename="se_globals.h">
+			<Option target="default" />
+			<Option target="cbtearaway" />
+			<Option target="release" />
+		</Unit>
+		<Unit filename="shellproperties.cpp">
+			<Option target="default" />
+			<Option target="cbtearaway" />
+			<Option target="release" />
+		</Unit>
+		<Unit filename="shellproperties.h">
+			<Option target="default" />
+			<Option target="cbtearaway" />
+			<Option target="release" />
+		</Unit>
 		<Extensions>
 			<code_completion />
 			<envvars />

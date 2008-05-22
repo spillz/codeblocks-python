@@ -115,13 +115,11 @@
 			<Option target="cbplugin" />
 		</Unit>
 		<Unit filename="FileExplorer.cpp">
-			<Option target="se-library" />
 			<Option target="default" />
 			<Option target="detachable" />
 			<Option target="cbplugin" />
 		</Unit>
 		<Unit filename="FileExplorer.h">
-			<Option target="se-library" />
 			<Option target="default" />
 			<Option target="detachable" />
 			<Option target="cbplugin" />
@@ -140,7 +138,6 @@
 		</Unit>
 		<Unit filename="Resources/dialogs.fbp">
 			<Option target="default" />
-			<Option target="se-library" />
 			<Option target="se-plugin" />
 			<Option target="detachable" />
 		</Unit>
@@ -150,20 +147,23 @@
 			<Option target="detachable" />
 		</Unit>
 		<Unit filename="Resources/il_resources.xrc">
-			<Option target="se-library" />
 			<Option target="se-plugin" />
 		</Unit>
 		<Unit filename="ShellCtrl.cpp">
 			<Option target="default" />
-			<Option target="se-library" />
 			<Option target="detachable" />
 			<Option target="cbplugin" />
 		</Unit>
 		<Unit filename="ShellCtrl.h">
 			<Option target="default" />
-			<Option target="se-library" />
 			<Option target="detachable" />
 			<Option target="cbplugin" />
+		</Unit>
+		<Unit filename="ShellCtrlBase.cpp">
+			<Option target="se-library" />
+		</Unit>
+		<Unit filename="ShellCtrlBase.h">
+			<Option target="se-library" />
 		</Unit>
 		<Unit filename="ShellExtensions.cpp">
 			<Option target="default" />
@@ -185,13 +185,11 @@
 		</Unit>
 		<Unit filename="se_globals.cpp">
 			<Option target="default" />
-			<Option target="se-library" />
 			<Option target="detachable" />
 			<Option target="cbplugin" />
 		</Unit>
 		<Unit filename="se_globals.h">
 			<Option target="default" />
-			<Option target="se-library" />
 			<Option target="detachable" />
 			<Option target="cbplugin" />
 		</Unit>

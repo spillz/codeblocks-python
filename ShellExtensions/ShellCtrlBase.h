@@ -22,7 +22,7 @@ class ShellRegInfo; //Every custom shell control must provide basic info to a gl
 class ShellRegistry; //The global registry stores the info for all known custom shell controls
 template<class T> class ShellCtrlRegistrant; //The developer makes their custom Shell Control classes available to the manager (and the main application) by creating an instance of this template class
 
-typedef ShellCtrlBase*(*fnCreate)(); //typedef defining function to create a custom shell control widget
+typedef ShellCtrlBase*(*fnCreate)(wxWindow*, int, const wxString &, ShellManager *); //typedef defining function to create a custom shell control widget
 typedef void(*fnFree)(ShellCtrlBase*); //typedef defining function to free a custom shell control widget
 
 //Every type of shell control has the following registration info
@@ -50,13 +50,31 @@ public:
         m_reginfo[name]=sri;
         return true;
     }
-    bool Deregister(const wxString &name);
+    bool Deregister(const wxString &name)
+    {
+        std::map<wxString, ShellRegInfo>::iterator it
+            =m_reginfo.find(name);
+        if(it==m_reginfo.end())
+            return false;
+        m_reginfo.erase(it);
+        return true;
+    }
     ShellCtrlBase *CreateControl(const wxString &type,wxWindow* parent, int id, const wxString &windowname, ShellManager *shellmgr=NULL)
     {
-        std::map<wxString, ShellRegInfo>::iterator it;
-        return NULL;
+        std::map<wxString, ShellRegInfo>::iterator it
+            =m_reginfo.find(type);
+        if(it==m_reginfo.end())
+            return NULL;
+        return it->second.create(parent, id, windowname, shellmgr);
     }
-    ShellCtrlBase *FreeControl(const wxString &type);
+    void FreeControl(ShellCtrlBase *sh) //TODO: Don't think this is necessary?
+    {
+//        std::map<wxString, ShellRegInfo>::iterator it
+//            =m_reginfo.find(type);
+//        if(it!=m_reginfo.end())
+//            it.second->free(); //TODO: Can't compile
+    }
+
 //    std::vector<ShellRegInfo> m_reginfo;
     std::map<wxString, ShellRegInfo> m_reginfo;
 };
@@ -77,7 +95,7 @@ template<class T> class ShellCtrlRegistrant
         {
             GlobalShellRegistry.Deregister(m_name);
         }
-        static ShellCtrlBase* Create() //allocates new shell control object on heap
+        static ShellCtrlBase* Create(wxWindow* parent, int id, const wxString &windowname, ShellManager *shellmgr=NULL) //allocates new shell control object on heap
         {
             return new T;
         }
@@ -166,11 +184,7 @@ class ShellManager : public wxPanel
         size_t GetTermNum(ShellCtrlBase *term);
     protected:
         wxTimer m_synctimer;
-//#ifdef CBIL_TEARAWAY
-//        TearawayNotebook *m_nb;
-//#else
         wxFlatNotebook *m_nb;
-//#endif
     DECLARE_EVENT_TABLE()
 };
 

@@ -7,37 +7,9 @@
 // The global instance of the shell registry
 ShellRegistry GlobalShellRegistry;
 
-////////////////////////////////////// ShellCtrlBase /////////////////////////////////////////////
+// Unique IDs for Timer and Shell Manager messages
 int ID_SHELLPOLLTIMER=wxNewId();
-int ID_PROC=wxNewId();
 int ID_SHELLMGR=wxNewId();
-
-
-//BEGIN_EVENT_TABLE(ShellCtrlBase, wxTextCtrl)
-//    EVT_CHAR(ShellCtrlBase::OnUserInput)
-//    EVT_END_PROCESS(ID_PROC, ShellCtrlBase::OnEndProcess)
-//    EVT_LEFT_DCLICK(ShellCtrlBase::OnDClick)
-//END_EVENT_TABLE()
-
-//IMPLEMENT_DYNAMIC_CLASS(ShellCtrlBase, wxFrame)
-//
-//
-//ShellCtrlBase::ShellCtrlBase(wxWindow* parent,wxWindowID id, ShellManager *shellmgr,
-//    const wxString& name,const wxString& value,const wxPoint& pos,const wxSize& size,long style)
-//    : wxTextCtrl(parent, id, value, pos, size, style)
-//{
-//    m_shellmgr=shellmgr;
-//    m_name=name;
-//    m_dead=true;
-//    m_proc=NULL;
-//    m_killlevel=0;
-//}
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////
-
-
 
 ////////////////////////////////////// ShellManager /////////////////////////////////////////////
 
@@ -174,7 +146,9 @@ ShellManager::ShellManager(wxWindow* parent)
     : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL/* | wxCLIP_CHILDREN*/)
 {
     m_synctimer.SetOwner(this, ID_SHELLPOLLTIMER);
-    wxBoxSizer* bs = new wxBoxSizer(wxVERTICAL);    m_nb = new wxFlatNotebook(this, ID_SHELLMGR, wxDefaultPosition, wxDefaultSize, wxFNB_X_ON_TAB|wxFNB_NO_X_BUTTON);    bs->Add(m_nb, 1, wxEXPAND | wxALL);
+    wxBoxSizer* bs = new wxBoxSizer(wxVERTICAL);
+    m_nb = new wxFlatNotebook(this, ID_SHELLMGR, wxDefaultPosition, wxDefaultSize, wxFNB_X_ON_TAB|wxFNB_NO_X_BUTTON);
+    bs->Add(m_nb, 1, wxEXPAND | wxALL);
     SetAutoLayout(TRUE);
     SetSizer(bs);
 }

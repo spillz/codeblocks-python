@@ -123,7 +123,7 @@ template<class T> class ShellCtrlRegistrant
 class ShellCtrlBase : public wxWindow //TODO: make wxWindow a member, not a base??
 {
     public:
-        //ShellCtrlBase() {m_dead=true; m_id=-1}
+        ShellCtrlBase() {m_dead=true; m_id=-1;}
         ShellCtrlBase(wxWindow* parent, int id, const wxString &name, ShellManager *shellmgr=NULL)
                 : wxWindow(parent, id)
             {m_parent=parent;
@@ -133,7 +133,7 @@ class ShellCtrlBase : public wxWindow //TODO: make wxWindow a member, not a base
 
         // Every shell control widget must override the following
         virtual long LaunchProcess(const wxString &processcmd, const wxArrayString &options)=0;
-        virtual void KillFrame()=0; // manager may destroy the window, but will call this before doing so
+//        virtual void KillWindow()=0; // manager may destroy the window, but will call this before doing so
         virtual void KillProcess()=0;
         virtual void SyncOutput(int maxchars=1000)=0; //use this to respond to ShellManager request to gather output from the running process for display in the frame
 
@@ -146,19 +146,9 @@ class ShellCtrlBase : public wxWindow //TODO: make wxWindow a member, not a base
         ShellManager *m_shellmgr;
         bool m_dead;
         int m_id;
-    DECLARE_DYNAMIC_CLASS(wxFrame)
+    DECLARE_DYNAMIC_CLASS(wxWindow)
 //    DECLARE_EVENT_TABLE()
 };
-
-// abstract base class to manage collections of shell terms
-//class ShellManager
-//{
-//    friend class ShellCtrlBase;
-//    public:
-//        virtual ~ShellManager();
-//    private:
-//        virtual void OnShellTerminate(ShellCtrlBase *term); //notifies manager of shell termination
-//};
 
 
 class ShellManager : public wxPanel
@@ -172,6 +162,7 @@ class ShellManager : public wxPanel
         void KillWindow(int id);
         ShellCtrlBase *GetPage(size_t i);
         ShellCtrlBase *GetPage(const wxString &name);
+        void OnShellTerminate(ShellCtrlBase *term);
         int NumAlive();
     private:
         //Responders to standard wxWidgets Messages
@@ -180,7 +171,6 @@ class ShellManager : public wxPanel
         void OnPageClosing(wxFlatNotebookEvent& event);
         bool QueryClose(ShellCtrlBase* sh);
         //Responders to friend class ShellCtrlBase
-        void OnShellTerminate(ShellCtrlBase *term);
         size_t GetTermNum(ShellCtrlBase *term);
     protected:
         wxTimer m_synctimer;

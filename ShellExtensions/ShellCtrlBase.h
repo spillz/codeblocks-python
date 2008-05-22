@@ -41,6 +41,7 @@ class ShellRegistry
 public:
     bool Register(const wxString &name, fnCreate create, fnFree free) //register/deregister are called by the plugin registrant instance
     {
+        wxMessageBox(wxString::Format(_T("registering shell type %s"),name.c_str()));
         std::map<wxString, ShellRegInfo>::iterator it;
         if(m_reginfo.find(name)!=m_reginfo.end())
             return false;
@@ -97,7 +98,7 @@ template<class T> class ShellCtrlRegistrant
         }
         static ShellCtrlBase* Create(wxWindow* parent, int id, const wxString &windowname, ShellManager *shellmgr=NULL) //allocates new shell control object on heap
         {
-            return new T;
+            return new T(parent, id, windowname, shellmgr);
         }
 
         static void Free(ShellCtrlBase* sh) // deletes object from heap
@@ -120,16 +121,16 @@ template<class T> class ShellCtrlRegistrant
 // All controls derives from a basic wxWindow
 // The control must offer services to create and destroy underlying processes
 // terminal controls sit inside a tabbed panel managed by the Shell Manager
-class ShellCtrlBase : public wxWindow //TODO: make wxWindow a member, not a base??
+class ShellCtrlBase : public wxPanel //TODO: make wxPanel a member, not a base??
 {
     public:
         ShellCtrlBase() {m_dead=true; m_id=-1;}
         ShellCtrlBase(wxWindow* parent, int id, const wxString &name, ShellManager *shellmgr=NULL)
-                : wxWindow(parent, id)
+                : wxPanel(parent, id)
             {m_parent=parent;
              m_id=id; m_dead=true;
              m_shellmgr=shellmgr; }
-        virtual ~ShellCtrlBase();
+        virtual ~ShellCtrlBase() {}
 
         // Every shell control widget must override the following
         virtual long LaunchProcess(const wxString &processcmd, const wxArrayString &options)=0;
@@ -146,7 +147,7 @@ class ShellCtrlBase : public wxWindow //TODO: make wxWindow a member, not a base
         ShellManager *m_shellmgr;
         bool m_dead;
         int m_id;
-    DECLARE_DYNAMIC_CLASS(wxWindow)
+//    DECLARE_DYNAMIC_CLASS(wxPanel)
 //    DECLARE_EVENT_TABLE()
 };
 

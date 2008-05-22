@@ -12,7 +12,7 @@
 #include <wx/dynarray.h>
 
 #include <sdk.h>
-
+#include <vector>
 #include "FileExplorerSettings.h"
 
 class Expansion;

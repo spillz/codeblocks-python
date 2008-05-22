@@ -14,10 +14,10 @@ BEGIN_EVENT_TABLE(PipedProcessCtrl, wxWindow)
     EVT_LEFT_DCLICK(PipedProcessCtrl::OnDClick)
 END_EVENT_TABLE()
 
-IMPLEMENT_DYNAMIC_CLASS(PipedProcessCtrl, wxWindow)
+IMPLEMENT_DYNAMIC_CLASS(PipedProcessCtrl, wxPanel)
 
 
-PipedProcessCtrl::PipedProcessCtrl(wxWindow* parent, int id, const wxString &name, ShellManager *shellmgr)
+PipedProcessCtrl::PipedProcessCtrl(wxWindow* parent, int id, const wxString &name, ShellManager *shellmgr) : ShellCtrlBase(parent, id, name, shellmgr)
 {
     m_shellmgr=shellmgr;
     m_name=name;

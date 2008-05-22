@@ -58,7 +58,7 @@ class PipedProcessCtrl : public ShellCtrlBase
         wxString m_linkregex;
         bool m_parselinks;
         bool m_linkclicks;
-    DECLARE_DYNAMIC_CLASS(wxWindow)
+    DECLARE_DYNAMIC_CLASS(wxPanel)
     DECLARE_EVENT_TABLE()
 };
 

@@ -55,7 +55,10 @@ long ShellManager::LaunchProcess(const wxString &processcmd, const wxString &nam
     int id=wxNewId();
     ShellCtrlBase *shell=GlobalShellRegistry.CreateControl(type,m_nb,id,name,this);
     if(!shell)
+    {
+        cbMessageBox(wxString::Format(_T("Console type %s not found in registry."),type.c_str()));
         return -1;
+    }
     long procid=shell->LaunchProcess(processcmd,options);
     if(procid>0)
     {
@@ -70,6 +73,7 @@ long ShellManager::LaunchProcess(const wxString &processcmd, const wxString &nam
     }
     m_nb->AddPage(shell,name);
     m_nb->SetSelection(m_nb->GetPageCount()-1);
+    shell->Show();
     return procid;
 }
 

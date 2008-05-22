@@ -1,8 +1,5 @@
 #include "ShellExtensions.h"
 #include "se_globals.h"
-#ifdef CBIL_TEARAWAY
-#include <tearawaynotebook.h>
-#endif
 
 // Register the plugin with Code::Blocks.
 // We are using an anonymous namespace so we don't litter the global one.
@@ -359,7 +356,8 @@ void ShellExtensions::OnRunTarget(wxCommandEvent& event)
 
     if(windowed)
     {
-        m_shellmgr->LaunchProcess(commandstr,consolename);
+        wxArrayString astr;
+        m_shellmgr->LaunchProcess(commandstr,consolename,_T("Piped Process Control"),astr);
         ShowConsole();
     } else if (console)
     {

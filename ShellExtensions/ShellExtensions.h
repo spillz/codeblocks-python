@@ -21,7 +21,7 @@
 #include <cbplugin.h> // for "class cbPlugin"
 #include "shellproperties.h"
 #include "CmdConfigDialog.h"
-#include "ShellCtrl.h"
+#include "ShellCtrlBase.h"
 #include "FileExplorer.h"
 
 class ShellExtensions : public cbPlugin

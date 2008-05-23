@@ -23,8 +23,6 @@ DECLARE_EVENT_TYPE(wxEVT_PY_NOTIFY_INTERPRETER, -1)
 DECLARE_EVENT_TYPE(wxEVT_PY_NOTIFY_UI, -1)
 END_DECLARE_EVENT_TYPES()
 
-int ID_PY_PROC=wxNewId();
-
 // Events sent from the UI to an intepreter request for shutdown
 class PyNotifyIntepreterEvent: public wxEvent
 {

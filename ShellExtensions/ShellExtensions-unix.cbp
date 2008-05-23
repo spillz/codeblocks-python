@@ -67,21 +67,10 @@
 					<Add after="zip -j9 $(#cb)/devel/share/codeblocks/shellextensions.zip manifest.xml Resources/fileexplorersettings.xrc" />
 				</ExtraCommands>
 			</Target>
-			<Target title="cbplugin">
-				<Option output="./cbplugin/shellextensions.so" prefix_auto="0" extension_auto="0" />
-				<Option type="3" />
-				<Option compiler="gcc" />
-				<Compiler>
-					<Add option="-Wall" />
-					<Add option="-g" />
-				</Compiler>
-				<ExtraCommands>
-					<Add after="strip cbplugin/shellextensions.so" />
-					<Add after="zip -j9 cbplugin/shellextensions.zip manifest.xml Resources/fileexplorersettings.xrc" />
-					<Add after="zip -j9 cbplugin/shellextensions.cbplugin cbplugin/shellextensions.zip cbplugin/shellextensions.so" />
-				</ExtraCommands>
-			</Target>
 		</Build>
+		<VirtualTargets>
+			<Add alias="se" targets="se-library;se-plugin;" />
+		</VirtualTargets>
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-g" />
@@ -106,58 +95,56 @@
 			<Option target="default" />
 			<Option target="se-plugin" />
 			<Option target="detachable" />
-			<Option target="cbplugin" />
 		</Unit>
 		<Unit filename="CmdConfigDialog.h">
 			<Option target="default" />
 			<Option target="se-plugin" />
 			<Option target="detachable" />
-			<Option target="cbplugin" />
 		</Unit>
 		<Unit filename="FileExplorer.cpp">
 			<Option target="default" />
 			<Option target="detachable" />
-			<Option target="cbplugin" />
+			<Option target="se-plugin" />
 		</Unit>
 		<Unit filename="FileExplorer.h">
 			<Option target="default" />
 			<Option target="detachable" />
-			<Option target="cbplugin" />
+			<Option target="se-plugin" />
 		</Unit>
 		<Unit filename="FileExplorerSettings.cpp">
 			<Option target="se-plugin" />
 			<Option target="default" />
 			<Option target="detachable" />
-			<Option target="cbplugin" />
 		</Unit>
 		<Unit filename="FileExplorerSettings.h">
 			<Option target="se-plugin" />
 			<Option target="default" />
 			<Option target="detachable" />
-			<Option target="cbplugin" />
+		</Unit>
+		<Unit filename="PipedProcessCtrl.cpp">
+			<Option target="se-plugin" />
+		</Unit>
+		<Unit filename="PipedProcessCtrl.h">
+			<Option target="se-plugin" />
 		</Unit>
 		<Unit filename="Resources/dialogs.fbp">
 			<Option target="default" />
-			<Option target="se-plugin" />
 			<Option target="detachable" />
 		</Unit>
 		<Unit filename="Resources/fileexplorersettings.xrc">
 			<Option target="default" />
-			<Option target="se-plugin" />
 			<Option target="detachable" />
 		</Unit>
 		<Unit filename="Resources/il_resources.xrc">
-			<Option target="se-plugin" />
+			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="ShellCtrl.cpp">
 			<Option target="default" />
 			<Option target="detachable" />
-			<Option target="cbplugin" />
 		</Unit>
 		<Unit filename="ShellCtrl.h">
 			<Option target="default" />
 			<Option target="detachable" />
-			<Option target="cbplugin" />
 		</Unit>
 		<Unit filename="ShellCtrlBase.cpp">
 			<Option target="se-library" />
@@ -169,41 +156,35 @@
 			<Option target="default" />
 			<Option target="se-plugin" />
 			<Option target="detachable" />
-			<Option target="cbplugin" />
 		</Unit>
 		<Unit filename="ShellExtensions.h">
 			<Option target="default" />
 			<Option target="se-plugin" />
 			<Option target="detachable" />
-			<Option target="cbplugin" />
 		</Unit>
 		<Unit filename="manifest.xml">
 			<Option target="default" />
-			<Option target="se-plugin" />
 			<Option target="detachable" />
-			<Option target="cbplugin" />
 		</Unit>
 		<Unit filename="se_globals.cpp">
 			<Option target="default" />
 			<Option target="detachable" />
-			<Option target="cbplugin" />
+			<Option target="se-plugin" />
 		</Unit>
 		<Unit filename="se_globals.h">
 			<Option target="default" />
 			<Option target="detachable" />
-			<Option target="cbplugin" />
+			<Option target="se-plugin" />
 		</Unit>
 		<Unit filename="shellproperties.cpp">
 			<Option target="default" />
 			<Option target="se-plugin" />
 			<Option target="detachable" />
-			<Option target="cbplugin" />
 		</Unit>
 		<Unit filename="shellproperties.h">
 			<Option target="default" />
 			<Option target="se-plugin" />
 			<Option target="detachable" />
-			<Option target="cbplugin" />
 		</Unit>
 		<Extensions>
 			<code_completion />

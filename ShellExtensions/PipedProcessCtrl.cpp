@@ -12,6 +12,7 @@ BEGIN_EVENT_TABLE(PipedProcessCtrl, wxWindow)
     EVT_CHAR(PipedProcessCtrl::OnUserInput)
     EVT_END_PROCESS(ID_PROC, PipedProcessCtrl::OnEndProcess)
     EVT_LEFT_DCLICK(PipedProcessCtrl::OnDClick)
+    EVT_SIZE    (PipedProcessCtrl::OnSize)
 END_EVENT_TABLE()
 
 IMPLEMENT_DYNAMIC_CLASS(PipedProcessCtrl, wxPanel)
@@ -177,6 +178,12 @@ void PipedProcessCtrl::ParseLinks(int lineno, int lastline)
     }
     m_textctrl->SetDefaultStyle(oldta);
 }
+
+void PipedProcessCtrl::OnSize(wxSizeEvent& event)
+{
+    m_textctrl->SetSize(event.GetSize());
+}
+
 
 void PipedProcessCtrl::OnUserInput(wxKeyEvent& ke)
 {

@@ -34,6 +34,7 @@ class PipedProcessCtrl : public ShellCtrlBase
         void SyncOutput(int maxchars=1000);
         void OnUserInput(wxKeyEvent& ke);
         void OnDClick(wxMouseEvent &e);
+        void OnSize(wxSizeEvent& event);
         wxString GetName() {return m_name;}
         void SetName(const wxString &name) {m_name=name;}
         bool IsDead() {return m_dead;}

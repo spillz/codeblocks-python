@@ -11,6 +11,62 @@ ShellRegistry GlobalShellRegistry;
 int ID_SHELLPOLLTIMER=wxNewId();
 int ID_SHELLMGR=wxNewId();
 
+
+bool ShellRegistry::Register(const wxString &name, fnCreate create, fnFree free) //register/deregister are called by the plugin registrant instance
+{
+    Manager::Get()->GetLogManager()->LogError(wxString::Format(_T("ShellExtensions Plugin: Registering shell type %s"),name.c_str()));
+    std::map<wxString, ShellRegInfo>::iterator it;
+    if(m_reginfo.find(name)!=m_reginfo.end())
+        return false;
+    ShellRegInfo sri;
+    sri.create=create;
+    sri.free=free;
+    m_reginfo[name]=sri;
+    return true;
+}
+
+
+bool ShellRegistry::Deregister(const wxString &name)
+{
+    std::map<wxString, ShellRegInfo>::iterator it
+        =m_reginfo.find(name);
+    if(it==m_reginfo.end())
+        return false;
+    m_reginfo.erase(it);
+    return true;
+}
+
+
+ShellCtrlBase *ShellRegistry::CreateControl(const wxString &type,wxWindow* parent, int id, const wxString &windowname, ShellManager *shellmgr)
+{
+    std::map<wxString, ShellRegInfo>::iterator it
+        =m_reginfo.find(type);
+    if(it==m_reginfo.end())
+        return NULL;
+    return it->second.create(parent, id, windowname, shellmgr);
+}
+
+
+void ShellRegistry::FreeControl(ShellCtrlBase *sh) //TODO: Don't think this is necessary?
+{
+//        std::map<wxString, ShellRegInfo>::iterator it
+//            =m_reginfo.find(type);
+//        if(it!=m_reginfo.end())
+//            it.second->free(); //TODO: Can't compile
+}
+
+
+
+ShellCtrlBase::ShellCtrlBase(wxWindow* parent, int id, const wxString &name, ShellManager *shellmgr)
+                : wxPanel(parent, id)
+{
+    m_parent=parent;
+    m_name=name;
+    m_id=id; m_dead=true;
+    m_shellmgr=shellmgr;
+}
+
+
 ////////////////////////////////////// ShellManager /////////////////////////////////////////////
 
 BEGIN_EVENT_TABLE(ShellManager, wxPanel)

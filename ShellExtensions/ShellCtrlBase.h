@@ -18,7 +18,7 @@
 
 // CLASSES DEFINED IN THIS LIBRARY
 class ShellManager; //Manages the collection of Shell Control Widgets allowing user interaction with external processes within a tabbed notepage - usually the main app (or some plugin) will declare a global instance of this manager. See the full declaration below for more detail
-class ShellCtrlBase; //The manager manages a set of Shell Control widgets that redirect I/O from an external process - ShellCtrlBase is an abstract base class allowing the developer to create their own custom controls for handling I/O from their process. Note that "process" is not defined here, it could be a new thread, an external program, a server connection etc
+class ShellCtrlBase; //The manager manages a set of Shell Control widgets that redirect I/O from an external process - ShellCtrlBase is an abstract base class allowing the developer to create custom controls for handling I/O from their process. Note that "process" is not defined here, it could be a new thread, an external program, a server connection etc
 class ShellRegInfo; //Every custom shell control must provide basic info to a global registry
 class ShellRegistry; //The global registry stores the info for all known custom shell controls
 template<class T> class ShellCtrlRegistrant; //The developer makes their custom Shell Control classes available to the manager (and the main application) by creating an instance of this template class
@@ -40,43 +40,11 @@ struct ShellRegInfo
 class ShellRegistry
 {
 public:
-    bool Register(const wxString &name, fnCreate create, fnFree free) //register/deregister are called by the plugin registrant instance
-    {
-        Manager::Get()->GetLogManager()->LogError(wxString::Format(_T("ShellExtensions Plugin: Registering shell type %s"),name.c_str()));
-        std::map<wxString, ShellRegInfo>::iterator it;
-        if(m_reginfo.find(name)!=m_reginfo.end())
-            return false;
-        ShellRegInfo sri;
-        sri.create=create;
-        sri.free=free;
-        m_reginfo[name]=sri;
-        return true;
-    }
-    bool Deregister(const wxString &name)
-    {
-        std::map<wxString, ShellRegInfo>::iterator it
-            =m_reginfo.find(name);
-        if(it==m_reginfo.end())
-            return false;
-        m_reginfo.erase(it);
-        return true;
-    }
-    ShellCtrlBase *CreateControl(const wxString &type,wxWindow* parent, int id, const wxString &windowname, ShellManager *shellmgr=NULL)
-    {
-        std::map<wxString, ShellRegInfo>::iterator it
-            =m_reginfo.find(type);
-        if(it==m_reginfo.end())
-            return NULL;
-        return it->second.create(parent, id, windowname, shellmgr);
-    }
-    void FreeControl(ShellCtrlBase *sh) //TODO: Don't think this is necessary?
-    {
-//        std::map<wxString, ShellRegInfo>::iterator it
-//            =m_reginfo.find(type);
-//        if(it!=m_reginfo.end())
-//            it.second->free(); //TODO: Can't compile
-    }
-
+    bool Register(const wxString &name, fnCreate create, fnFree free); //register/deregister are called by the plugin registrant instance
+    bool Deregister(const wxString &name);
+    ShellCtrlBase *CreateControl(const wxString &type,wxWindow* parent, int id, const wxString &windowname, ShellManager *shellmgr=NULL);
+    void FreeControl(ShellCtrlBase *sh); //TODO: Don't think this is necessary?
+private:
 //    std::vector<ShellRegInfo> m_reginfo;
     std::map<wxString, ShellRegInfo> m_reginfo;
 };
@@ -126,18 +94,14 @@ class ShellCtrlBase : public wxPanel //TODO: make wxPanel a member, not a base??
 {
     public:
         ShellCtrlBase() {m_dead=true; m_id=-1;}
-        ShellCtrlBase(wxWindow* parent, int id, const wxString &name, ShellManager *shellmgr=NULL)
-                : wxPanel(parent, id)
-            {m_parent=parent;
-             m_id=id; m_dead=true;
-             m_shellmgr=shellmgr; }
+        ShellCtrlBase(wxWindow* parent, int id, const wxString &name, ShellManager *shellmgr=NULL);
         virtual ~ShellCtrlBase() {}
 
         // Every shell control widget must override the following
         virtual long LaunchProcess(const wxString &processcmd, const wxArrayString &options)=0;
 //        virtual void KillWindow()=0; // manager may destroy the window, but will call this before doing so
-        virtual void KillProcess()=0;
-        virtual void SyncOutput(int maxchars=1000)=0; //use this to respond to ShellManager request to gather output from the running process for display in the frame
+        virtual void KillProcess()=0; //use this to respond to ShellManager request to kill the process
+        virtual void SyncOutput(int maxchars=1000)=0; //use this to respond to ShellManager request to gather output from the running process for display in the panel
 
         wxString GetName() {return m_name;}
         void SetName(const wxString &name) {m_name=name;}

@@ -8,7 +8,7 @@
 int ID_PROC=wxNewId();
 
 
-BEGIN_EVENT_TABLE(PipedProcessCtrl, wxWindow)
+BEGIN_EVENT_TABLE(PipedProcessCtrl, wxPanel)
     EVT_CHAR(PipedProcessCtrl::OnUserInput)
     EVT_END_PROCESS(ID_PROC, PipedProcessCtrl::OnEndProcess)
     EVT_LEFT_DCLICK(PipedProcessCtrl::OnDClick)
@@ -90,7 +90,6 @@ void PipedProcessCtrl::KillProcess()
     {
         if(wxProcess::Exists(pid))
         {
-            cbMessageBox(_T("Forcing..."));
             wxProcess::Kill(pid,wxSIGKILL);
         }
     }

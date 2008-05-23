@@ -141,9 +141,8 @@ class ShellCtrlBase : public wxPanel //TODO: make wxPanel a member, not a base??
         wxString GetName() {return m_name;}
         void SetName(const wxString &name) {m_name=name;}
         bool IsDead() {return m_dead;}
-    private:
-        wxString m_name;
     protected:
+        wxString m_name;
         ShellManager *m_shellmgr;
         bool m_dead;
         int m_id;

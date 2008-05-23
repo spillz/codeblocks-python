@@ -35,9 +35,6 @@ class PipedProcessCtrl : public ShellCtrlBase
         void OnUserInput(wxKeyEvent& ke);
         void OnDClick(wxMouseEvent &e);
         void OnSize(wxSizeEvent& event);
-        wxString GetName() {return m_name;}
-        void SetName(const wxString &name) {m_name=name;}
-        bool IsDead() {return m_dead;}
         bool ParsesLinks(wxString &LinkRegex) {LinkRegex=m_linkregex;return m_parselinks;}
         void ParseLinks(bool parselinks=true, wxString LinkRegex=LinkRegexDefault) {m_parselinks=parselinks;}
         static wxString LinkRegexDefault;
@@ -49,13 +46,10 @@ class PipedProcessCtrl : public ShellCtrlBase
         wxInputStream *m_istream;
         wxInputStream *m_estream;
         void OnEndProcess(wxProcessEvent &event);
-        bool m_dead;
         wxString m_lateststreamdata;
         wxString m_latesterrstreamdata;
         int m_killlevel;
         int m_exitcode;
-        wxString m_name;
-        ShellManager *m_shellmgr;
         wxString m_linkregex;
         bool m_parselinks;
         bool m_linkclicks;

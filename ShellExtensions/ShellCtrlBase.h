@@ -14,6 +14,7 @@
 #include <wx/process.h>
 #include <wx/wxFlatNotebook/wxFlatNotebook.h>
 #include <sdk.h>
+#include "se_globals.h"
 
 // CLASSES DEFINED IN THIS LIBRARY
 class ShellManager; //Manages the collection of Shell Control Widgets allowing user interaction with external processes within a tabbed notepage - usually the main app (or some plugin) will declare a global instance of this manager. See the full declaration below for more detail
@@ -41,7 +42,7 @@ class ShellRegistry
 public:
     bool Register(const wxString &name, fnCreate create, fnFree free) //register/deregister are called by the plugin registrant instance
     {
-        wxMessageBox(wxString::Format(_T("registering shell type %s"),name.c_str()));
+        Manager::Get()->GetLogManager()->LogError(wxString::Format(_T("ShellExtensions Plugin: Registering shell type %s"),name.c_str()));
         std::map<wxString, ShellRegInfo>::iterator it;
         if(m_reginfo.find(name)!=m_reginfo.end())
             return false;

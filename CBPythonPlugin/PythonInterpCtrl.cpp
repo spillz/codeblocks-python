@@ -4,6 +4,19 @@
 #include "PythonInterpCtrl.h"
 #include <globals.h>
 
+////////////////////////////////////// PythonInterpJob /////////////////////////////////////////////
+
+bool PyInterpJob::operator()()
+{
+    // talk to m_client
+    // call run_code on the command string
+    // notify response (sends stdout for display)
+    // loop while not finished
+    //    call continue, posting any input
+    //    notify response (sends stdout for display)
+}
+
+
 ////////////////////////////////////// PythonInterpCtrl /////////////////////////////////////////////
 int ID_PROC=wxNewId();
 
@@ -45,7 +58,8 @@ long PythonInterpCtrl::LaunchProcess(const wxString &processcmd, const wxArraySt
 {
     if(!m_dead || m_pyinterp)
         return -1;
-    m_pyinterp=new PyInstance(_T("localhost"),8000);
+    m_pyinterp=new PyInstance(_T("python interp.py"),_T("localhost"),8000);
+    //TODO: Perform any initial communication with the running python process...
     return 1;
 }
 

@@ -45,11 +45,17 @@ wxThread(wxTHREAD_JOINABLE)
     finished=false;
     started=false;
     killonexit=selfdestroy;
-    // need to call a Python method to notify it of this thread using the API...
+}
+
+void PyJob::Abort()
+{
+    if(this->IsAlive())
+        this->Kill();
 }
 
 PyJob::~PyJob()
 {
+    Abort();
 }
 
 void *PyJob::Entry()
@@ -62,7 +68,6 @@ void *PyJob::Entry()
         pe.SetState(PYSTATE_ABORTEDJOB);
     ::wxPostEvent(pyinst,pe);
     Exit();
-    return NULL;
 }
 
 
@@ -92,7 +97,7 @@ PyInstance::~PyInstance()
     // kill python process if still running
 }
 
-PyInstance::PyInstance(const wxString &hostaddress, int port)
+PyInstance::PyInstance(const wxString &processcmd, const wxString &hostaddress, int port)
 {
   m_port=port;
   m_hostaddress=hostaddress;
@@ -107,7 +112,7 @@ PyInstance::PyInstance(const wxString &hostaddress, int port)
     std::cout << "Error calling 'listMethods'\n\n";
 }
 
-long PyInstance::LaunchProcess(wxString processcmd)
+long PyInstance::LaunchProcess(const wxString &processcmd)
 {
     if(!m_proc_dead)
         return -1;

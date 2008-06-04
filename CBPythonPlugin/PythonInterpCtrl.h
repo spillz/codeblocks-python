@@ -14,6 +14,11 @@
 
 class PythonInterpCtrl;
 
+class PyInterpJob: public PyJob
+{
+    bool operator();
+}
+
 namespace
 {
 ShellCtrlRegistrant<PythonInterpCtrl> reg(_T("Python Interpreter"));
@@ -35,6 +40,7 @@ class PythonInterpCtrl : public ShellCtrlBase
         void OnUserInput(wxKeyEvent& ke);
         void OnSize(wxSizeEvent& event);
     private:
+        PyInterpJob *m_job;
         wxTextCtrl *m_textctrl;
         PyInstance *m_pyinterp;
 //        void OnEndProcess(wxProcessEvent &event);

@@ -85,9 +85,11 @@ class PyJob: public wxThread
 public:
     PyJob(PyInstance *pyinst, wxWindow *p, int id, bool selfdestroy=true);
     virtual ~PyJob();
-    bool operator()() {return false;}
+    void Abort();
+    virtual bool operator()()=0;// {return false;}
 protected:
     virtual void *Entry();
+    XmlRpc::XmlRpcClient *m_client;
     PyInstance *pyinst;
     wxWindow *parent;
     int id;
@@ -111,8 +113,8 @@ WX_DECLARE_LIST(PyJob, PyJobQueue);
 class PyInstance: public wxEvtHandler
 {
 public:
-    PyInstance(const wxString &hostaddress, int port);
-    long LaunchProcess(wxString processcmd);
+    PyInstance(const wxString &processcmd, const wxString &hostaddress, int port);
+    long LaunchProcess(const wxString &processcmd);
     PyInstance(const PyInstance &copy);
     ~PyInstance();
     void EvalString(char *str, bool wait=true);

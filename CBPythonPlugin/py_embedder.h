@@ -124,6 +124,8 @@ public:
     void OnJobNotify(PyNotifyUIEvent &event);
     void PauseJobs();
     void ClearJobs();
+protected:
+    void Exec(const wxString &method, XmlRpc::XmlRpcValue &inarg, XmlRpc::XmlRpcValue &result);
 private:
     wxProcess *m_proc; // external python process
     long m_proc_id;

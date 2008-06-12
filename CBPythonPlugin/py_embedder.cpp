@@ -141,6 +141,11 @@ PyInstance::PyInstance(const PyInstance &copy)
     m_proc_dead=copy.m_proc_dead;
 }
 
+void PyInstance::Exec(const wxString &method, XmlRpc::XmlRpcValue &inarg, XmlRpc::XmlRpcValue &result)
+{
+
+}
+
 void PyInstance::KillProcess(bool force)
 {
     if(m_proc_dead)
@@ -222,10 +227,9 @@ PyMgr::~PyMgr()
 
 PyInstance *PyMgr::LaunchInterpreter()
 {
-    PyInstance *p=new PyInstance(_("localhost"),8000);
-    if(!p)
-        return p;
-    m_Interpreters.Add(p);
+    PyInstance *p=new PyInstance(_("python interp.py"),_("localhost"),8000);
+    if(p)
+        m_Interpreters.Add(p);
     return p;
 }
 

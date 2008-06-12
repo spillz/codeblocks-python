@@ -16,8 +16,19 @@ class PythonInterpCtrl;
 
 class PyInterpJob: public PyJob
 {
-    bool operator();
-}
+    PyInterpJob(PyInstance *pyinst, wxWindow *p, int id, bool selfdestroy=true) : PyJob(pyinst, p, id, selfdestroy)
+    {
+        return;
+    }
+    bool operator()();
+    void stdin_append(const wxString &data)
+    { //asynchronously dispatch data to python interpreter's stdin
+        wxMutexLocker ml(stdin_mutex);
+        stdin_data+=data;
+    }
+    wxString stdin_data;
+    wxMutex stdin_mutex;
+};
 
 namespace
 {

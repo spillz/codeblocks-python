@@ -68,12 +68,14 @@
 					<Add option="-DWX_PRECOMP" />
 					<Add option="-DwxUSE_UNICODE" />
 					<Add directory="$(#cb.include)" />
+					<Add directory="$(#cb.include)\wxFlatNotebook\include" />
 					<Add directory="$(#cb.include)\wxscintilla\include" />
 					<Add directory="$(#wx.include)" />
 					<Add directory="$(#wx.lib)\gcc_dll\mswu" />
 					<Add directory="$(#xmlrpc.include)" />
 				</Compiler>
 				<Linker>
+					<Add library="$(#cb)\devel\ShellCtrlBase.dll" />
 					<Add library="codeblocks" />
 					<Add library="wxmsw28u" />
 					<Add library="libxmlrpc" />
@@ -146,6 +148,12 @@
 		<Unit filename="ConfigDialog.h" />
 		<Unit filename="PyPlugin.cpp" />
 		<Unit filename="PyPlugin.h" />
+		<Unit filename="PythonInterpCtrl.cpp">
+			<Option target="experimental" />
+		</Unit>
+		<Unit filename="PythonInterpCtrl.h">
+			<Option target="experimental" />
+		</Unit>
 		<Unit filename="Resources\dialogs.fbp">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
@@ -164,10 +172,10 @@
 			<Option target="experimental" />
 		</Unit>
 		<Unit filename="python\interp.py">
-			<Option target="experimental" />
+			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="python\interp_client.py">
-			<Option target="experimental" />
+			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Extensions>
 			<code_completion />

@@ -112,6 +112,7 @@ WX_DECLARE_LIST(PyJob, PyJobQueue);
 /////////////////////////////////////////////////////////////////////////////////////
 class PyInstance: public wxEvtHandler
 {
+    friend class PyJob;
 public:
     PyInstance(const wxString &processcmd, const wxString &hostaddress, int port);
     long LaunchProcess(const wxString &processcmd);

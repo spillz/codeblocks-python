@@ -24,11 +24,12 @@ PyNotifyIntepreterEvent::PyNotifyIntepreterEvent(int id) : wxEvent(id, wxEVT_PY_
 
 DEFINE_EVENT_TYPE( wxEVT_PY_NOTIFY_UI )
 
-PyNotifyUIEvent::PyNotifyUIEvent(int id, PyInstance *inst, JobStates js) : wxEvent(id, wxEVT_PY_NOTIFY_UI)
+PyNotifyUIEvent::PyNotifyUIEvent(int id, PyInstance *inst, wxWindow *window, JobStates js) : wxEvent(id, wxEVT_PY_NOTIFY_UI)
 {
     instance=inst;
     jobstate=js;
     job=NULL;
+    parent=window;
 }
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -60,7 +61,7 @@ PyJob::~PyJob()
 
 void *PyJob::Entry()
 {
-    PyNotifyUIEvent pe(id,pyinst,PYSTATE_STARTEDJOB);
+    PyNotifyUIEvent pe(id,pyinst,parent,PYSTATE_STARTEDJOB);
     ::wxPostEvent(pyinst,pe);
     if((*this)())
         pe.SetState(PYSTATE_FINISHEDJOB);
@@ -68,6 +69,7 @@ void *PyJob::Entry()
         pe.SetState(PYSTATE_ABORTEDJOB);
     ::wxPostEvent(pyinst,pe);
     Exit();
+    return NULL;
 }
 
 
@@ -141,9 +143,53 @@ PyInstance::PyInstance(const PyInstance &copy)
     m_proc_dead=copy.m_proc_dead;
 }
 
-void PyInstance::Exec(const wxString &method, XmlRpc::XmlRpcValue &inarg, XmlRpc::XmlRpcValue &result)
+bool PyInstance::RunCode(const wxString &codestr, const wxString &stdinstr, bool &unfinished, wxString &stdoutstr, wxString & stderrstr)
 {
+    XmlRpc::XmlRpcValue args, result;
+    args[0]=codestr.utf8_str();
+    args[1]=stdinstr.utf8_str();
+    if(Exec(_("run_code"), args, result))
+    {
+        unfinished=result[0];
+        std::string r1=result[1];
+        stdoutstr.FromUTF8(r1.c_str());
+        std::string r2=result[2];
+        stderrstr.FromUTF8(r2.c_str());
+        return true;
+    }
+    return false;
+}
 
+bool PyInstance::Continue(const wxString &stdinstr, bool &unfinished, wxString &stdoutstr, wxString & stderrstr)
+{
+    XmlRpc::XmlRpcValue args, result;
+    args[0]=stdinstr.utf8_str();
+    if(Exec(_("cont"), args, result))
+    {
+        unfinished=result[0];
+        std::string r1=result[1];
+        stdoutstr.FromUTF8(r1.c_str());
+        std::string r2=result[2];
+        stderrstr.FromUTF8(r2.c_str());
+        return true;
+    }
+    return false;
+}
+
+bool PyInstance::Kill()
+{
+    XmlRpc::XmlRpcValue args, result;
+    if(Exec(_("end"), args, result))
+    {
+        return true;
+    }
+    return false;
+}
+
+bool PyInstance::Exec(const wxString &method, XmlRpc::XmlRpcValue &inarg, XmlRpc::XmlRpcValue &result)
+{
+    wxMutexLocker ml(exec_mutex);
+    return m_client->execute(method.mb_str(), inarg, result);
 }
 
 void PyInstance::KillProcess(bool force)
@@ -197,7 +243,8 @@ void PyInstance::OnJobNotify(PyNotifyUIEvent &event)
         }
         m_queue.DeleteNode(m_queue.GetFirst());
     }
-    ::wxPostEvent(event.parent,event);
+    if(event.parent)
+        ::wxPostEvent(event.parent,event);
     if(m_paused)
         return;
     wxPyJobQueueNode *node=m_queue.GetFirst();

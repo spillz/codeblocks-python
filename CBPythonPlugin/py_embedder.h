@@ -33,7 +33,7 @@ public:
     ~PyNotifyIntepreterEvent() {}
 };
 
-enum JobStates {PYSTATE_STARTEDJOB, PYSTATE_FINISHEDJOB, PYSTATE_ABORTEDJOB};
+enum JobStates {PYSTATE_STARTEDJOB, PYSTATE_FINISHEDJOB, PYSTATE_ABORTEDJOB, PYSTATE_NOTIFY};
 
 // Events sent from the thread interacting with the python interpreter back to the UI.
 // indicating job completion, interpreter shutdown etc
@@ -41,11 +41,13 @@ class PyNotifyUIEvent: public wxEvent
 {
     friend class PyInstance;
 public:
-    PyNotifyUIEvent(int id, PyInstance *instance, JobStates jobstate);
+    PyNotifyUIEvent(int id, PyInstance *instance, wxWindow *parent, JobStates jobstate);
     PyNotifyUIEvent(const PyNotifyUIEvent& c) : wxEvent(c)
     {
         jobstate = c.jobstate;
+        job= c.job;
         instance= c.instance;
+        parent= c.parent;
     }
     wxEvent *Clone() const { return new PyNotifyUIEvent(*this); }
     ~PyNotifyUIEvent() {}
@@ -89,7 +91,6 @@ public:
     virtual bool operator()()=0;// {return false;}
 protected:
     virtual void *Entry();
-    XmlRpc::XmlRpcClient *m_client;
     PyInstance *pyinst;
     wxWindow *parent;
     int id;
@@ -125,9 +126,13 @@ public:
     void OnJobNotify(PyNotifyUIEvent &event);
     void PauseJobs();
     void ClearJobs();
+    bool RunCode(const wxString &codestr, const wxString &stdinstr, bool &unfinished, wxString &stdoutstr, wxString & stderrstr);
+    bool Continue(const wxString &stdinstr, bool &unfinished, wxString &stdoutstr, wxString & stderrstr);
+    bool Kill();
 protected:
-    void Exec(const wxString &method, XmlRpc::XmlRpcValue &inarg, XmlRpc::XmlRpcValue &result);
+    bool Exec(const wxString &method, XmlRpc::XmlRpcValue &inarg, XmlRpc::XmlRpcValue &result);
 private:
+    wxMutex exec_mutex;
     wxProcess *m_proc; // external python process
     long m_proc_id;
     int  m_proc_killlevel;

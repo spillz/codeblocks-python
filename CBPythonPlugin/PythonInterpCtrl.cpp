@@ -9,11 +9,21 @@
 bool PyInterpJob::operator()()
 {
     // talk to m_client
-    // call run_code on the command string
-    // notify response (sends stdout for display)
-    // loop while not finished
-    //    call continue, posting any input
-    //    notify response (sends stdout for display)
+    bool unfinished;
+    pyinst->RunCode(code,stdin_data,unfinished,stdout_data,stderr_data);
+    while(unfinished)
+    {
+        data_mutex.Lock();
+        if(pyinst->Continue(stdin_data,unfinished,stdout_data,stderr_data))
+            return false;
+        stdin_data=_("");
+        data_mutex.Unlock();
+        PyNotifyUIEvent pe(id,pyinst,parent,PYSTATE_NOTIFY);
+        ::wxPostEvent(parent,pe);
+        // sleep for some period of time
+
+    }
+    return true;
 }
 
 

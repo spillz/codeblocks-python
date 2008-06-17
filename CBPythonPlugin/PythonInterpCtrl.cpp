@@ -245,6 +245,17 @@ bool PythonInterpCtrl::Continue(bool &unfinished)
     return false;
 }
 
+bool PythonInterpCtrl::BreakCode()
+{
+    XmlRpc::XmlRpcValue args, result;
+    if(m_pyinterp->Exec(_("break_code"), args, result))
+    {
+        //TODO: evaluate result -- if it not true, there was no code running
+        return true;
+    }
+    return false;
+}
+
 bool PythonInterpCtrl::SendKill()
 {
     XmlRpc::XmlRpcValue args, result;

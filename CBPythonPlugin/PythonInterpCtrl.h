@@ -55,6 +55,7 @@ class PythonInterpCtrl : public ShellCtrlBase
         wxString stdin_retrieve();
         wxString stdout_retrieve();
         wxString stderr_retrieve();
+        bool BreakCode();
         bool RunCode(const wxString &codestr, bool &unfinished);
         bool Continue(bool &unfinished);
         bool SendKill();

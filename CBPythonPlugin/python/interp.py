@@ -102,6 +102,11 @@ class AsyncServer(threading.Thread):
         self.lock.notify()
         self.lock.release()
         return "Session Complete"
+    def break_code(self):
+        if self.interp._runningeval:
+            raise KeyboardInterrupt
+            return True
+        return False
     def run_code(self,eval_str,stdin):
         if self.interp.queue_code(eval_str):
             return self.cont(stdin)

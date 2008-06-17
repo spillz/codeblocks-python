@@ -126,10 +126,6 @@ public:
     void OnJobNotify(PyNotifyUIEvent &event);
     void PauseJobs();
     void ClearJobs();
-    bool RunCode(const wxString &codestr, const wxString &stdinstr, bool &unfinished, wxString &stdoutstr, wxString & stderrstr);
-    bool Continue(const wxString &stdinstr, bool &unfinished, wxString &stdoutstr, wxString & stderrstr);
-    bool Kill();
-protected:
     bool Exec(const wxString &method, XmlRpc::XmlRpcValue &inarg, XmlRpc::XmlRpcValue &result);
 private:
     wxMutex exec_mutex;

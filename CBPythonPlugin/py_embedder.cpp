@@ -143,49 +143,6 @@ PyInstance::PyInstance(const PyInstance &copy)
     m_proc_dead=copy.m_proc_dead;
 }
 
-bool PyInstance::RunCode(const wxString &codestr, const wxString &stdinstr, bool &unfinished, wxString &stdoutstr, wxString & stderrstr)
-{
-    XmlRpc::XmlRpcValue args, result;
-    args[0]=codestr.utf8_str();
-    args[1]=stdinstr.utf8_str();
-    if(Exec(_("run_code"), args, result))
-    {
-        unfinished=result[0];
-        std::string r1=result[1];
-        stdoutstr.FromUTF8(r1.c_str());
-        std::string r2=result[2];
-        stderrstr.FromUTF8(r2.c_str());
-        return true;
-    }
-    return false;
-}
-
-bool PyInstance::Continue(const wxString &stdinstr, bool &unfinished, wxString &stdoutstr, wxString & stderrstr)
-{
-    XmlRpc::XmlRpcValue args, result;
-    args[0]=stdinstr.utf8_str();
-    if(Exec(_("cont"), args, result))
-    {
-        unfinished=result[0];
-        std::string r1=result[1];
-        stdoutstr.FromUTF8(r1.c_str());
-        std::string r2=result[2];
-        stderrstr.FromUTF8(r2.c_str());
-        return true;
-    }
-    return false;
-}
-
-bool PyInstance::Kill()
-{
-    XmlRpc::XmlRpcValue args, result;
-    if(Exec(_("end"), args, result))
-    {
-        return true;
-    }
-    return false;
-}
-
 bool PyInstance::Exec(const wxString &method, XmlRpc::XmlRpcValue &inarg, XmlRpc::XmlRpcValue &result)
 {
     wxMutexLocker ml(exec_mutex);

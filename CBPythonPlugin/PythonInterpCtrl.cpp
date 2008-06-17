@@ -10,14 +10,11 @@ bool PyInterpJob::operator()()
 {
     // talk to m_client
     bool unfinished;
-    pyinst->RunCode(code,stdin_data,unfinished,stdout_data,stderr_data);
+    pctl->RunCode(code,unfinished);
     while(unfinished)
     {
-        data_mutex.Lock();
-        if(pyinst->Continue(stdin_data,unfinished,stdout_data,stderr_data))
+        if(pctl->Continue(unfinished))
             return false;
-        stdin_data=_("");
-        data_mutex.Unlock();
         PyNotifyUIEvent pe(id,pyinst,parent,PYSTATE_NOTIFY);
         ::wxPostEvent(parent,pe);
         // sleep for some period of time
@@ -172,3 +169,89 @@ void PythonInterpCtrl::OnUserInput(wxKeyEvent& ke)
     m_textctrl->AppendText(kc2);
     m_textctrl->SetInsertionPointEnd();
 }
+
+void PythonInterpCtrl::stdin_append(const wxString &data)
+{ //asynchronously dispatch data to python interpreter's stdin
+    wxMutexLocker ml(io_mutex);
+    stdin_data+=data;
+}
+
+void PythonInterpCtrl::stdout_append(const wxString &data)
+{ //asynchronously dispatch data to python interpreter's stdin
+    wxMutexLocker ml(io_mutex);
+    stdout_data+=data;
+}
+
+void PythonInterpCtrl::stderr_append(const wxString &data)
+{ //asynchronously dispatch data to python interpreter's stdin
+    wxMutexLocker ml(io_mutex);
+    stderr_data+=data;
+}
+
+wxString PythonInterpCtrl::stdin_retrieve()
+{
+    wxMutexLocker ml(io_mutex);
+    wxString s(stdin_data);
+    stdin_data=_T("");
+    return s;
+}
+
+wxString PythonInterpCtrl::stdout_retrieve()
+{
+    wxMutexLocker ml(io_mutex);
+    wxString s(stdout_data);
+    stdout_data=_T("");
+    return s;
+}
+
+wxString PythonInterpCtrl::stderr_retrieve()
+{
+    wxMutexLocker ml(io_mutex);
+    wxString s(stderr_data);
+    stderr_data=_T("");
+    return s;
+}
+
+bool PythonInterpCtrl::RunCode(const wxString &codestr, bool &unfinished)
+{
+    XmlRpc::XmlRpcValue args, result;
+    args[0]=codestr.utf8_str();
+    args[1]=stdin_retrieve().utf8_str();
+    if(m_pyinterp->Exec(_("run_code"), args, result))
+    {
+        unfinished=result[0];
+        std::string r1=result[1];
+        stdout_append(wxString::FromUTF8(r1.c_str()));
+        std::string r2=result[2];
+        stderr_append(wxString::FromUTF8(r2.c_str()));
+        return true;
+    }
+    return false;
+}
+
+bool PythonInterpCtrl::Continue(bool &unfinished)
+{
+    XmlRpc::XmlRpcValue args, result;
+    args[0]=stdin_retrieve().utf8_str();
+    if(m_pyinterp->Exec(_("cont"), args, result))
+    {
+        unfinished=result[0];
+        std::string r1=result[1];
+        stdout_append(wxString::FromUTF8(r1.c_str()));
+        std::string r2=result[2];
+        stderr_append(wxString::FromUTF8(r2.c_str()));
+        return true;
+    }
+    return false;
+}
+
+bool PythonInterpCtrl::SendKill()
+{
+    XmlRpc::XmlRpcValue args, result;
+    if(m_pyinterp->Exec(_("end"), args, result))
+    {
+        return true;
+    }
+    return false;
+}
+

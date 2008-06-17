@@ -16,22 +16,14 @@ class PythonInterpCtrl;
 
 class PyInterpJob: public PyJob
 {
-    PyInterpJob(wxString code, PyInstance *pyinst, wxWindow *p, int id=wxID_ANY, bool selfdestroy=true) : PyJob(pyinst, p, id, selfdestroy)
+    PyInterpJob(wxString code, PyInstance *pyinst, PythonInterpCtrl *pctl, wxWindow *p, int id=wxID_ANY, bool selfdestroy=true) : PyJob(pyinst, p, id, selfdestroy)
     {
+        this->pctl=pctl;
         return;
     }
+    PythonInterpCtrl *pctl;
     bool operator()();
-    void stdin_append(const wxString &data)
-    { //asynchronously dispatch data to python interpreter's stdin
-        wxMutexLocker ml(data_mutex);
-        stdin_data+=data;
-    }
     wxString code;
-    wxString stdout_retrieve() {wxMutexLocker ml(data_mutex); wxString s(stdout_data); stdout_data=_T(""); return s;}
-    wxString stderr_retrieve() {wxMutexLocker ml(data_mutex); wxString s(stderr_data); stderr_data=_T(""); return s;}
-    wxString stdin_data;
-    wxString stdout_data, stderr_data;
-    wxMutex data_mutex;
 };
 
 namespace
@@ -54,10 +46,27 @@ class PythonInterpCtrl : public ShellCtrlBase
 
         void OnUserInput(wxKeyEvent& ke);
         void OnSize(wxSizeEvent& event);
+
+    protected:
+        friend class PyInterpJob;
+        void stdin_append(const wxString &data);
+        void stdout_append(const wxString &data);
+        void stderr_append(const wxString &data);
+        wxString stdin_retrieve();
+        wxString stdout_retrieve();
+        wxString stderr_retrieve();
+        bool RunCode(const wxString &codestr, bool &unfinished);
+        bool Continue(bool &unfinished);
+        bool SendKill();
+
     private:
+        wxString stdin_data, stdout_data, stderr_data;
+        wxMutex io_mutex;
         PyInterpJob *m_job;
         wxTextCtrl *m_textctrl;
         PyInstance *m_pyinterp;
+
+
 //        void OnEndProcess(wxProcessEvent &event);
     DECLARE_DYNAMIC_CLASS(wxPanel)
     DECLARE_EVENT_TABLE()

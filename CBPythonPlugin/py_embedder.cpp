@@ -102,9 +102,10 @@ PyInstance::~PyInstance()
 PyInstance::PyInstance(const wxString &processcmd, const wxString &hostaddress, int port)
 {
   m_port=port;
+  m_proc_dead=true;
   m_hostaddress=hostaddress;
   // Launch process
-  LaunchProcess(_T("python pyinterp.py")); //TODO: The command for the interpreter process should come from the manager (and be stored in a config file)
+  LaunchProcess(processcmd); //TODO: The command for the interpreter process should come from the manager (and be stored in a config file)
   // Setup XMLRPC client and use introspection API to look up the supported methods
   m_client = new XmlRpc::XmlRpcClient(hostaddress.char_str(), port);
   XmlRpc::XmlRpcValue noArgs, result;

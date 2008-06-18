@@ -4,6 +4,9 @@
 #include "PythonInterpCtrl.h"
 #include <globals.h>
 
+//DEFINE_EVENT_TYPE( wxEVT_PY_NOTIFY_UI )
+
+
 ////////////////////////////////////// PythonInterpJob /////////////////////////////////////////////
 
 bool PyInterpJob::operator()()
@@ -11,8 +14,17 @@ bool PyInterpJob::operator()()
     // talk to m_client
     bool unfinished;
     pctl->RunCode(code,unfinished);
+    bool break_called=false;
     while(unfinished)
     {
+        break_mutex.Lock();
+        if(break_job && !break_called)
+        {
+            break_mutex.Unlock();
+            if(pctl->BreakCode())
+                break_called=true;
+        } else
+            break_mutex.Unlock();
         if(pctl->Continue(unfinished))
             return false;
         PyNotifyUIEvent pe(id,pyinst,parent,PYSTATE_NOTIFY);
@@ -28,22 +40,27 @@ bool PyInterpJob::operator()()
 int ID_PROC=wxNewId();
 
 
+IMPLEMENT_DYNAMIC_CLASS(PythonInterpCtrl, wxPanel)
+
 BEGIN_EVENT_TABLE(PythonInterpCtrl, wxPanel)
     EVT_CHAR(PythonInterpCtrl::OnUserInput)
+    EVT_PY_NOTIFY_UI(PythonInterpCtrl::OnPyNotify)
 //    EVT_END_PROCESS(ID_PROC, PythonInterpCtrl::OnEndProcess)
 //    EVT_LEFT_DCLICK(PythonInterpCtrl::OnDClick)
     EVT_SIZE    (PythonInterpCtrl::OnSize)
 END_EVENT_TABLE()
 
-IMPLEMENT_DYNAMIC_CLASS(PythonInterpCtrl, wxPanel)
 
 
 PythonInterpCtrl::PythonInterpCtrl(wxWindow* parent, int id, const wxString &name, ShellManager *shellmgr) : ShellCtrlBase(parent, id, name, shellmgr)
 {
     m_pyinterp=NULL;
-    m_textctrl=new wxTextCtrl(this, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_RICH|wxTE_MULTILINE|wxTE_READONLY|wxTE_PROCESS_ENTER|wxEXPAND);
+    m_ioctrl=new wxTextCtrl(this, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_RICH|wxTE_MULTILINE|wxTE_READONLY|wxTE_PROCESS_ENTER|wxEXPAND);
+    m_codectrl=new wxTextCtrl(this, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_RICH|wxTE_MULTILINE|wxTE_READONLY|wxTE_PROCESS_ENTER|wxEXPAND);
+    wxSplitterWindow *sw=new wxSplitterWindow(this, wxID_ANY);
+    sw->SplitHorizontally(m_codectrl, m_ioctrl, 100);
     wxBoxSizer* bs = new wxBoxSizer(wxVERTICAL);
-    bs->Add(m_textctrl, 1, wxEXPAND | wxALL);
+    bs->Add(sw, 1, wxEXPAND | wxALL);
     SetAutoLayout(TRUE);
     SetSizer(bs);
 }
@@ -98,6 +115,13 @@ void PythonInterpCtrl::KillProcess()
 //    }
 }
 
+void PythonInterpCtrl::OnPyNotify(PyNotifyUIEvent& event)
+{
+    m_ioctrl->AppendText(stdout_retrieve());
+    m_ioctrl->AppendText(stderr_retrieve());
+}
+
+
 void PythonInterpCtrl::SyncOutput(int maxchars)
 {
 //    if(!m_proc)
@@ -146,7 +170,7 @@ void PythonInterpCtrl::SyncOutput(int maxchars)
 
 void PythonInterpCtrl::OnSize(wxSizeEvent& event)
 {
-    m_textctrl->SetSize(event.GetSize());
+//    m_textctrl->SetSize(event.GetSize());
 }
 
 void PythonInterpCtrl::OnUserInput(wxKeyEvent& ke)
@@ -166,8 +190,8 @@ void PythonInterpCtrl::OnUserInput(wxKeyEvent& ke)
     wxChar kc2=ke.GetUnicodeKey();
     wxString buf(kc2);
     //TODO: queue the key press for dispatch to the interpreter
-    m_textctrl->AppendText(kc2);
-    m_textctrl->SetInsertionPointEnd();
+    m_ioctrl->AppendText(kc2);
+    m_ioctrl->SetInsertionPointEnd();
 }
 
 void PythonInterpCtrl::stdin_append(const wxString &data)

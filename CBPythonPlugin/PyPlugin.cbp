@@ -146,6 +146,12 @@
 		</Compiler>
 		<Unit filename="ConfigDialog.cpp" />
 		<Unit filename="ConfigDialog.h" />
+		<Unit filename="PyEvents.cpp">
+			<Option target="experimental" />
+		</Unit>
+		<Unit filename="PyEvents.h">
+			<Option target="experimental" />
+		</Unit>
 		<Unit filename="PyPlugin.cpp" />
 		<Unit filename="PyPlugin.h" />
 		<Unit filename="PythonInterpCtrl.cpp">

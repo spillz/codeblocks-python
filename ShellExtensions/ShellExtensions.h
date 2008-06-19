@@ -143,6 +143,9 @@ class ShellExtensions : public cbPlugin
         void OnShowConsole(wxCommandEvent& event);
         void OnUpdateUI(wxUpdateUIEvent& event);
 
+        void OnLaunchPythonProcess(wxCommandEvent &event);
+
+
         wxMenu *m_LangMenu;  // pointer to the interpreters menu
         unsigned int m_interpnum;
         unsigned int m_contextactions[10];

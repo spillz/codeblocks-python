@@ -14,6 +14,8 @@ int ID_LangMenu_RunPiped=wxNewId();
 int ID_LangMenu_ShowConsole=wxNewId();
 int ID_PipedProcess=wxNewId();
 
+int ID_LaunchPythonProcess=wxNewId();
+
 // Ugly ugly hack to handle dynamic menus
 int ID_ContextMenu_0=wxNewId();
 int ID_ContextMenu_1=wxNewId();
@@ -122,6 +124,7 @@ BEGIN_EVENT_TABLE(ShellExtensions, cbPlugin)
     EVT_MENU_RANGE(ID_ContextMenu_0,ID_ContextMenu_49,ShellExtensions::OnRunTarget)
     EVT_MENU_RANGE(ID_SubMenu_0, ID_SubMenu_49, ShellExtensions::OnRunTarget)
     EVT_MENU(ID_LangMenu_ShowConsole,ShellExtensions::OnShowConsole)
+    EVT_MENU(ID_LaunchPythonProcess,ShellExtensions::OnLaunchPythonProcess)
     EVT_UPDATE_UI(ID_LangMenu_ShowConsole, ShellExtensions::OnUpdateUI)
 END_EVENT_TABLE()
 
@@ -386,6 +389,16 @@ void ShellExtensions::OnRunTarget(wxCommandEvent& event)
     wxSetWorkingDirectory(olddir);
 }
 
+void ShellExtensions::OnLaunchPythonProcess(wxCommandEvent &event)
+{
+    wxString olddir=wxGetCwd();
+    wxArrayString astr;
+    wxSetWorkingDirectory(_T("c:\\source\\cbil_berlios\\trunk\\CBPythonPlugin\\Python\\"));
+    m_shellmgr->LaunchProcess(_T("c:\\python25\\python interp.py"),_T("Python"),_T("Python Interpreter"),astr);
+    wxSetWorkingDirectory(olddir);
+}
+
+
 // DEPRECATED - NO LONGER REQUIRED
 void ShellExtensions::OnRun(wxCommandEvent& event)
 {
@@ -547,6 +560,7 @@ void ShellExtensions::CreateMenu()
         else
             menu->Append(ID_SubMenu_0+i,menuloc);
     }
+    m_LangMenu->Append(ID_LaunchPythonProcess,_T("Launch Python Interpreter"),_T(""));
     m_LangMenu->Append(ID_LangMenu_ShowConsole,_T("Toggle Shell Extensions I/O Window"),_T(""),wxITEM_CHECK);
 }
 

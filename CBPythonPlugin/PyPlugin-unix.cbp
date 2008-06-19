@@ -86,6 +86,12 @@
 		<Unit filename="PyEvalJob.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="PyEvents.cpp">
+			<Option target="experimental" />
+		</Unit>
+		<Unit filename="PyEvents.h">
+			<Option target="experimental" />
+		</Unit>
 		<Unit filename="PyPlugin.cpp" />
 		<Unit filename="PyPlugin.h" />
 		<Unit filename="PythonInterpCtrl.cpp">

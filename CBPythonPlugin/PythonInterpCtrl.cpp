@@ -30,10 +30,34 @@ bool PyInterpJob::operator()()
         PyNotifyUIEvent pe(id,pyinst,parent,PYSTATE_NOTIFY);
         ::wxPostEvent(parent,pe);
         // sleep for some period of time
-
+        Sleep(50);
     }
     return true;
 }
+
+
+////////////////////////////////////// PythonCodeCtrl //////////////////////////////////////////////
+
+BEGIN_EVENT_TABLE(PythonCodeCtrl, wxTextCtrl)
+    EVT_CHAR(PythonCodeCtrl::OnUserInput)
+END_EVENT_TABLE()
+
+void PythonCodeCtrl::OnUserInput(wxKeyEvent& ke)
+{
+    wxMessageBox(_T("keypress"));
+    if(ke.GetModifiers()==wxMOD_CONTROL)
+    {
+        wxMessageBox(_T("control pressed"));
+        if(ke.GetKeyCode()==L'd')
+        {
+            m_pyctrl->DispatchCode(GetValue());
+            ChangeValue(_T(""));
+            wxMessageBox(_T("command dispatched"));
+        }
+    }
+    ke.Skip();
+}
+
 
 
 ////////////////////////////////////// PythonInterpCtrl /////////////////////////////////////////////
@@ -55,12 +79,15 @@ END_EVENT_TABLE()
 PythonInterpCtrl::PythonInterpCtrl(wxWindow* parent, int id, const wxString &name, ShellManager *shellmgr) : ShellCtrlBase(parent, id, name, shellmgr)
 {
     m_pyinterp=NULL;
-    m_ioctrl=new wxTextCtrl(this, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_RICH|wxTE_MULTILINE|wxTE_READONLY|wxTE_PROCESS_ENTER|wxEXPAND);
-    m_codectrl=new wxTextCtrl(this, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_RICH|wxTE_MULTILINE|wxTE_READONLY|wxTE_PROCESS_ENTER|wxEXPAND);
-    wxSplitterWindow *sw=new wxSplitterWindow(this, wxID_ANY);
-    sw->SplitHorizontally(m_codectrl, m_ioctrl, 100);
+    m_sw=new wxSplitterWindow(this, wxID_ANY);
+    m_ioctrl=new wxTextCtrl(m_sw, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_RICH|wxTE_MULTILINE|wxTE_READONLY|wxTE_PROCESS_ENTER|wxEXPAND);
+    m_codectrl=new PythonCodeCtrl(m_sw, this);
+    m_codectrl->AppendText(_("print 'Python'"));
+    m_ioctrl->AppendText(_("abc"));
+    m_sw->SplitHorizontally(m_codectrl, m_ioctrl, 0);
+    m_sw->SetMinimumPaneSize(20);
     wxBoxSizer* bs = new wxBoxSizer(wxVERTICAL);
-    bs->Add(sw, 1, wxEXPAND | wxALL);
+    bs->Add(m_sw, 1, wxEXPAND | wxALL);
     SetAutoLayout(TRUE);
     SetSizer(bs);
 }
@@ -82,7 +109,7 @@ long PythonInterpCtrl::LaunchProcess(const wxString &processcmd, const wxArraySt
 {
     if(!m_dead || m_pyinterp)
         return -1;
-    m_pyinterp=new PyInstance(_T("python interp.py"),_T("localhost"),8000);
+    m_pyinterp=new PyInstance(processcmd,_T("localhost"),8000);
     //TODO: Perform any initial communication with the running python process...
     return 1;
 }
@@ -114,6 +141,15 @@ void PythonInterpCtrl::KillProcess()
 //        }
 //    }
 }
+
+bool PythonInterpCtrl::DispatchCode(const wxString &code)
+{
+    //TODO: check to see if a job is already running
+    m_job=new PyInterpJob(code,m_pyinterp,this);
+    m_pyinterp->AddJob(m_job);
+    return true;
+}
+
 
 void PythonInterpCtrl::OnPyNotify(PyNotifyUIEvent& event)
 {
@@ -170,7 +206,7 @@ void PythonInterpCtrl::SyncOutput(int maxchars)
 
 void PythonInterpCtrl::OnSize(wxSizeEvent& event)
 {
-//    m_textctrl->SetSize(event.GetSize());
+    m_sw->SetSize(event.GetSize());
 }
 
 void PythonInterpCtrl::OnUserInput(wxKeyEvent& ke)
@@ -180,18 +216,27 @@ void PythonInterpCtrl::OnUserInput(wxKeyEvent& ke)
         ke.Skip();
         return;
     }
-    char* kc1=new char[2];
-    kc1[0]=ke.GetKeyCode()%256;
-    kc1[1]=0;
-    if(kc1[0]=='\r')
+    if(ke.GetModifiers()==wxMOD_CONTROL && ke.GetKeyCode()==WXK_RETURN)
     {
-        kc1[0]='\n';
+        m_job=new PyInterpJob(m_codectrl->GetValue(),m_pyinterp,this);
+        m_pyinterp->AddJob(m_job);
+        m_codectrl->ChangeValue(_T(""));
+        wxMessageBox(_T("command dispatched"));
     }
-    wxChar kc2=ke.GetUnicodeKey();
-    wxString buf(kc2);
-    //TODO: queue the key press for dispatch to the interpreter
-    m_ioctrl->AppendText(kc2);
-    m_ioctrl->SetInsertionPointEnd();
+    wxMessageBox(_T("key captured"));
+
+//    char* kc1=new char[2];
+//    kc1[0]=ke.GetKeyCode()%256;
+//    kc1[1]=0;
+//    if(kc1[0]=='\r')
+//    {
+//        kc1[0]='\n';
+//    }
+//    wxChar kc2=ke.GetUnicodeKey();
+//    wxString buf(kc2);
+//    //TODO: queue the key press for dispatch to the interpreter
+//    m_ioctrl->AppendText(kc2);
+//    m_ioctrl->SetInsertionPointEnd();
 }
 
 void PythonInterpCtrl::stdin_append(const wxString &data)

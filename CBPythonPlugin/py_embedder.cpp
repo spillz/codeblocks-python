@@ -80,6 +80,7 @@ PyInstance::~PyInstance()
 PyInstance::PyInstance(const wxString &processcmd, const wxString &hostaddress, int port)
 {
   m_port=port;
+  m_proc=NULL;
   m_proc_dead=true;
   m_hostaddress=hostaddress;
   // Launch process

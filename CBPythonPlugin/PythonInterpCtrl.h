@@ -12,34 +12,33 @@
 #include <sdk.h>
 #include "../ShellExtensions/ShellCtrlBase.h"
 
-class TestWin:public wxEvtHandler
-{
-public:
-    void OnPyNotify(PyNotifyUIEvent &e) {}
-    DECLARE_EVENT_TABLE();
-};
-
-BEGIN_EVENT_TABLE(TestWin, wxEvtHandler)
-    EVT_PY_NOTIFY_UI(TestWin::OnPyNotify)
-END_EVENT_TABLE()
-
-
 class PythonInterpCtrl;
 
 class PyInterpJob: public PyJob
 {
-    PyInterpJob(wxString code, PyInstance *pyinst, PythonInterpCtrl *pctl, wxWindow *p, int id=wxID_ANY, bool selfdestroy=true) : PyJob(pyinst, p, id, selfdestroy)
+public:
+    PyInterpJob(wxString code, PyInstance *pyinst, PythonInterpCtrl *pctl, int id=wxID_ANY, bool selfdestroy=true) : PyJob(pyinst, (wxWindow*)pctl, id, selfdestroy)
     {
         this->pctl=pctl;
         break_job=false;
         return;
     }
     PythonInterpCtrl *pctl;
-    bool operator()();
+    bool operator()(); //TODO: Handle the break
     wxString code;
     wxMutex break_mutex;
     bool break_job;
 };
+
+class PythonCodeCtrl: public wxTextCtrl
+{
+public:
+    PythonCodeCtrl(wxWindow *parent, PythonInterpCtrl *py) : wxTextCtrl(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_RICH|wxTE_MULTILINE|wxTE_PROCESS_ENTER|wxEXPAND) {m_pyctrl = py;}
+    void OnUserInput(wxKeyEvent& ke);
+    PythonInterpCtrl *m_pyctrl;
+    DECLARE_EVENT_TABLE()
+};
+
 
 namespace
 {
@@ -63,6 +62,9 @@ class PythonInterpCtrl : public ShellCtrlBase
         void OnSize(wxSizeEvent& event);
         void OnPyNotify(PyNotifyUIEvent& event);
 
+        bool DispatchCode(const wxString &code);
+
+
     protected:
         friend class PyInterpJob;
         void stdin_append(const wxString &data);
@@ -81,6 +83,7 @@ class PythonInterpCtrl : public ShellCtrlBase
         wxMutex io_mutex;
         PyInterpJob *m_job;
         wxTextCtrl *m_ioctrl, *m_codectrl;
+        wxSplitterWindow *m_sw;
         PyInstance *m_pyinterp;
 
 

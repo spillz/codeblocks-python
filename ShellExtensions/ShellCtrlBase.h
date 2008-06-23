@@ -93,7 +93,7 @@ template<class T> class ShellCtrlRegistrant
 class ShellCtrlBase : public wxPanel //TODO: make wxPanel a member, not a base??
 {
     public:
-        ShellCtrlBase() {m_dead=true; m_id=-1;}
+        ShellCtrlBase():wxPanel() {m_dead=true; m_id=-1;}
         ShellCtrlBase(wxWindow* parent, int id, const wxString &name, ShellManager *shellmgr=NULL);
         virtual ~ShellCtrlBase() {}
 
@@ -111,7 +111,7 @@ class ShellCtrlBase : public wxPanel //TODO: make wxPanel a member, not a base??
         ShellManager *m_shellmgr;
         bool m_dead;
         int m_id;
-//    DECLARE_DYNAMIC_CLASS(wxPanel)
+//    DECLARE_DYNAMIC_CLASS(ShellCtrlBase)
 //    DECLARE_EVENT_TABLE()
 };
 

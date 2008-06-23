@@ -56,6 +56,7 @@ void ShellRegistry::FreeControl(ShellCtrlBase *sh) //TODO: Don't think this is n
 }
 
 
+//IMPLEMENT_DYNAMIC_CLASS(ShellCtrlBase, wxPanel)
 
 ShellCtrlBase::ShellCtrlBase(wxWindow* parent, int id, const wxString &name, ShellManager *shellmgr)
                 : wxPanel(parent, id)

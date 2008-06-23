@@ -5,7 +5,7 @@
 // We are using an anonymous namespace so we don't litter the global one.
 namespace
 {
-    PluginRegistrant<ShellExtensions> reg(_T("ShellExtensions"));
+    PluginRegistrant<ShellExtensions> reg(_T("ShellExtensions-dbg"));
 }
 
 int ID_UpdateUI=wxNewId();
@@ -393,8 +393,13 @@ void ShellExtensions::OnLaunchPythonProcess(wxCommandEvent &event)
 {
     wxString olddir=wxGetCwd();
     wxArrayString astr;
+#ifdef __WXMSW__
     wxSetWorkingDirectory(_T("c:\\source\\cbil_berlios\\trunk\\CBPythonPlugin\\Python\\"));
     m_shellmgr->LaunchProcess(_T("c:\\python25\\python interp.py"),_T("Python"),_T("Python Interpreter"),astr);
+#else
+    wxSetWorkingDirectory(_T("/home/damien/src/cbil/CBPythonPlugin/python/"));
+    m_shellmgr->LaunchProcess(_T("python interp.py"),_T("Python"),_T("Python Interpreter"),astr);
+#endif
     wxSetWorkingDirectory(olddir);
 }
 

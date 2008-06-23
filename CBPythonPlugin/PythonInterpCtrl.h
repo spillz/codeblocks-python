@@ -17,7 +17,7 @@ class PythonInterpCtrl;
 class PyInterpJob: public PyJob
 {
 public:
-    PyInterpJob(wxString code, PyInstance *pyinst, PythonInterpCtrl *pctl, int id=wxID_ANY, bool selfdestroy=true) : PyJob(pyinst, (wxWindow*)pctl, id, selfdestroy)
+    PyInterpJob(wxString code, PyInstance *pyinst, PythonInterpCtrl *pctl, wxWindow *w, int id=wxID_ANY, bool selfdestroy=true) : PyJob(pyinst, w, id, selfdestroy)
     {
         this->pctl=pctl;
         break_job=false;
@@ -81,14 +81,13 @@ class PythonInterpCtrl : public ShellCtrlBase
     private:
         wxString stdin_data, stdout_data, stderr_data;
         wxMutex io_mutex;
-        PyInterpJob *m_job;
         wxTextCtrl *m_ioctrl, *m_codectrl;
         wxSplitterWindow *m_sw;
         PyInstance *m_pyinterp;
 
 
 //        void OnEndProcess(wxProcessEvent &event);
-    DECLARE_DYNAMIC_CLASS(wxPanel)
+    DECLARE_DYNAMIC_CLASS(PythonInterpCtrl)
     DECLARE_EVENT_TABLE()
 };
 

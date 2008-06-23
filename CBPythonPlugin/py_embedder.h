@@ -38,6 +38,7 @@ protected:
     bool started;
     bool killonexit;
     friend class PyInstance;
+//    DECLARE_DYNAMIC_CLASS(PyJob);
 };
 
 WX_DECLARE_LIST(PyJob, PyJobQueue);
@@ -79,7 +80,8 @@ private:
     int m_port; // port number for server
     XmlRpc::XmlRpcClient *m_client;
     //void AttachExtension(); //attach a python extension table as an import for this interpreter
-    DECLARE_EVENT_TABLE();
+    //DECLARE_DYNAMIC_CLASS(PyInstance)
+    DECLARE_EVENT_TABLE()
 };
 
 WX_DECLARE_OBJARRAY(PyInstance, PyInstanceCollection);

@@ -15,6 +15,7 @@ bool PyInterpJob::operator()()
     bool unfinished;
     pctl->RunCode(code,unfinished);
     bool break_called=false;
+    pctl->stdout_append(_T("\njob start\n"));
     while(unfinished)
     {
         break_mutex.Lock();
@@ -27,11 +28,14 @@ bool PyInterpJob::operator()()
             break_mutex.Unlock();
         if(pctl->Continue(unfinished))
             return false;
+        pctl->stdout_append(_T("job continuing\n"));
         PyNotifyUIEvent pe(id,pyinst,parent,PYSTATE_NOTIFY);
         ::wxPostEvent(parent,pe);
         // sleep for some period of time
         Sleep(50);
     }
+    pctl->stdout_append(_T("job done\n"));
+
     return true;
 }
 
@@ -44,11 +48,11 @@ END_EVENT_TABLE()
 
 void PythonCodeCtrl::OnUserInput(wxKeyEvent& ke)
 {
-    wxMessageBox(_T("keypress"));
     if(ke.GetModifiers()==wxMOD_CONTROL)
     {
-        wxMessageBox(_T("control pressed"));
-        if(ke.GetKeyCode()==L'd')
+//        wxMessageBox(_T("control pressed"));
+//        wxMessageBox(wxString::Format(_("Key: %i"),ke.GetKeyCode()));
+        if(ke.GetKeyCode()==4)
         {
             m_pyctrl->DispatchCode(GetValue());
             ChangeValue(_T(""));
@@ -145,8 +149,7 @@ void PythonInterpCtrl::KillProcess()
 bool PythonInterpCtrl::DispatchCode(const wxString &code)
 {
     //TODO: check to see if a job is already running
-    m_job=new PyInterpJob(code,m_pyinterp,this);
-    m_pyinterp->AddJob(m_job);
+    m_pyinterp->AddJob(new PyInterpJob(code,m_pyinterp,this,m_ioctrl));
     return true;
 }
 
@@ -216,14 +219,14 @@ void PythonInterpCtrl::OnUserInput(wxKeyEvent& ke)
         ke.Skip();
         return;
     }
-    if(ke.GetModifiers()==wxMOD_CONTROL && ke.GetKeyCode()==WXK_RETURN)
-    {
-        m_job=new PyInterpJob(m_codectrl->GetValue(),m_pyinterp,this);
-        m_pyinterp->AddJob(m_job);
-        m_codectrl->ChangeValue(_T(""));
-        wxMessageBox(_T("command dispatched"));
-    }
-    wxMessageBox(_T("key captured"));
+//    if(ke.GetModifiers()==wxMOD_CONTROL && ke.GetKeyCode()==WXK_RETURN)
+//    {
+//        PyInterpJob m_job(m_codectrl->GetValue(),m_pyinterp,this);
+//        m_pyinterp->AddJob(m_job);
+//        m_codectrl->ChangeValue(_T(""));
+//        wxMessageBox(_T("command dispatched"));
+//    }
+//    wxMessageBox(_T("key captured"));
 
 //    char* kc1=new char[2];
 //    kc1[0]=ke.GetKeyCode()%256;

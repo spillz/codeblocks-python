@@ -16,6 +16,9 @@ int ID_PY_PROC=wxNewId();
 //////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////
 
+
+//IMPLEMENT_DYNAMIC_CLASS(PyJob, wxThread)
+
 PyJob::PyJob(PyInstance *pyinst, wxWindow *p, int id, bool selfdestroy):
 wxThread(wxTHREAD_JOINABLE)
 {
@@ -39,6 +42,7 @@ PyJob::~PyJob()
 
 void *PyJob::Entry()
 {
+    wxMessageBox(_("entered thread"));
     PyNotifyUIEvent pe(id,pyinst,parent,PYSTATE_STARTEDJOB);
     ::wxPostEvent(pyinst,pe);
     if((*this)())
@@ -56,6 +60,8 @@ void *PyJob::Entry()
 // class PyInstance
 //////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////
+
+//IMPLEMENT_DYNAMIC_CLASS(PyInstance, wxEvtHandler)
 
 BEGIN_EVENT_TABLE(PyInstance, wxEvtHandler)
     EVT_PY_NOTIFY_UI(PyInstance::OnJobNotify)

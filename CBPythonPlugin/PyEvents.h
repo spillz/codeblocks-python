@@ -10,6 +10,17 @@
 class PyJob;
 class PyInstance;
 
+BEGIN_DECLARE_EVENT_TYPES()
+DECLARE_LOCAL_EVENT_TYPE(wxEVT_PY_NOTIFY_INTERPRETER, -1)
+//DECLARE_EXPORTED_EVENT_TYPE(WXDLLIMPEXP_CORE,wxEVT_PY_NOTIFY_INTERPRETER, -1)
+//DECLARE_EVENT_TYPE(wxEVT_PY_NOTIFY_INTERPRETER, -1)
+DECLARE_LOCAL_EVENT_TYPE(wxEVT_PY_NOTIFY_UI, -1)
+//DECLARE_EXPORTED_EVENT_TYPE(WXDLLIMPEXP_CORE,wxEVT_PY_NOTIFY_UI, -1)
+//DECLARE_EVENT_TYPE(wxEVT_PY_NOTIFY_UI, -1)
+END_DECLARE_EVENT_TYPES()
+
+
+
 // Events sent from the UI to an intepreter request for shutdown
 class PyNotifyIntepreterEvent: public wxEvent
 {
@@ -22,13 +33,14 @@ public:
 
 enum JobStates {PYSTATE_STARTEDJOB, PYSTATE_FINISHEDJOB, PYSTATE_ABORTEDJOB, PYSTATE_NOTIFY};
 
+
 // Events sent from the thread interacting with the python interpreter back to the UI.
 // indicating job completion, interpreter shutdown etc
 class PyNotifyUIEvent: public wxEvent
 {
     friend class PyInstance;
 public:
-    PyNotifyUIEvent(int id=-1) {}
+    PyNotifyUIEvent(int id=-1): wxEvent(id,wxEVT_PY_NOTIFY_UI) {}
     PyNotifyUIEvent(int id, PyInstance *instance, wxWindow *parent, JobStates jobstate);
     PyNotifyUIEvent(const PyNotifyUIEvent& c) : wxEvent(c)
     {
@@ -50,14 +62,6 @@ protected:
     wxWindow *parent;
 };
 
-BEGIN_DECLARE_EVENT_TYPES()
-DECLARE_LOCAL_EVENT_TYPE(wxEVT_PY_NOTIFY_INTERPRETER, -1)
-//DECLARE_EXPORTED_EVENT_TYPE(WXDLLIMPEXP_CORE,wxEVT_PY_NOTIFY_INTERPRETER, -1)
-//DECLARE_EVENT_TYPE(wxEVT_PY_NOTIFY_INTERPRETER, -1)
-DECLARE_LOCAL_EVENT_TYPE(wxEVT_PY_NOTIFY_UI, -1)
-//DECLARE_EXPORTED_EVENT_TYPE(WXDLLIMPEXP_CORE,wxEVT_PY_NOTIFY_UI, -1)
-//DECLARE_EVENT_TYPE(wxEVT_PY_NOTIFY_UI, -1)
-END_DECLARE_EVENT_TYPES()
 
 typedef void (wxEvtHandler::*PyNotifyIntepreterEventFunction)(PyNotifyIntepreterEvent&);
 typedef void (wxEvtHandler::*PyNotifyUIEventFunction)(PyNotifyUIEvent&);

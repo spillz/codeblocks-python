@@ -5,7 +5,7 @@
 // We are using an anonymous namespace so we don't litter the global one.
 namespace
 {
-    PluginRegistrant<ShellExtensions> reg(_T("ShellExtensions-dbg"));
+    PluginRegistrant<ShellExtensions> reg(_T("ShellExtensions"));
 }
 
 int ID_UpdateUI=wxNewId();

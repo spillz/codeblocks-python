@@ -6,6 +6,12 @@
 //////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////
 
+DEFINE_EVENT_TYPE(wxEVT_PY_NOTIFY_UI_STARTED)
+DEFINE_EVENT_TYPE(wxEVT_PY_NOTIFY_UI_FINISHED)
+DEFINE_EVENT_TYPE(wxEVT_PY_NOTIFY_UI_ABORTED)
+DEFINE_EVENT_TYPE(wxEVT_PY_NOTIFY_UI_NOTIFY)
+
+
 DEFINE_EVENT_TYPE(wxEVT_PY_NOTIFY_INTERPRETER );
 
 PyNotifyIntepreterEvent::PyNotifyIntepreterEvent(int id) : wxEvent(id, wxEVT_PY_NOTIFY_INTERPRETER)

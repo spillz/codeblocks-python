@@ -40,16 +40,35 @@ PyJob::~PyJob()
     Abort();
 }
 
+//void *PyJob::Entry()
+//{
+//    wxMessageBox(_("entered thread"));
+//    PyNotifyUIEvent pe(id,pyinst,parent,PYSTATE_STARTEDJOB);
+//    ::wxPostEvent(pyinst,pe);
+//    if((*this)())
+//        pe.SetState(PYSTATE_FINISHEDJOB);
+//    else
+//        pe.SetState(PYSTATE_ABORTEDJOB);
+//    ::wxPostEvent(pyinst,pe);
+//    Exit();
+//    return NULL;
+//}
+
 void *PyJob::Entry()
 {
     wxMessageBox(_("entered thread"));
-    PyNotifyUIEvent pe(id,pyinst,parent,PYSTATE_STARTEDJOB);
+    wxCommandEvent pe(wxEVT_PY_NOTIFY_UI_STARTED,0);
     ::wxPostEvent(pyinst,pe);
     if((*this)())
-        pe.SetState(PYSTATE_FINISHEDJOB);
+    {
+        wxCommandEvent pe(wxEVT_PY_NOTIFY_UI_FINISHED,0);
+        ::wxPostEvent(pyinst,pe);
+    }
     else
-        pe.SetState(PYSTATE_ABORTEDJOB);
-    ::wxPostEvent(pyinst,pe);
+    {
+        wxCommandEvent pe(wxEVT_PY_NOTIFY_UI_ABORTED,0);
+        ::wxPostEvent(pyinst,pe);
+    }
     Exit();
     return NULL;
 }
@@ -64,7 +83,9 @@ void *PyJob::Entry()
 //IMPLEMENT_DYNAMIC_CLASS(PyInstance, wxEvtHandler)
 
 BEGIN_EVENT_TABLE(PyInstance, wxEvtHandler)
-    EVT_PY_NOTIFY_UI(PyInstance::OnJobNotify)
+//    EVT_PY_NOTIFY_UI(PyInstance::OnJobNotify)
+    EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_FINISHED, PyInstance::OnJobNotify)
+    EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_ABORTED, PyInstance::OnJobNotify)
 END_EVENT_TABLE()
 
 //PyInstance::PyInstance()
@@ -89,6 +110,8 @@ PyInstance::PyInstance(const wxString &processcmd, const wxString &hostaddress, 
   m_proc=NULL;
   m_proc_dead=true;
   m_hostaddress=hostaddress;
+  m_paused=false;
+  m_proc_killlevel=0;
   // Launch process
   LaunchProcess(processcmd); //TODO: The command for the interpreter process should come from the manager (and be stored in a config file)
   // Setup XMLRPC client and use introspection API to look up the supported methods
@@ -173,21 +196,21 @@ bool PyInstance::AddJob(PyJob *job)
     return true;
 }
 
-void PyInstance::OnJobNotify(PyNotifyUIEvent &event)
+void PyInstance::OnJobNotify(wxCommandEvent &event)
 {
-    if(event.jobstate==PYSTATE_ABORTEDJOB||event.jobstate==PYSTATE_FINISHEDJOB)
+//    if(event.jobstate==PYSTATE_ABORTEDJOB||event.jobstate==PYSTATE_FINISHEDJOB)
+//    {
+    PyJob *job=m_queue.GetFirst()->GetData();
+    job->Wait();
+    if(job->killonexit)
     {
-        event.job=m_queue.GetFirst()->GetData();
-        event.job->Wait();
-        if(event.job->killonexit)
-        {
-            delete event.job;
-            event.job=NULL;
-        }
-        m_queue.DeleteNode(m_queue.GetFirst());
+        delete job;
+        job=NULL;
     }
-    if(event.parent)
-        ::wxPostEvent(event.parent,event);
+    m_queue.DeleteNode(m_queue.GetFirst());
+//    }
+//    if(event.parent)
+//        ::wxPostEvent(event.parent,event);
     if(m_paused)
         return;
     wxPyJobQueueNode *node=m_queue.GetFirst();

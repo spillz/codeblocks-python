@@ -12,6 +12,7 @@
 bool PyInterpJob::operator()()
 {
     // talk to m_client
+    wxMessageBox(_("entered operator..."));
     bool unfinished;
     pctl->RunCode(code,unfinished);
     bool break_called=false;
@@ -29,7 +30,8 @@ bool PyInterpJob::operator()()
         if(pctl->Continue(unfinished))
             return false;
         pctl->stdout_append(_T("job continuing\n"));
-        PyNotifyUIEvent pe(id,pyinst,parent,PYSTATE_NOTIFY);
+//        PyNotifyUIEvent pe(id,pyinst,parent,PYSTATE_NOTIFY);
+        wxCommandEvent pe(wxEVT_PY_NOTIFY_UI_NOTIFY,0);
         ::wxPostEvent(parent,pe);
         // sleep for some period of time
         Sleep(50);
@@ -72,9 +74,11 @@ IMPLEMENT_DYNAMIC_CLASS(PythonInterpCtrl, wxPanel)
 
 BEGIN_EVENT_TABLE(PythonInterpCtrl, wxPanel)
     EVT_CHAR(PythonInterpCtrl::OnUserInput)
-    EVT_PY_NOTIFY_UI(PythonInterpCtrl::OnPyNotify)
+//    EVT_PY_NOTIFY_UI(PythonInterpCtrl::OnPyNotify)
 //    EVT_END_PROCESS(ID_PROC, PythonInterpCtrl::OnEndProcess)
 //    EVT_LEFT_DCLICK(PythonInterpCtrl::OnDClick)
+    EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_NOTIFY, PythonInterpCtrl::OnPyNotify)
+    EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_STARTED, PythonInterpCtrl::OnPyNotify)
     EVT_SIZE    (PythonInterpCtrl::OnSize)
 END_EVENT_TABLE()
 
@@ -154,7 +158,7 @@ bool PythonInterpCtrl::DispatchCode(const wxString &code)
 }
 
 
-void PythonInterpCtrl::OnPyNotify(PyNotifyUIEvent& event)
+void PythonInterpCtrl::OnPyNotify(wxCommandEvent& event)
 {
     m_ioctrl->AppendText(stdout_retrieve());
     m_ioctrl->AppendText(stderr_retrieve());

@@ -64,7 +64,7 @@ public:
     long GetPid() {if(m_proc) return m_proc_id; else return -1;}
     void KillProcess(bool force=false);
     bool AddJob(PyJob *job);
-    void OnJobNotify(PyNotifyUIEvent &event);
+    void OnJobNotify(wxCommandEvent &event);
     void PauseJobs();
     void ClearJobs();
     bool Exec(const wxString &method, XmlRpc::XmlRpcValue &inarg, XmlRpc::XmlRpcValue &result);

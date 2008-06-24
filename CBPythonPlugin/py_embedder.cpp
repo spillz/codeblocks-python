@@ -56,18 +56,19 @@ PyJob::~PyJob()
 
 void *PyJob::Entry()
 {
-    wxMessageBox(_("entered thread"));
+//    wxMutexGuiEnter();
     wxCommandEvent pe(wxEVT_PY_NOTIFY_UI_STARTED,0);
-    ::wxPostEvent(pyinst,pe);
+    parent->AddPendingEvent(pe);
+//    wxMutexGuiLeave();
     if((*this)())
     {
         wxCommandEvent pe(wxEVT_PY_NOTIFY_UI_FINISHED,0);
-        ::wxPostEvent(pyinst,pe);
+        pyinst->AddPendingEvent(pe);
     }
     else
     {
         wxCommandEvent pe(wxEVT_PY_NOTIFY_UI_ABORTED,0);
-        ::wxPostEvent(pyinst,pe);
+        pyinst->AddPendingEvent(pe);
     }
     Exit();
     return NULL;

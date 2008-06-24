@@ -12,7 +12,7 @@
 bool PyInterpJob::operator()()
 {
     // talk to m_client
-    wxMessageBox(_("entered operator..."));
+//    wxMessageBox(_("entered operator..."));
     bool unfinished;
     pctl->RunCode(code,unfinished);
     bool break_called=false;
@@ -31,8 +31,10 @@ bool PyInterpJob::operator()()
             return false;
         pctl->stdout_append(_T("job continuing\n"));
 //        PyNotifyUIEvent pe(id,pyinst,parent,PYSTATE_NOTIFY);
+        wxMutexGuiEnter();
         wxCommandEvent pe(wxEVT_PY_NOTIFY_UI_NOTIFY,0);
         ::wxPostEvent(parent,pe);
+        wxMutexGuiLeave();
         // sleep for some period of time
         Sleep(50);
     }
@@ -153,6 +155,8 @@ void PythonInterpCtrl::KillProcess()
 bool PythonInterpCtrl::DispatchCode(const wxString &code)
 {
     //TODO: check to see if a job is already running
+    wxCommandEvent ce(wxEVT_PY_NOTIFY_UI_STARTED,0);
+    wxPostEvent(this,ce);
     m_pyinterp->AddJob(new PyInterpJob(code,m_pyinterp,this,m_ioctrl));
     return true;
 }

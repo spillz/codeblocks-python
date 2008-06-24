@@ -117,11 +117,15 @@ PyInstance::PyInstance(const wxString &processcmd, const wxString &hostaddress, 
   LaunchProcess(processcmd); //TODO: The command for the interpreter process should come from the manager (and be stored in a config file)
   // Setup XMLRPC client and use introspection API to look up the supported methods
   m_client = new XmlRpc::XmlRpcClient(hostaddress.char_str(), port);
-  XmlRpc::XmlRpcValue noArgs, result;
-  if (m_client->execute("system.listMethods", noArgs, result))
-    std::cout << "\nMethods:\n " << result << "\n\n";
-  else
-    std::cout << "Error calling 'listMethods'\n\n";
+//  XmlRpc::XmlRpcValue noArgs, result;
+//  if (m_client->execute("system.listMethods", noArgs, result))
+//  {
+////    wxMessageBox(wxString::Format(_T("Called 'listMethods'\n\n")));
+////    std::string s(result[0]);
+////    wxMessageBox(wxString::Format(_T("\nMethods: %s\n "), s.c_str()));
+//  }
+//  else
+////    wxMessageBox(wxString::Format(_T("Error calling 'listMethods'\n\n")));
 }
 
 long PyInstance::LaunchProcess(const wxString &processcmd)
@@ -156,7 +160,8 @@ PyInstance::PyInstance(const PyInstance &copy)
 bool PyInstance::Exec(const wxString &method, XmlRpc::XmlRpcValue &inarg, XmlRpc::XmlRpcValue &result)
 {
     wxMutexLocker ml(exec_mutex);
-    return m_client->execute(method.mb_str(), inarg, result);
+    wxMessageBox(method);
+    return m_client->execute(method.utf8_str(), inarg, result);
 }
 
 void PyInstance::KillProcess(bool force)

@@ -88,7 +88,7 @@ class AsyncServer(threading.Thread):
         self.server.register_introspection_functions()
         self.server.socket.settimeout(5)
         self.server.register_function(self.end,'end')
-        self.server.register_function(self.run_code,'exec')
+        self.server.register_function(self.run_code,'run_code')
         self.server.register_function(self.cont,'cont')
         while not self._quit:
             try:
@@ -108,6 +108,7 @@ class AsyncServer(threading.Thread):
             return True
         return False
     def run_code(self,eval_str,stdin):
+        print >>sys.__stdout__,"running code"
         if self.interp.queue_code(eval_str):
             return self.cont(stdin)
         else:

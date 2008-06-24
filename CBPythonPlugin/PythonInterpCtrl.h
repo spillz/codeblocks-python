@@ -19,6 +19,7 @@ class PyInterpJob: public PyJob
 public:
     PyInterpJob(wxString code, PyInstance *pyinst, PythonInterpCtrl *pctl, wxWindow *w, int id=wxID_ANY, bool selfdestroy=true) : PyJob(pyinst, w, id, selfdestroy)
     {
+        this->code=code;
         this->pctl=pctl;
         break_job=false;
         return;

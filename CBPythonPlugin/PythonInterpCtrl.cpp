@@ -13,10 +13,10 @@ bool PyInterpJob::operator()()
 {
     // talk to m_client
 //    wxMessageBox(_("entered operator..."));
-    bool unfinished;
+    bool unfinished=false;
     pctl->RunCode(code,unfinished);
     bool break_called=false;
-    pctl->stdout_append(_T("\njob start\n"));
+    pctl->stdout_append(wxString(_T("\njob start\n")).c_str());
     while(unfinished)
     {
         break_mutex.Lock();
@@ -58,6 +58,7 @@ void PythonCodeCtrl::OnUserInput(wxKeyEvent& ke)
 //        wxMessageBox(wxString::Format(_("Key: %i"),ke.GetKeyCode()));
         if(ke.GetKeyCode()==4)
         {
+            wxMessageBox(GetValue());
             m_pyctrl->DispatchCode(GetValue());
             ChangeValue(_T(""));
             wxMessageBox(_T("command dispatched"));
@@ -157,7 +158,15 @@ bool PythonInterpCtrl::DispatchCode(const wxString &code)
     //TODO: check to see if a job is already running
     wxCommandEvent ce(wxEVT_PY_NOTIFY_UI_STARTED,0);
     wxPostEvent(this,ce);
-    m_pyinterp->AddJob(new PyInterpJob(code,m_pyinterp,this,m_ioctrl));
+    bool unfin;
+    if(this->RunCode(_T("print 'abc'"),unfin))
+    {
+        wxMessageBox(_T("ran code print 'abc'"));
+        if(unfin)
+            wxMessageBox(_T("not finito"));
+    } else
+        wxMessageBox(_T("failed to print 'abc'"));
+    m_pyinterp->AddJob(new PyInterpJob(wxString(code.c_str()),m_pyinterp,this,m_ioctrl));
     return true;
 }
 

@@ -81,6 +81,7 @@ private:
     XmlRpc::XmlRpcClient *m_client;
     //void AttachExtension(); //attach a python extension table as an import for this interpreter
     //DECLARE_DYNAMIC_CLASS(PyInstance)
+    DECLARE_CLASS(PyInstance)
     DECLARE_EVENT_TABLE()
 };
 

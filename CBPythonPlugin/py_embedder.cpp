@@ -24,6 +24,7 @@ wxThread(wxTHREAD_JOINABLE)
 {
     parent=p;
     this->id=id;
+    this->pyinst=pyinst;
     finished=false;
     started=false;
     killonexit=selfdestroy;
@@ -83,6 +84,9 @@ void *PyJob::Entry()
 
 //IMPLEMENT_DYNAMIC_CLASS(PyInstance, wxEvtHandler)
 
+IMPLEMENT_CLASS(PyInstance, wxEvtHandler)
+
+
 BEGIN_EVENT_TABLE(PyInstance, wxEvtHandler)
 //    EVT_PY_NOTIFY_UI(PyInstance::OnJobNotify)
     EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_FINISHED, PyInstance::OnJobNotify)
@@ -135,7 +139,7 @@ long PyInstance::LaunchProcess(const wxString &processcmd)
     if(m_proc) //this should never happen
         m_proc->Detach(); //self cleanup
     m_proc=new wxProcess(this,ID_PY_PROC);
-    m_proc->Redirect();
+//    m_proc->Redirect();
     m_proc_id=wxExecute(processcmd,wxEXEC_ASYNC,m_proc);
     if(m_proc_id>0)
     {
@@ -160,7 +164,6 @@ PyInstance::PyInstance(const PyInstance &copy)
 bool PyInstance::Exec(const wxString &method, XmlRpc::XmlRpcValue &inarg, XmlRpc::XmlRpcValue &result)
 {
     wxMutexLocker ml(exec_mutex);
-    wxMessageBox(method);
     return m_client->execute(method.utf8_str(), inarg, result);
 }
 

@@ -15,6 +15,8 @@ bool PyInterpJob::operator()()
 //    wxMessageBox(_("entered operator..."));
     bool unfinished=false;
     pctl->RunCode(code,unfinished);
+    wxCommandEvent pe(wxEVT_PY_NOTIFY_UI_NOTIFY,0);
+    ::wxPostEvent(parent,pe);
     bool break_called=false;
     pctl->stdout_append(wxString(_T("\njob start\n")).c_str());
     while(unfinished)
@@ -31,15 +33,11 @@ bool PyInterpJob::operator()()
             return false;
         pctl->stdout_append(_T("job continuing\n"));
 //        PyNotifyUIEvent pe(id,pyinst,parent,PYSTATE_NOTIFY);
-        wxMutexGuiEnter();
-        wxCommandEvent pe(wxEVT_PY_NOTIFY_UI_NOTIFY,0);
         ::wxPostEvent(parent,pe);
-        wxMutexGuiLeave();
         // sleep for some period of time
         Sleep(50);
     }
     pctl->stdout_append(_T("job done\n"));
-
     return true;
 }
 
@@ -156,16 +154,16 @@ void PythonInterpCtrl::KillProcess()
 bool PythonInterpCtrl::DispatchCode(const wxString &code)
 {
     //TODO: check to see if a job is already running
-    wxCommandEvent ce(wxEVT_PY_NOTIFY_UI_STARTED,0);
-    wxPostEvent(this,ce);
-    bool unfin;
-    if(this->RunCode(_T("print 'abc'"),unfin))
-    {
-        wxMessageBox(_T("ran code print 'abc'"));
-        if(unfin)
-            wxMessageBox(_T("not finito"));
-    } else
-        wxMessageBox(_T("failed to print 'abc'"));
+//    wxCommandEvent ce(wxEVT_PY_NOTIFY_UI_STARTED,0);
+//    wxPostEvent(this,ce);
+//    bool unfin;
+//    if(this->RunCode(_T("print 'abc'"),unfin))
+//    {
+//        wxMessageBox(_T("ran code print 'abc'"));
+//        if(unfin)
+//            wxMessageBox(_T("not finito"));
+//    } else
+//        wxMessageBox(_T("failed to print 'abc'"));
     m_pyinterp->AddJob(new PyInterpJob(wxString(code.c_str()),m_pyinterp,this,m_ioctrl));
     return true;
 }
@@ -306,9 +304,11 @@ bool PythonInterpCtrl::RunCode(const wxString &codestr, bool &unfinished)
     XmlRpc::XmlRpcValue args, result;
     args[0]=codestr.utf8_str();
     args[1]=stdin_retrieve().utf8_str();
+    int returncode=0;
     if(m_pyinterp->Exec(_("run_code"), args, result))
     {
-        unfinished=result[0];
+        returncode=result[0];
+        unfinished=returncode>0;
         std::string r1=result[1];
         stdout_append(wxString::FromUTF8(r1.c_str()));
         std::string r2=result[2];

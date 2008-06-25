@@ -130,15 +130,3 @@ interp_server.start()
 interp_server.start_interp()
 
 print 'success'
-
-
-## SimpleXMLRPCServer examples
-
-# Register a function under a different name
-#def adder_function(x,y):
-#    return x + y
-#server.register_function(adder_function, 'add')
-
-
-# Run the server's main loop
-#server.serve_forever()

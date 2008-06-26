@@ -31,7 +31,7 @@ class PyInterp (code.InteractiveInterpreter):
         self._stdout=datastore(lock)
         self._stdin=datastore(lock)
         self._stderr=datastore(lock)
-        self._running=False
+        self._running=True
         self._runningeval=False
         self.lock=lock
         self.eval_str=''
@@ -47,27 +47,27 @@ class PyInterp (code.InteractiveInterpreter):
         else:
             return False
     def main_loop(self):
-        _running=True
-        while _running:
-            if self.eval_str!='':
-                print >>sys.__stdout__,'acquiring lock',self.eval_str
-                #self.lock.acquire()
-                #self.lock.release()
-                print >>sys.__stdout__,'running code',self.eval_str
-                try:
-                    self.runsource(self.eval_str+'\n')
-                except:
-                    print "error in eval_str"
-                print >>sys.__stdout__,'ran code',self.eval_str
-                self.lock.acquire()
-                self.lock.notify()
+        while self._running: #runs the eval_str queued by the server, then waits for the next until the server requests exit
+            try:
+                if self.eval_str!='':
+                    print >>sys.__stdout__,'running code',self.eval_str
+                    print self.eval_str
+                    try:
+                        self.runsource(self.eval_str+'\n')
+                        print >>sys.__stdout__,'ran code'
+                    except KeyboardInterrupt:
+                        print 'Keyboard Interrupt'
+                    except:
+                        print "error in eval_str", sys.exc_info()[0]
+                self.lock.acquire() #acquire the lock to reset eval string and running status
                 self._runningeval=False
                 self.eval_str=''
+                self.lock.notify() #notify the server in case it is waiting
+                self.lock.wait() #now await the next instruction
                 self.lock.release()
-            self.lock.acquire()
-            print >>sys.__stdout__,'waiting',self.eval_str
-            self.lock.wait()
-            self.lock.release()
+            except KeyboardInterrupt:
+                print >>sys.__stdout__,'keyboard interrupt',self.eval_str
+
 
 
 class AsyncServer(threading.Thread):
@@ -86,22 +86,21 @@ class AsyncServer(threading.Thread):
     def run(self):
         self.server = SimpleXMLRPCServer(("localhost", 8000))
         self.server.register_introspection_functions()
-        self.server.socket.settimeout(5)
+        #self.server.socket.settimeout(self.timeout)
         self.server.register_function(self.end,'end')
         self.server.register_function(self.run_code,'run_code')
         self.server.register_function(self.cont,'cont')
         while not self._quit:
-            try:
-                self.server.handle_request()
-            except:
-                print "Unexpected Error"
+            self.server.handle_request()
     def end(self):
+        if self.interp._runningeval:
+            raise KeyboardInterrupt
         self.lock.acquire()
         self.interp._running=False
         self._quit=True
         self.lock.notify()
         self.lock.release()
-        return "Session Complete"
+        return "Session Terminated"
     def break_code(self):
         if self.interp._runningeval:
             raise KeyboardInterrupt
@@ -123,10 +122,10 @@ class AsyncServer(threading.Thread):
         #return status, stdout, stderr
 
 
-print 'test'
+print 'server started'
 
 interp_server=AsyncServer()
 interp_server.start()
 interp_server.start_interp()
 
-print 'success'
+print 'server terminated'

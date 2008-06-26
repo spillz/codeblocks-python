@@ -18,7 +18,6 @@ bool PyInterpJob::operator()()
     wxCommandEvent pe(wxEVT_PY_NOTIFY_UI_NOTIFY,0);
     ::wxPostEvent(parent,pe);
     bool break_called=false;
-    pctl->stdout_append(wxString(_T("\njob start\n")).c_str());
     while(unfinished)
     {
         break_mutex.Lock();
@@ -31,13 +30,11 @@ bool PyInterpJob::operator()()
             break_mutex.Unlock();
         if(pctl->Continue(unfinished))
             return false;
-        pctl->stdout_append(_T("job continuing\n"));
 //        PyNotifyUIEvent pe(id,pyinst,parent,PYSTATE_NOTIFY);
         ::wxPostEvent(parent,pe);
         // sleep for some period of time
         Sleep(50);
     }
-    pctl->stdout_append(_T("job done\n"));
     return true;
 }
 

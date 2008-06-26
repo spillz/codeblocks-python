@@ -63,7 +63,7 @@ ShellCtrlBase::ShellCtrlBase(wxWindow* parent, int id, const wxString &name, She
 {
     m_parent=parent;
     m_name=name;
-    m_id=id; m_dead=true;
+    m_id=id;
     m_shellmgr=shellmgr;
 }
 

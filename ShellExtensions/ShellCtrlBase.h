@@ -87,13 +87,13 @@ template<class T> class ShellCtrlRegistrant
 
 
 // This is the shell control base class
-// All controls derives from a basic wxWindow
+// All controls derives from a basic wxPanel
 // The control must offer services to create and destroy underlying processes
 // terminal controls sit inside a tabbed panel managed by the Shell Manager
 class ShellCtrlBase : public wxPanel //TODO: make wxPanel a member, not a base??
 {
     public:
-        ShellCtrlBase():wxPanel() {m_dead=true; m_id=-1;}
+        ShellCtrlBase():wxPanel() {m_id=-1;}
         ShellCtrlBase(wxWindow* parent, int id, const wxString &name, ShellManager *shellmgr=NULL);
         virtual ~ShellCtrlBase() {}
 
@@ -103,13 +103,12 @@ class ShellCtrlBase : public wxPanel //TODO: make wxPanel a member, not a base??
         virtual void KillProcess()=0; //use this to respond to ShellManager request to kill the process
         virtual void SyncOutput(int maxchars=1000)=0; //use this to respond to ShellManager request to gather output from the running process for display in the panel
 
+        virtual bool IsDead()=0;
         wxString GetName() {return m_name;}
         void SetName(const wxString &name) {m_name=name;}
-        bool IsDead() {return m_dead;}
     protected:
         wxString m_name;
         ShellManager *m_shellmgr;
-        bool m_dead;
         int m_id;
 //    DECLARE_DYNAMIC_CLASS(ShellCtrlBase)
 //    DECLARE_EVENT_TABLE()

@@ -30,6 +30,7 @@ class PipedProcessCtrl : public ShellCtrlBase
         long LaunchProcess(const wxString &processcmd, const wxArrayString &options); //bool ParseLinks=true, bool LinkClicks=true, const wxString &LinkRegex=LinkRegexDefault
         void KillProcess();
         void KillWindow();
+        bool IsDead() {return m_dead;}
         long GetPid() {if(m_proc) return m_procid; else return -1;}
         void SyncOutput(int maxchars=1000);
         void OnUserInput(wxKeyEvent& ke);
@@ -53,6 +54,7 @@ class PipedProcessCtrl : public ShellCtrlBase
         wxString m_linkregex;
         bool m_parselinks;
         bool m_linkclicks;
+        bool m_dead;
     DECLARE_DYNAMIC_CLASS(wxPanel)
     DECLARE_EVENT_TABLE()
 };

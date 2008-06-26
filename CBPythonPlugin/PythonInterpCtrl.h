@@ -56,12 +56,14 @@ class PythonInterpCtrl : public ShellCtrlBase
         virtual long LaunchProcess(const wxString &processcmd, const wxArrayString &options);
         virtual void KillProcess();
         virtual void SyncOutput(int maxchars=1000); //use this to respond to ShellManager request to gather output from the running process for display in the frame
+        virtual bool IsDead() {if (m_pyinterp) return m_pyinterp->IsDead(); return true;}
 
 //        long GetPid() {if(m_proc) return m_procid; else return -1;}
 
         void OnUserInput(wxKeyEvent& ke);
         void OnSize(wxSizeEvent& event);
         void OnPyNotify(wxCommandEvent& event);
+        void OnEndProcess(wxCommandEvent &ce);
 
         bool DispatchCode(const wxString &code);
 
@@ -85,6 +87,7 @@ class PythonInterpCtrl : public ShellCtrlBase
         wxTextCtrl *m_ioctrl, *m_codectrl;
         wxSplitterWindow *m_sw;
         PyInstance *m_pyinterp;
+        int m_killlevel;
 
 
 //        void OnEndProcess(wxProcessEvent &event);

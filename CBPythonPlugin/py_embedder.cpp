@@ -91,6 +91,7 @@ BEGIN_EVENT_TABLE(PyInstance, wxEvtHandler)
 //    EVT_PY_NOTIFY_UI(PyInstance::OnJobNotify)
     EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_FINISHED, PyInstance::OnJobNotify)
     EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_ABORTED, PyInstance::OnJobNotify)
+    EVT_END_PROCESS(ID_PY_PROC, PyInstance::OnEndProcess)
 END_EVENT_TABLE()
 
 //PyInstance::PyInstance()
@@ -106,11 +107,18 @@ PyInstance::~PyInstance()
     // check if any running jobs, kill them
     // delete the client
     delete m_client;
+
+    if (!m_proc_dead)
+    {
+        m_proc->Detach();
+        wxProcess::Kill(m_proc_id,wxSIGKILL);
+    }
     // kill python process if still running
 }
 
-PyInstance::PyInstance(const wxString &processcmd, const wxString &hostaddress, int port)
+PyInstance::PyInstance(const wxString &processcmd, const wxString &hostaddress, int port, wxWindow *parent)
 {
+  m_parent=parent;
   m_port=port;
   m_proc=NULL;
   m_proc_dead=true;
@@ -151,6 +159,7 @@ long PyInstance::LaunchProcess(const wxString &processcmd)
 
 PyInstance::PyInstance(const PyInstance &copy)
 {
+    m_parent=copy.m_parent;
     m_paused=copy.m_paused;
     m_queue=copy.m_queue;
     m_hostaddress=copy.m_hostaddress;
@@ -167,19 +176,33 @@ bool PyInstance::Exec(const wxString &method, XmlRpc::XmlRpcValue &inarg, XmlRpc
     return m_client->execute(method.utf8_str(), inarg, result);
 }
 
+void PyInstance::OnEndProcess(wxProcessEvent &event)
+{
+    //TODO: m_exitcode=event.GetExitCode();
+    m_proc_dead=true;
+    delete m_proc;
+    m_proc=NULL;
+    m_proc_id=NULL;
+    m_proc_killlevel=0;
+    wxCommandEvent ce(wxEVT_PY_PROC_END,0);
+    if(m_parent)
+        m_parent->AddPendingEvent(ce);
+}
+
+
 void PyInstance::KillProcess(bool force)
 {
     if(m_proc_dead)
         return;
     long pid=GetPid();
+//    if(m_proc_killlevel==0)
+//    {
+//        m_proc_killlevel=1;
+//        if(wxProcess::Exists(pid))
+//            wxProcess::Kill(pid,wxSIGTERM);
+//        return;
+//    }
     if(m_proc_killlevel==0)
-    {
-        m_proc_killlevel=1;
-        if(wxProcess::Exists(pid))
-            wxProcess::Kill(pid,wxSIGTERM);
-        return;
-    }
-    if(m_proc_killlevel==1)
     {
         if(wxProcess::Exists(pid))
         {

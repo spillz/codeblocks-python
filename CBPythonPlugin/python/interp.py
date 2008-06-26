@@ -85,6 +85,7 @@ class AsyncServer(threading.Thread):
         self.interp.main_loop()
     def run(self):
         self.server = SimpleXMLRPCServer(("localhost", 8000))
+        self.server.logRequests=0
         self.server.register_introspection_functions()
         #self.server.socket.settimeout(self.timeout)
         self.server.register_function(self.end,'end')

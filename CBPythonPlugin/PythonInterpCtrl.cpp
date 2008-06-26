@@ -14,7 +14,8 @@ bool PyInterpJob::operator()()
     // talk to m_client
 //    wxMessageBox(_("entered operator..."));
     bool unfinished=false;
-    pctl->RunCode(code,unfinished);
+    if(!pctl->RunCode(code,unfinished))
+        return false; //TODO: maybe retry before failing out completely
     wxCommandEvent pe(wxEVT_PY_NOTIFY_UI_NOTIFY,0);
     ::wxPostEvent(parent,pe);
     bool break_called=false;
@@ -28,12 +29,12 @@ bool PyInterpJob::operator()()
                 break_called=true;
         } else
             break_mutex.Unlock();
-        if(pctl->Continue(unfinished))
-            return false;
+        if(!pctl->Continue(unfinished))
+            return false; //TODO: maybe retry before failing out completely
 //        PyNotifyUIEvent pe(id,pyinst,parent,PYSTATE_NOTIFY);
         ::wxPostEvent(parent,pe);
         // sleep for some period of time
-        Sleep(50);
+        Sleep(50); //TODO: Make the sleep period user-defined
     }
     return true;
 }
@@ -53,10 +54,8 @@ void PythonCodeCtrl::OnUserInput(wxKeyEvent& ke)
 //        wxMessageBox(wxString::Format(_("Key: %i"),ke.GetKeyCode()));
         if(ke.GetKeyCode()==4)
         {
-            wxMessageBox(GetValue());
             m_pyctrl->DispatchCode(GetValue());
             ChangeValue(_T(""));
-            wxMessageBox(_T("command dispatched"));
         }
     }
     ke.Skip();
@@ -77,6 +76,7 @@ BEGIN_EVENT_TABLE(PythonInterpCtrl, wxPanel)
 //    EVT_LEFT_DCLICK(PythonInterpCtrl::OnDClick)
     EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_NOTIFY, PythonInterpCtrl::OnPyNotify)
     EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_STARTED, PythonInterpCtrl::OnPyNotify)
+    EVT_COMMAND(0, wxEVT_PY_PROC_END, PythonInterpCtrl::OnEndProcess)
     EVT_SIZE    (PythonInterpCtrl::OnSize)
 END_EVENT_TABLE()
 
@@ -84,12 +84,12 @@ END_EVENT_TABLE()
 
 PythonInterpCtrl::PythonInterpCtrl(wxWindow* parent, int id, const wxString &name, ShellManager *shellmgr) : ShellCtrlBase(parent, id, name, shellmgr)
 {
+    m_killlevel=0;
     m_pyinterp=NULL;
     m_sw=new wxSplitterWindow(this, wxID_ANY);
     m_ioctrl=new wxTextCtrl(m_sw, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_RICH|wxTE_MULTILINE|wxTE_READONLY|wxTE_PROCESS_ENTER|wxEXPAND);
     m_codectrl=new PythonCodeCtrl(m_sw, this);
     m_codectrl->AppendText(_("print 'Python'"));
-    m_ioctrl->AppendText(_("abc"));
     m_sw->SplitHorizontally(m_codectrl, m_ioctrl, 0);
     m_sw->SetMinimumPaneSize(20);
     wxBoxSizer* bs = new wxBoxSizer(wxVERTICAL);
@@ -99,31 +99,31 @@ PythonInterpCtrl::PythonInterpCtrl(wxWindow* parent, int id, const wxString &nam
 }
 
 
-//void PythonInterpCtrl::OnEndProcess(wxProcessEvent &event)
-//{
-//    m_exitcode=event.GetExitCode();
-//    SyncOutput(-1); //read any left over output TODO: while loop to handle extremely large amount of output
-//    m_dead=true;
-//    delete m_proc;
-//    m_proc=NULL;
-//    m_killlevel=0;
-//    if(m_shellmgr)
-//        m_shellmgr->OnShellTerminate(this);
-//}
-
 long PythonInterpCtrl::LaunchProcess(const wxString &processcmd, const wxArrayString &options) // bool ParseLinks, bool LinkClicks, const wxString &LinkRegex
 {
-    if(!m_dead || m_pyinterp)
+    if(!IsDead())
         return -1;
-    m_pyinterp=new PyInstance(processcmd,_T("localhost"),8000);
+    m_pyinterp=new PyInstance(processcmd,_T("localhost"),8000,this); //TODO: The port should be caller-defined (in the options, say)
     //TODO: Perform any initial communication with the running python process...
     return 1;
 }
 
 void PythonInterpCtrl::KillProcess()
 {
-    if(m_dead)
+    if(IsDead())
         return;
+    if(m_killlevel==0)
+    {
+        SendKill();
+        m_killlevel=1;
+        return;
+    }
+    if(m_killlevel==1)
+    {
+        m_pyinterp->KillProcess();
+        return;
+    }
+
 //    if(m_killlevel==0) //some process will complete if we send EOF. TODO: make sending EOF a separate option
 //    {
 //        m_proc->CloseOutput();
@@ -172,6 +172,13 @@ void PythonInterpCtrl::OnPyNotify(wxCommandEvent& event)
     m_ioctrl->AppendText(stderr_retrieve());
 }
 
+void PythonInterpCtrl::OnEndProcess(wxCommandEvent &ce)
+{
+    m_ioctrl->AppendText(stdout_retrieve());
+    m_ioctrl->AppendText(stderr_retrieve());
+    if(m_shellmgr)
+        m_shellmgr->OnShellTerminate(this);
+}
 
 void PythonInterpCtrl::SyncOutput(int maxchars)
 {
@@ -226,7 +233,7 @@ void PythonInterpCtrl::OnSize(wxSizeEvent& event)
 
 void PythonInterpCtrl::OnUserInput(wxKeyEvent& ke)
 {
-    if(m_dead)
+    if(!IsDead())
     {
         ke.Skip();
         return;
@@ -312,6 +319,7 @@ bool PythonInterpCtrl::RunCode(const wxString &codestr, bool &unfinished)
         stderr_append(wxString::FromUTF8(r2.c_str()));
         return true;
     }
+    unfinished=false;
     return false;
 }
 
@@ -319,15 +327,18 @@ bool PythonInterpCtrl::Continue(bool &unfinished)
 {
     XmlRpc::XmlRpcValue args, result;
     args[0]=stdin_retrieve().utf8_str();
+    int returncode=0;
     if(m_pyinterp->Exec(_("cont"), args, result))
     {
-        unfinished=result[0];
+        returncode=result[0];
+        unfinished=returncode>0;
         std::string r1=result[1];
         stdout_append(wxString::FromUTF8(r1.c_str()));
         std::string r2=result[2];
         stderr_append(wxString::FromUTF8(r2.c_str()));
         return true;
     }
+    unfinished=false;
     return false;
 }
 

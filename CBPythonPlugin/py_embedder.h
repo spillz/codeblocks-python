@@ -56,7 +56,7 @@ class PyInstance: public wxEvtHandler
 {
     friend class PyJob;
 public:
-    PyInstance(const wxString &processcmd, const wxString &hostaddress, int port);
+    PyInstance(const wxString &processcmd, const wxString &hostaddress, int port, wxWindow *parent=NULL);
     long LaunchProcess(const wxString &processcmd);
     PyInstance(const PyInstance &copy);
     ~PyInstance();
@@ -67,8 +67,11 @@ public:
     void OnJobNotify(wxCommandEvent &event);
     void PauseJobs();
     void ClearJobs();
+    bool IsDead() {return m_proc_dead;}
     bool Exec(const wxString &method, XmlRpc::XmlRpcValue &inarg, XmlRpc::XmlRpcValue &result);
+    void OnEndProcess(wxProcessEvent &event);
 private:
+    wxWindow *m_parent;
     wxMutex exec_mutex;
     wxProcess *m_proc; // external python process
     long m_proc_id;

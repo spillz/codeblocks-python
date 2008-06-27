@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="xmlrpc" />
+		<Option makefile="makefile" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Win32 Release">
+				<Option output="C:\Source\XMLRPC\Lib\libxmlrpc" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option object_output="Release" />
+				<Option type="2" />
+				<Option compiler="gcc" />
+				<Option createDefFile="1" />
+				<Compiler>
+					<Add option="-W" />
+					<Add option="-fexceptions" />
+					<Add option="-O2" />
+					<Add option="-DWIN32" />
+					<Add option="-DNDEBUG" />
+					<Add option="-D_WINDOWS" />
+					<Add option="-D_MBCS" />
+					<Add option="-D_LIB" />
+				</Compiler>
+			</Target>
+			<Target title="Win32 Debug">
+				<Option output="C:\Source\XMLRPC\Debug\libxmlrpc" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option object_output="Debug" />
+				<Option type="2" />
+				<Option compiler="gcc" />
+				<Option createDefFile="1" />
+				<Compiler>
+					<Add option="-W" />
+					<Add option="-fexceptions" />
+					<Add option="-g" />
+					<Add option="-DWIN32" />
+					<Add option="-D_DEBUG" />
+					<Add option="-D_WINDOWS" />
+					<Add option="-D_MBCS" />
+					<Add option="-D_LIB" />
+				</Compiler>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add directory="Include" />
+		</Compiler>
+		<Unit filename="README.html" />
+		<Unit filename="src\XmlRpc.h" />
+		<Unit filename="src\XmlRpcClient.cpp" />
+		<Unit filename="src\XmlRpcClient.h" />
+		<Unit filename="src\XmlRpcDispatch.cpp" />
+		<Unit filename="src\XmlRpcDispatch.h" />
+		<Unit filename="src\XmlRpcServer.cpp" />
+		<Unit filename="src\XmlRpcServer.h" />
+		<Unit filename="src\XmlRpcServerConnection.cpp" />
+		<Unit filename="src\XmlRpcServerConnection.h" />
+		<Unit filename="src\XmlRpcServerMethod.cpp" />
+		<Unit filename="src\XmlRpcServerMethod.h" />
+		<Unit filename="src\XmlRpcSocket.cpp" />
+		<Unit filename="src\XmlRpcSocket.h" />
+		<Unit filename="src\XmlRpcSource.cpp" />
+		<Unit filename="src\XmlRpcSource.h" />
+		<Unit filename="src\XmlRpcUtil.cpp" />
+		<Unit filename="src\XmlRpcUtil.h" />
+		<Unit filename="src\XmlRpcValue.cpp" />
+		<Unit filename="src\XmlRpcValue.h" />
+		<Unit filename="src\base64.h" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

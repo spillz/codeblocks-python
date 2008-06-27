@@ -37,7 +37,8 @@
 				</Compiler>
 				<Linker>
 					<Add library="codeblocks" />
-					<Add library="$(#cb)/devel/se-common.so" />
+					<Add library="se-common" />
+					<Add directory="$(#cb)/devel" />
 				</Linker>
 				<ExtraCommands>
 					<Add after="zip -j9 $(#cb)/devel/share/codeblocks/PyPlugin.zip manifest.xml Resources/*.xrc Resources/images/*.png Resources/images/16x16/*.png" />

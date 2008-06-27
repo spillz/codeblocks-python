@@ -19,16 +19,17 @@ class PyInterpJob: public PyJob
 public:
     PyInterpJob(wxString code, PyInstance *pyinst, PythonInterpCtrl *pctl, wxWindow *w, int id=wxID_ANY, bool selfdestroy=true) : PyJob(pyinst, w, id, selfdestroy)
     {
-        this->code=code;
+        m_code=code;
         this->pctl=pctl;
-        break_job=false;
+        m_break_job=false;
         return;
     }
     PythonInterpCtrl *pctl;
-    bool operator()(); //TODO: Handle the break
-    wxString code;
-    wxMutex break_mutex;
-    bool break_job;
+    bool operator()(); // main thread loop
+    void Break(); // called outside of thread to send break signal to the running interpreter
+    wxString m_code;
+    wxMutex m_break_mutex;
+    bool m_break_job;
 };
 
 class PythonCodeCtrl: public wxTextCtrl
@@ -38,6 +39,56 @@ public:
     void OnUserInput(wxKeyEvent& ke);
     PythonInterpCtrl *m_pyctrl;
     DECLARE_EVENT_TABLE()
+};
+
+// Allocates ports for xmlrpc connections (ensures unique port allocations)
+// TODO: define port as an object to automate release
+class PortAllocator: public std::map<int, bool>
+{
+public:
+    PortAllocator(const wxString &portlist=_T("9000;9001;9002"))
+    {
+        SetPorts(portlist);
+    }
+    void SetPorts(wxString portlist)
+    { //TODO: If new ports overlap current then use current state of the port
+        this->clear();
+        wxString portstr=portlist.BeforeFirst(';');
+        while(portstr!=_(""))
+        {
+            long port;
+            if(portstr.ToLong(&port))
+                if(port>0)
+                    (*this)[port]=false;
+            portlist=portlist.AfterFirst(';');
+            portstr=portlist.BeforeFirst(';');
+        }
+    }
+    wxString GetPorts()
+    {
+        wxString portlist;
+        for(PortAllocator::iterator it=this->begin();it!=this->end();it++)
+            portlist+=wxString::Format(_T("%i;"),it->first);
+        return portlist;
+    }
+    int RequestPort() //return the first free port
+    {
+        for(PortAllocator::iterator it=this->begin();it!=this->end();it++)
+            if(!(it->second))
+            {
+                it->second=true;
+                return it->first;
+            }
+        return -1; //no ports available
+    }
+    bool ReleasePort(int port) //release port, returns false if not found
+    {
+        PortAllocator::iterator it=this->find(port);
+        if(it==PortAllocator::end())
+            return false;
+        it->second=false;
+        return true;
+    }
 };
 
 
@@ -67,6 +118,9 @@ class PythonInterpCtrl : public ShellCtrlBase
 
         bool DispatchCode(const wxString &code);
 
+        bool BreakCode();
+
+        static PortAllocator m_portalloc;
 
     protected:
         friend class PyInterpJob;
@@ -76,7 +130,6 @@ class PythonInterpCtrl : public ShellCtrlBase
         wxString stdin_retrieve();
         wxString stdout_retrieve();
         wxString stderr_retrieve();
-        bool BreakCode();
         bool RunCode(const wxString &codestr, bool &unfinished);
         bool Continue(bool &unfinished);
         bool SendKill();
@@ -88,6 +141,7 @@ class PythonInterpCtrl : public ShellCtrlBase
         wxSplitterWindow *m_sw;
         PyInstance *m_pyinterp;
         int m_killlevel;
+        int m_port;
 
 
 //        void OnEndProcess(wxProcessEvent &event);

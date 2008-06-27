@@ -9,7 +9,7 @@ class datastore:
         self.lock=lock
     def write(self,textstr):
         #queue stdout string to be sent to client periodically
-        print >>sys.__stdout__, 'INTERCEPTED:',textstr
+        #print >>sys.__stdout__, 'INTERCEPTED:',textstr
         self.lock.acquire()
         self.data=self.data+textstr
         self.lock.release()
@@ -42,7 +42,7 @@ class PyInterp (code.InteractiveInterpreter):
             self._runningeval=True
             self.lock.notify()
             self.lock.release()
-            print >>sys.__stdout__,'queue lock released',self.eval_str
+            print >>sys.__stdout__,'queue lock released'
             return True
         else:
             return False
@@ -71,12 +71,13 @@ class PyInterp (code.InteractiveInterpreter):
 
 
 class AsyncServer(threading.Thread):
-    def __init__(self):
+    def __init__(self,port):
         # Create XMLRPC server
         threading.Thread.__init__(self)
         self.lock=threading.Condition(threading.Lock())
         self.timeout=0.1
         self._quit=False
+        self.port=port
         self.interp = PyInterp(self.lock)
         sys.stdout=self.interp._stdout
         sys.stdin=self.interp._stdin
@@ -84,12 +85,13 @@ class AsyncServer(threading.Thread):
     def start_interp(self):
         self.interp.main_loop()
     def run(self):
-        self.server = SimpleXMLRPCServer(("localhost", 8000))
+        self.server = SimpleXMLRPCServer(("localhost", self.port))
         self.server.logRequests=0
         self.server.register_introspection_functions()
         #self.server.socket.settimeout(self.timeout)
         self.server.register_function(self.end,'end')
         self.server.register_function(self.run_code,'run_code')
+        self.server.register_function(self.break_code,'break_code')
         self.server.register_function(self.cont,'cont')
         while not self._quit:
             self.server.handle_request()
@@ -103,8 +105,15 @@ class AsyncServer(threading.Thread):
         self.lock.release()
         return "Session Terminated"
     def break_code(self):
+        print >>sys.__stdout__,'break requested'
         if self.interp._runningeval:
-            raise KeyboardInterrupt
+            print >>sys.__stdout__,'break request pending'
+            try:
+                raise KeyboardInterrupt
+            except KeyboardInterrupt:
+                print >>sys.__stdout__,'exception caught in server thread'
+                return True
+            print 'exception not caught in server thread'
             return True
         return False
     def run_code(self,eval_str,stdin):
@@ -122,10 +131,24 @@ class AsyncServer(threading.Thread):
         return int(self.interp._runningeval),self.interp._stdout.read(),self.interp._stderr.read()
         #return status, stdout, stderr
 
+def cmd_err():
+    print 'Correct usage: pyinterp.py <port>'
+    print '<port> must be a positive integer'
+    exit()
 
-print 'server started'
+if len(sys.argv)!=2:
+    cmd_err()
+try:
+    port = int(sys.argv[1])
+except:
+    cmd_err()
+if port<=0:
+    cmd_err()
 
-interp_server=AsyncServer()
+
+print 'starting server on port', port
+
+interp_server=AsyncServer(port)
 interp_server.start()
 interp_server.start_interp()
 

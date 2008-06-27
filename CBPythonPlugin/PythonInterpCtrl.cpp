@@ -14,21 +14,21 @@ bool PyInterpJob::operator()()
     // talk to m_client
 //    wxMessageBox(_("entered operator..."));
     bool unfinished=false;
-    if(!pctl->RunCode(code,unfinished))
+    if(!pctl->RunCode(m_code,unfinished))
         return false; //TODO: maybe retry before failing out completely
     wxCommandEvent pe(wxEVT_PY_NOTIFY_UI_NOTIFY,0);
     ::wxPostEvent(parent,pe);
     bool break_called=false;
     while(unfinished)
     {
-        break_mutex.Lock();
-        if(break_job && !break_called)
+        m_break_mutex.Lock();
+        if(m_break_job && !break_called)
         {
-            break_mutex.Unlock();
+            m_break_mutex.Unlock();
             if(pctl->BreakCode())
                 break_called=true;
         } else
-            break_mutex.Unlock();
+            m_break_mutex.Unlock();
         if(!pctl->Continue(unfinished))
             return false; //TODO: maybe retry before failing out completely
 //        PyNotifyUIEvent pe(id,pyinst,parent,PYSTATE_NOTIFY);
@@ -39,6 +39,13 @@ bool PyInterpJob::operator()()
     return true;
 }
 
+
+void PyInterpJob::Break()
+{
+    m_break_mutex.Lock();
+    m_break_job=true;
+    m_break_mutex.Unlock();
+}
 
 ////////////////////////////////////// PythonCodeCtrl //////////////////////////////////////////////
 
@@ -56,6 +63,10 @@ void PythonCodeCtrl::OnUserInput(wxKeyEvent& ke)
         {
             m_pyctrl->DispatchCode(GetValue());
             ChangeValue(_T(""));
+        }
+        if(ke.GetKeyCode()==5)
+        {
+            m_pyctrl->BreakCode();
         }
     }
     ke.Skip();
@@ -85,6 +96,7 @@ END_EVENT_TABLE()
 PythonInterpCtrl::PythonInterpCtrl(wxWindow* parent, int id, const wxString &name, ShellManager *shellmgr) : ShellCtrlBase(parent, id, name, shellmgr)
 {
     m_killlevel=0;
+    m_port=0;
     m_pyinterp=NULL;
     m_sw=new wxSplitterWindow(this, wxID_ANY);
     m_ioctrl=new wxTextCtrl(m_sw, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_RICH|wxTE_MULTILINE|wxTE_READONLY|wxTE_PROCESS_ENTER|wxEXPAND);
@@ -98,12 +110,18 @@ PythonInterpCtrl::PythonInterpCtrl(wxWindow* parent, int id, const wxString &nam
     SetSizer(bs);
 }
 
+PortAllocator PythonInterpCtrl::m_portalloc;
 
 long PythonInterpCtrl::LaunchProcess(const wxString &processcmd, const wxArrayString &options) // bool ParseLinks, bool LinkClicks, const wxString &LinkRegex
 {
     if(!IsDead())
         return -1;
-    m_pyinterp=new PyInstance(processcmd,_T("localhost"),8000,this); //TODO: The port should be caller-defined (in the options, say)
+    wxMessageBox(m_portalloc.GetPorts());
+    m_port=m_portalloc.RequestPort();
+    if(m_port<0)
+        return -1;
+    wxString cmd=processcmd+wxString::Format(_T(" %i"),m_port); //TODO: better way to address the port assignment in the command string
+    m_pyinterp=new PyInstance(cmd,_T("localhost"),m_port,this);
     //TODO: Perform any initial communication with the running python process...
     return 1;
 }
@@ -176,6 +194,7 @@ void PythonInterpCtrl::OnEndProcess(wxCommandEvent &ce)
 {
     m_ioctrl->AppendText(stdout_retrieve());
     m_ioctrl->AppendText(stderr_retrieve());
+    m_portalloc.ReleasePort(m_port);
     if(m_shellmgr)
         m_shellmgr->OnShellTerminate(this);
 }
@@ -348,8 +367,10 @@ bool PythonInterpCtrl::BreakCode()
     if(m_pyinterp->Exec(_("break_code"), args, result))
     {
         //TODO: evaluate result -- if it not true, there was no code running
+        wxMessageBox(_("break sent"));
         return true;
     }
+    wxMessageBox(_("break not sent"));
     return false;
 }
 

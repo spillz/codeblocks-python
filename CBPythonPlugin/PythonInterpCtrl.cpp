@@ -116,7 +116,7 @@ PythonInterpCtrl::PythonInterpCtrl(wxWindow* parent, int id, const wxString &nam
     m_port=0;
     m_pyinterp=NULL;
     m_sw=new wxSplitterWindow(this, wxID_ANY);
-    m_ioctrl=new wxTextCtrl(m_sw, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_RICH|wxTE_MULTILINE|wxTE_READONLY|wxTE_PROCESS_ENTER|wxEXPAND);
+    m_ioctrl=new wxTextCtrl(m_sw, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_RICH|wxTE_MULTILINE|wxTE_READONLY|wxTE_PROCESS_ENTER|wxTE_PROCESS_TAB|wxEXPAND);
     m_codectrl=new PythonCodeCtrl(m_sw, this);
     m_codectrl->AppendText(_("print 'Python'"));
     int sash_pos=parent->GetClientSize().GetHeight()/5;

@@ -35,7 +35,7 @@ public:
 class PythonCodeCtrl: public wxTextCtrl
 {
 public:
-    PythonCodeCtrl(wxWindow *parent, PythonInterpCtrl *py) : wxTextCtrl(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_RICH|wxTE_MULTILINE|wxTE_PROCESS_ENTER|wxEXPAND) {m_pyctrl = py;}
+    PythonCodeCtrl(wxWindow *parent, PythonInterpCtrl *py) : wxTextCtrl(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_RICH|wxTE_MULTILINE|wxTE_PROCESS_ENTER|wxTE_PROCESS_TAB|wxEXPAND) {m_pyctrl = py;}
     void OnUserInput(wxKeyEvent& ke);
     PythonInterpCtrl *m_pyctrl;
     DECLARE_EVENT_TABLE()

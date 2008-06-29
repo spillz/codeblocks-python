@@ -42,6 +42,8 @@
 				</Linker>
 				<ExtraCommands>
 					<Add after="zip -j9 $(#cb)/devel/share/codeblocks/PyPlugin.zip manifest.xml Resources/*.xrc Resources/images/*.png Resources/images/16x16/*.png" />
+					<Add after="mkdir -p $(#cb)/devel/share/codeblocks/python" />
+					<Add after="cp -r python/interp.py $(#cb)/devel/share/codeblocks/python/interp.py" />
 				</ExtraCommands>
 			</Target>
 			<Environment>

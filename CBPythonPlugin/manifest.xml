@@ -11,4 +11,5 @@
         <Value thanksTo="" />
         <Value license="GPL" />
     </Plugin>
+    <Extra file="python/interp.py" />
 </CodeBlocks_plugin_manifest_file>

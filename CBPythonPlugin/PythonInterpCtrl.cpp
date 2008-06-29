@@ -116,11 +116,35 @@ long PythonInterpCtrl::LaunchProcess(const wxString &processcmd, const wxArraySt
 {
     if(!IsDead())
         return -1;
-    wxMessageBox(m_portalloc.GetPorts());
+    //wxMessageBox(m_portalloc.GetPorts());
     m_port=m_portalloc.RequestPort();
     if(m_port<0)
         return -1;
-    wxString cmd=processcmd+wxString::Format(_T(" %i"),m_port); //TODO: better way to address the port assignment in the command string
+    //TODO: get the command and working dir from the
+#ifdef __WXMSW__
+    wxString cmd=_T("interp.py ")+wxString::Format(_T(" %i"),m_port);
+    wxString python=_T("\\python");
+    wxString interp=_T("\\interp.py");
+#else
+    wxString cmd=_T("python interp.py ")+wxString::Format(_T(" %i"),m_port);
+    wxString python=_T("/python");
+    wxString interp=_T("/interp.py");
+#endif
+    wxString gpath = ConfigManager::GetDataFolder(true)+python;
+    wxString lpath = ConfigManager::GetDataFolder(false)+python;
+    bool global=false,local=false;
+    if(wxFileName::FileExists(gpath+interp))
+    {
+        wxSetWorkingDirectory(gpath);
+        global=true;
+    }
+    if(wxFileName::FileExists(lpath+interp))
+    {
+        wxSetWorkingDirectory(lpath);
+        local=true;
+    }
+    if(!global&&!local) //No interpreter script found, return failure.
+        return -2; //TODO: Return meaningful messages (or at least use the codeblocks logger)
     m_pyinterp=new PyInstance(cmd,_T("localhost"),m_port,this);
     //TODO: Perform any initial communication with the running python process...
     return 1;

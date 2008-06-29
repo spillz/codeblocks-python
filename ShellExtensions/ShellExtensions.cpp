@@ -393,13 +393,7 @@ void ShellExtensions::OnLaunchPythonProcess(wxCommandEvent &event)
 {
     wxString olddir=wxGetCwd();
     wxArrayString astr;
-#ifdef __WXMSW__
-    wxSetWorkingDirectory(_T("c:\\source\\cbil_berlios\\trunk\\CBPythonPlugin\\Python\\"));
-    m_shellmgr->LaunchProcess(_T("c:\\python25\\python interp.py"),_T("Python"),_T("Python Interpreter"),astr);
-#else
-    wxSetWorkingDirectory(_T("/home/damien/src/cbil/CBPythonPlugin/python/"));
-    m_shellmgr->LaunchProcess(_T("python interp.py"),_T("Python"),_T("Python Interpreter"),astr);
-#endif
+    m_shellmgr->LaunchProcess(_T(""),_T("Python"),_T("Python Interpreter"),astr);
     wxSetWorkingDirectory(olddir);
 }
 

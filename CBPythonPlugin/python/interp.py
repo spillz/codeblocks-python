@@ -75,7 +75,7 @@ class AsyncServer(threading.Thread):
         # Create XMLRPC server
         threading.Thread.__init__(self)
         self.lock=threading.Condition(threading.Lock())
-        self.timeout=0.1
+        self.timeout=0.2
         self._quit=False
         self.port=port
         self.interp = PyInterp(self.lock)

@@ -125,6 +125,7 @@ PyInstance::PyInstance(const wxString &processcmd, const wxString &hostaddress, 
   m_hostaddress=hostaddress;
   m_paused=false;
   m_proc_killlevel=0;
+  m_jobrunning=false;
   // Launch process
   LaunchProcess(processcmd); //TODO: The command for the interpreter process should come from the manager (and be stored in a config file)
   // Setup XMLRPC client and use introspection API to look up the supported methods
@@ -189,6 +190,24 @@ void PyInstance::OnEndProcess(wxProcessEvent &event)
         m_parent->AddPendingEvent(ce);
 }
 
+void PyInstance::Break()
+{
+    if(!m_jobrunning)
+        return;
+    long pid=GetPid();
+    if(wxProcess::Exists(pid))
+    {
+#ifdef __WXMSW__
+        //TODO: Verify that this actually works
+        // Use the WIN32 native call to send a CTRL+C signal
+        GenerateConsoleCtrlEvent(CTRL_C_EVENT,pid) //may need to #include <Windows.h> and link to Kernel32.dll
+        // also need to check whether the pid is valid or something else needs to be used.
+#else
+        wxProcess::Kill(pid,wxSIGINT);
+#endif
+    }
+}
+
 
 void PyInstance::KillProcess(bool force)
 {
@@ -206,7 +225,6 @@ void PyInstance::KillProcess(bool force)
     {
         if(wxProcess::Exists(pid))
         {
-//                cbMessageBox(_T("Forcing..."));
             wxProcess::Kill(pid,wxSIGKILL);
         }
     }
@@ -224,6 +242,7 @@ bool PyInstance::AddJob(PyJob *job)
     {
         newjob->started=true;
         newjob->Run();
+        m_jobrunning=true;
     }
     return true;
 }
@@ -239,6 +258,7 @@ void PyInstance::OnJobNotify(wxCommandEvent &event)
         delete job;
         job=NULL;
     }
+    m_jobrunning=false;
     m_queue.DeleteNode(m_queue.GetFirst());
 //    }
 //    if(event.parent)
@@ -253,6 +273,7 @@ void PyInstance::OnJobNotify(wxCommandEvent &event)
     {
         newjob->started=true;
         newjob->Run();
+        m_jobrunning=true;
     }
 }
 

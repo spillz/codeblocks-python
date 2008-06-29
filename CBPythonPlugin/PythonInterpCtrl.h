@@ -114,6 +114,7 @@ class PythonInterpCtrl : public ShellCtrlBase
         void OnUserInput(wxKeyEvent& ke);
         void OnSize(wxSizeEvent& event);
         void OnPyNotify(wxCommandEvent& event);
+        void OnPyJobDone(wxCommandEvent& event);
         void OnEndProcess(wxCommandEvent &ce);
 
         bool DispatchCode(const wxString &code);

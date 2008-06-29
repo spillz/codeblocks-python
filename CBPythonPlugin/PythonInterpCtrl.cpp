@@ -34,8 +34,11 @@ bool PyInterpJob::operator()()
 //        PyNotifyUIEvent pe(id,pyinst,parent,PYSTATE_NOTIFY);
         ::wxPostEvent(parent,pe);
         // sleep for some period of time
-        Sleep(50); //TODO: Make the sleep period user-defined
+        if(unfinished)
+            Sleep(50); //TODO: Make the sleep period user-defined
     }
+    wxCommandEvent pef(wxEVT_PY_NOTIFY_UI_FINISHED,0);
+    ::wxPostEvent(parent,pef);
     return true;
 }
 
@@ -62,11 +65,24 @@ void PythonCodeCtrl::OnUserInput(wxKeyEvent& ke)
         if(ke.GetKeyCode()==4)
         {
             m_pyctrl->DispatchCode(GetValue());
-            ChangeValue(_T(""));
+//            if(m_pyctrl->DispatchCode(GetValue()))
+//                ChangeValue(_T(""));
+            return;
         }
         if(ke.GetKeyCode()==5)
         {
             m_pyctrl->BreakCode();
+            return;
+        }
+    }
+    if(!ke.HasModifiers())
+    {
+        if(ke.GetKeyCode()==WXK_RETURN)
+        {
+            m_pyctrl->DispatchCode(GetValue());
+//            if(m_pyctrl->DispatchCode(GetValue()))
+//                ChangeValue(_T(""));
+            return;
         }
     }
     ke.Skip();
@@ -87,6 +103,7 @@ BEGIN_EVENT_TABLE(PythonInterpCtrl, wxPanel)
 //    EVT_LEFT_DCLICK(PythonInterpCtrl::OnDClick)
     EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_NOTIFY, PythonInterpCtrl::OnPyNotify)
     EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_STARTED, PythonInterpCtrl::OnPyNotify)
+    EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_FINISHED, PythonInterpCtrl::OnPyJobDone)
     EVT_COMMAND(0, wxEVT_PY_PROC_END, PythonInterpCtrl::OnEndProcess)
     EVT_SIZE    (PythonInterpCtrl::OnSize)
 END_EVENT_TABLE()
@@ -102,7 +119,10 @@ PythonInterpCtrl::PythonInterpCtrl(wxWindow* parent, int id, const wxString &nam
     m_ioctrl=new wxTextCtrl(m_sw, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_RICH|wxTE_MULTILINE|wxTE_READONLY|wxTE_PROCESS_ENTER|wxEXPAND);
     m_codectrl=new PythonCodeCtrl(m_sw, this);
     m_codectrl->AppendText(_("print 'Python'"));
-    m_sw->SplitHorizontally(m_codectrl, m_ioctrl, 0);
+    int sash_pos=parent->GetClientSize().GetHeight()/5;
+    if(sash_pos<20)
+        sash_pos=0;
+    m_sw->SplitHorizontally(m_codectrl, m_ioctrl, sash_pos);
     m_sw->SetMinimumPaneSize(20);
     wxBoxSizer* bs = new wxBoxSizer(wxVERTICAL);
     bs->Add(m_sw, 1, wxEXPAND | wxALL);
@@ -203,6 +223,8 @@ bool PythonInterpCtrl::DispatchCode(const wxString &code)
 //            wxMessageBox(_T("not finito"));
 //    } else
 //        wxMessageBox(_T("failed to print 'abc'"));
+    if(m_pyinterp->IsJobRunning())
+        return false;
     m_pyinterp->AddJob(new PyInterpJob(wxString(code.c_str()),m_pyinterp,this,m_ioctrl));
     return true;
 }
@@ -213,6 +235,12 @@ void PythonInterpCtrl::OnPyNotify(wxCommandEvent& event)
     m_ioctrl->AppendText(stdout_retrieve());
     m_ioctrl->AppendText(stderr_retrieve());
 }
+
+void PythonInterpCtrl::OnPyJobDone(wxCommandEvent& event)
+{
+    m_codectrl->ChangeValue(_T(""));
+}
+
 
 void PythonInterpCtrl::OnEndProcess(wxCommandEvent &ce)
 {
@@ -387,6 +415,8 @@ bool PythonInterpCtrl::Continue(bool &unfinished)
 
 bool PythonInterpCtrl::BreakCode()
 {
+    m_pyinterp->Break();
+    return true;
     XmlRpc::XmlRpcValue args, result;
     if(m_pyinterp->Exec(_("break_code"), args, result))
     {

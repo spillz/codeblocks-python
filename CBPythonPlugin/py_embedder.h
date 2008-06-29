@@ -63,10 +63,12 @@ public:
     void EvalString(char *str, bool wait=true);
     long GetPid() {if(m_proc) return m_proc_id; else return -1;}
     void KillProcess(bool force=false);
+    void Break();
     bool AddJob(PyJob *job);
     void OnJobNotify(wxCommandEvent &event);
     void PauseJobs();
     void ClearJobs();
+    bool IsJobRunning() {return m_jobrunning;}
     bool IsDead() {return m_proc_dead;}
     bool Exec(const wxString &method, XmlRpc::XmlRpcValue &inarg, XmlRpc::XmlRpcValue &result);
     void OnEndProcess(wxProcessEvent &event);
@@ -81,6 +83,7 @@ private:
     bool m_paused; //if paused is true, new jobs in the queue will not be processed automatically
     wxString m_hostaddress; //address for python server process
     int m_port; // port number for server
+    bool m_jobrunning;
     XmlRpc::XmlRpcClient *m_client;
     //void AttachExtension(); //attach a python extension table as an import for this interpreter
     //DECLARE_DYNAMIC_CLASS(PyInstance)

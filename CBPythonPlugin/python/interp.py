@@ -24,7 +24,6 @@ class datastore:
         self.lock.release()
         return data
 
-
 class PyInterp (code.InteractiveInterpreter):
     def __init__(self,lock):
         code.InteractiveInterpreter.__init__(self)
@@ -51,7 +50,7 @@ class PyInterp (code.InteractiveInterpreter):
             try:
                 if self.eval_str!='':
                     print >>sys.__stdout__,'running code',self.eval_str
-                    print self.eval_str
+                    #print self.eval_str
                     try:
                         self.runsource(self.eval_str+'\n')
                         print >>sys.__stdout__,'ran code'
@@ -67,8 +66,6 @@ class PyInterp (code.InteractiveInterpreter):
                 self.lock.release()
             except KeyboardInterrupt:
                 print >>sys.__stdout__,'keyboard interrupt',self.eval_str
-
-
 
 class AsyncServer(threading.Thread):
     def __init__(self,port):
@@ -117,11 +114,20 @@ class AsyncServer(threading.Thread):
             return True
         return False
     def run_code(self,eval_str,stdin):
+        print >>sys.__stdout__,"compiling code"
+        try:
+            cobj=code.compile_command(eval_str)
+        except:
+            print >>sys.__stderr__,"syntax error"
+            return -1,'',''
+        if cobj==None:
+            print >>sys.__stderr__,"statement incomplete"
+            return -2,'',''
         print >>sys.__stdout__,"running code"
         if self.interp.queue_code(eval_str):
             return self.cont(stdin)
         else:
-            return -1,self.interp._stdin.read(),self.interp._stderr.read()
+            return -3,self.interp._stdin.read(),self.interp._stderr.read()
     def cont(self,stdin):
         self.interp._stdin.write(stdin)
         self.lock.acquire()
@@ -144,7 +150,6 @@ except:
     cmd_err()
 if port<=0:
     cmd_err()
-
 
 print 'starting server on port', port
 

@@ -99,6 +99,7 @@
 				</Linker>
 				<ExtraCommands>
 					<Add after="zip -j9 $(#cb)\devel\share\codeblocks\PyPlugin.zip manifest.xml resources\*.xrc resources\images\*.png resources\images\16x16\*.png" />
+					<Add after="xcopy /y python\interp.py $(#cb)\devel\share\codeblocks\python\" />
 				</ExtraCommands>
 			</Target>
 			<Target title="nightly">

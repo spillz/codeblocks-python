@@ -35,7 +35,7 @@ public:
 class PythonCodeCtrl: public wxTextCtrl
 {
 public:
-    PythonCodeCtrl(wxWindow *parent, PythonInterpCtrl *py) : wxTextCtrl(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_RICH|wxTE_MULTILINE|wxTE_PROCESS_ENTER|wxTE_PROCESS_TAB|wxEXPAND) {m_pyctrl = py;}
+    PythonCodeCtrl(wxWindow *parent, PythonInterpCtrl *py) : wxTextCtrl(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, /*wxTE_RICH|*/ wxTE_MULTILINE|wxTE_PROCESS_ENTER|wxTE_PROCESS_TAB|wxEXPAND) {m_pyctrl = py;}
     void OnUserInput(wxKeyEvent& ke);
     PythonInterpCtrl *m_pyctrl;
     DECLARE_EVENT_TABLE()
@@ -114,7 +114,9 @@ class PythonInterpCtrl : public ShellCtrlBase
         void OnUserInput(wxKeyEvent& ke);
         void OnSize(wxSizeEvent& event);
         void OnPyNotify(wxCommandEvent& event);
+        void OnPyCode(wxCommandEvent& event);
         void OnPyJobDone(wxCommandEvent& event);
+        void OnPyJobAbort(wxCommandEvent& event);
         void OnEndProcess(wxCommandEvent &ce);
 
         bool DispatchCode(const wxString &code);
@@ -131,8 +133,8 @@ class PythonInterpCtrl : public ShellCtrlBase
         wxString stdin_retrieve();
         wxString stdout_retrieve();
         wxString stderr_retrieve();
-        bool RunCode(const wxString &codestr, bool &unfinished);
-        bool Continue(bool &unfinished);
+        bool RunCode(const wxString &codestr, int &unfinished);
+        bool Continue(int &unfinished);
         bool SendKill();
 
     private:
@@ -141,6 +143,7 @@ class PythonInterpCtrl : public ShellCtrlBase
         wxTextCtrl *m_ioctrl, *m_codectrl;
         wxSplitterWindow *m_sw;
         PyInstance *m_pyinterp;
+        wxString m_code; //currently running code
         int m_killlevel;
         int m_port;
 

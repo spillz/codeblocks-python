@@ -183,7 +183,7 @@ void PyInstance::OnEndProcess(wxProcessEvent &event)
     m_proc_dead=true;
     delete m_proc;
     m_proc=NULL;
-    m_proc_id=NULL;
+    m_proc_id=0;
     m_proc_killlevel=0;
     wxCommandEvent ce(wxEVT_PY_PROC_END,0);
     if(m_parent)
@@ -200,7 +200,7 @@ void PyInstance::Break()
 #ifdef __WXMSW__
         //TODO: Verify that this actually works
         // Use the WIN32 native call to send a CTRL+C signal
-        GenerateConsoleCtrlEvent(CTRL_C_EVENT,pid) //may need to #include <Windows.h> and link to Kernel32.dll
+        GenerateConsoleCtrlEvent(CTRL_C_EVENT,pid); //may need to #include <Windows.h> and link to Kernel32.dll
         // also need to check whether the pid is valid or something else needs to be used.
 #else
         wxProcess::Kill(pid,wxSIGINT);

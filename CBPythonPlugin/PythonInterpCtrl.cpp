@@ -4,8 +4,8 @@
 #include "PythonInterpCtrl.h"
 #include <globals.h>
 
-//DEFINE_EVENT_TYPE( wxEVT_PY_NOTIFY_UI )
-
+DECLARE_LOCAL_EVENT_TYPE(wxEVT_PY_NOTIFY_UI_CODEOK, -1)
+DEFINE_EVENT_TYPE( wxEVT_PY_NOTIFY_UI_CODEOK )
 
 ////////////////////////////////////// PythonInterpJob /////////////////////////////////////////////
 
@@ -13,13 +13,18 @@ bool PyInterpJob::operator()()
 {
     // talk to m_client
 //    wxMessageBox(_("entered operator..."));
-    bool unfinished=false;
-    if(!pctl->RunCode(m_code,unfinished))
+    int status=0;
+    if(!pctl->RunCode(m_code,status))
         return false; //TODO: maybe retry before failing out completely
+    if(status>=0)
+    {
+        wxCommandEvent pe(wxEVT_PY_NOTIFY_UI_CODEOK,0);
+        ::wxPostEvent(parent,pe);
+    }
     wxCommandEvent pe(wxEVT_PY_NOTIFY_UI_NOTIFY,0);
     ::wxPostEvent(parent,pe);
     bool break_called=false;
-    while(unfinished)
+    while(status>0)
     {
         m_break_mutex.Lock();
         if(m_break_job && !break_called)
@@ -29,19 +34,25 @@ bool PyInterpJob::operator()()
                 break_called=true;
         } else
             m_break_mutex.Unlock();
-        if(!pctl->Continue(unfinished))
+        if(!pctl->Continue(status))
             return false; //TODO: maybe retry before failing out completely
 //        PyNotifyUIEvent pe(id,pyinst,parent,PYSTATE_NOTIFY);
         ::wxPostEvent(parent,pe);
         // sleep for some period of time
-        if(unfinished)
+        if(status>0)
             Sleep(50); //TODO: Make the sleep period user-defined
     }
-    wxCommandEvent pef(wxEVT_PY_NOTIFY_UI_FINISHED,0);
-    ::wxPostEvent(parent,pef);
+    if(status==0)
+    {
+        wxCommandEvent pef(wxEVT_PY_NOTIFY_UI_FINISHED,0);
+        ::wxPostEvent(parent,pef);
+    } else
+    {
+        wxCommandEvent pef(wxEVT_PY_NOTIFY_UI_ABORTED,0);
+        ::wxPostEvent(parent,pef);
+    }
     return true;
 }
-
 
 void PyInterpJob::Break()
 {
@@ -79,20 +90,22 @@ void PythonCodeCtrl::OnUserInput(wxKeyEvent& ke)
     {
         if(ke.GetKeyCode()==WXK_RETURN)
         {
-            m_pyctrl->DispatchCode(GetValue());
-//            if(m_pyctrl->DispatchCode(GetValue()))
-//                ChangeValue(_T(""));
-            return;
+            if(!ke.ShiftDown())
+            {
+                m_pyctrl->DispatchCode(GetValue());
+                return;
+            } else
+            {
+                ke.Skip();
+            }
         }
+
     }
     ke.Skip();
 }
 
-
-
 ////////////////////////////////////// PythonInterpCtrl /////////////////////////////////////////////
 int ID_PROC=wxNewId();
-
 
 IMPLEMENT_DYNAMIC_CLASS(PythonInterpCtrl, wxPanel)
 
@@ -102,13 +115,14 @@ BEGIN_EVENT_TABLE(PythonInterpCtrl, wxPanel)
 //    EVT_END_PROCESS(ID_PROC, PythonInterpCtrl::OnEndProcess)
 //    EVT_LEFT_DCLICK(PythonInterpCtrl::OnDClick)
     EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_NOTIFY, PythonInterpCtrl::OnPyNotify)
+    EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_CODEOK, PythonInterpCtrl::OnPyCode)
     EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_STARTED, PythonInterpCtrl::OnPyNotify)
     EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_FINISHED, PythonInterpCtrl::OnPyJobDone)
+    EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_ABORTED, PythonInterpCtrl::OnPyJobAbort)
     EVT_COMMAND(0, wxEVT_PY_PROC_END, PythonInterpCtrl::OnEndProcess)
+
     EVT_SIZE    (PythonInterpCtrl::OnSize)
 END_EVENT_TABLE()
-
-
 
 PythonInterpCtrl::PythonInterpCtrl(wxWindow* parent, int id, const wxString &name, ShellManager *shellmgr) : ShellCtrlBase(parent, id, name, shellmgr)
 {
@@ -142,7 +156,7 @@ long PythonInterpCtrl::LaunchProcess(const wxString &processcmd, const wxArraySt
         return -1;
     //TODO: get the command and working dir from the
 #ifdef __WXMSW__
-    wxString cmd=_T("interp.py ")+wxString::Format(_T(" %i"),m_port);
+    wxString cmd=_T("cmd /c interp.py ")+wxString::Format(_T(" %i"),m_port);
     wxString python=_T("\\python");
     wxString interp=_T("\\interp.py");
 #else
@@ -185,50 +199,16 @@ void PythonInterpCtrl::KillProcess()
         m_pyinterp->KillProcess();
         return;
     }
-
-//    if(m_killlevel==0) //some process will complete if we send EOF. TODO: make sending EOF a separate option
-//    {
-//        m_proc->CloseOutput();
-//        m_killlevel=1;
-//        return;
-//    }
-//    long pid=GetPid();
-//    if(m_killlevel==0)
-//    {
-//        m_killlevel=1;
-//        if(wxProcess::Exists(pid))
-//            wxProcess::Kill(pid,wxSIGTERM);
-//        return;
-//    }
-//    if(m_killlevel==1)
-//    {
-//        if(wxProcess::Exists(pid))
-//        {
-//            cbMessageBox(_T("Forcing..."));
-//            wxProcess::Kill(pid,wxSIGKILL);
-//        }
-//    }
 }
 
 bool PythonInterpCtrl::DispatchCode(const wxString &code)
 {
-    //TODO: check to see if a job is already running
-//    wxCommandEvent ce(wxEVT_PY_NOTIFY_UI_STARTED,0);
-//    wxPostEvent(this,ce);
-//    bool unfin;
-//    if(this->RunCode(_T("print 'abc'"),unfin))
-//    {
-//        wxMessageBox(_T("ran code print 'abc'"));
-//        if(unfin)
-//            wxMessageBox(_T("not finito"));
-//    } else
-//        wxMessageBox(_T("failed to print 'abc'"));
     if(m_pyinterp->IsJobRunning())
         return false;
     m_pyinterp->AddJob(new PyInterpJob(wxString(code.c_str()),m_pyinterp,this,m_ioctrl));
+    m_code=code;
     return true;
 }
-
 
 void PythonInterpCtrl::OnPyNotify(wxCommandEvent& event)
 {
@@ -236,9 +216,30 @@ void PythonInterpCtrl::OnPyNotify(wxCommandEvent& event)
     m_ioctrl->AppendText(stderr_retrieve());
 }
 
+void PythonInterpCtrl::OnPyCode(wxCommandEvent& event)
+{
+    wxTextAttr oldta=m_ioctrl->GetDefaultStyle();
+    wxTextAttr ta=oldta;
+    wxFont f=ta.GetFont();
+    f.SetWeight(wxFONTWEIGHT_BOLD);
+    ta.SetFont(f);
+    m_ioctrl->SetDefaultStyle(ta);
+    m_ioctrl->AppendText(m_code);
+    m_ioctrl->SetDefaultStyle(oldta);
+    m_ioctrl->AppendText(_T("\n"));
+}
+
+
 void PythonInterpCtrl::OnPyJobDone(wxCommandEvent& event)
 {
     m_codectrl->ChangeValue(_T(""));
+    m_code=_T("");
+}
+
+void PythonInterpCtrl::OnPyJobAbort(wxCommandEvent& event)
+{
+    m_codectrl->AppendText(_T("\n"));
+    m_code=_T("");
 }
 
 
@@ -374,42 +375,38 @@ wxString PythonInterpCtrl::stderr_retrieve()
     return s;
 }
 
-bool PythonInterpCtrl::RunCode(const wxString &codestr, bool &unfinished)
+bool PythonInterpCtrl::RunCode(const wxString &codestr, int &status)
 {
     XmlRpc::XmlRpcValue args, result;
     args[0]=codestr.utf8_str();
     args[1]=stdin_retrieve().utf8_str();
-    int returncode=0;
     if(m_pyinterp->Exec(_("run_code"), args, result))
     {
-        returncode=result[0];
-        unfinished=returncode>0;
+        status=result[0];
         std::string r1=result[1];
         stdout_append(wxString::FromUTF8(r1.c_str()));
         std::string r2=result[2];
         stderr_append(wxString::FromUTF8(r2.c_str()));
         return true;
     }
-    unfinished=false;
+    status=-4;
     return false;
 }
 
-bool PythonInterpCtrl::Continue(bool &unfinished)
+bool PythonInterpCtrl::Continue(int &status)
 {
     XmlRpc::XmlRpcValue args, result;
     args[0]=stdin_retrieve().utf8_str();
-    int returncode=0;
     if(m_pyinterp->Exec(_("cont"), args, result))
     {
-        returncode=result[0];
-        unfinished=returncode>0;
+        status=result[0];
         std::string r1=result[1];
         stdout_append(wxString::FromUTF8(r1.c_str()));
         std::string r2=result[2];
         stderr_append(wxString::FromUTF8(r2.c_str()));
         return true;
     }
-    unfinished=false;
+    status=-4;
     return false;
 }
 

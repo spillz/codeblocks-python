@@ -134,7 +134,7 @@ class PythonInterpCtrl : public ShellCtrlBase
         wxString stdout_retrieve();
         wxString stderr_retrieve();
         bool RunCode(const wxString &codestr, int &unfinished);
-        bool Continue(int &unfinished);
+        bool Continue(int &unfinished, bool &line_input_request);
         bool SendKill();
 
     private:

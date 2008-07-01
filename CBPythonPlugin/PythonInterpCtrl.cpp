@@ -7,6 +7,9 @@
 DECLARE_LOCAL_EVENT_TYPE(wxEVT_PY_NOTIFY_UI_CODEOK, -1)
 DEFINE_EVENT_TYPE( wxEVT_PY_NOTIFY_UI_CODEOK )
 
+DECLARE_LOCAL_EVENT_TYPE(wxEVT_PY_NOTIFY_UI_INPUT, -1)
+DEFINE_EVENT_TYPE( wxEVT_PY_NOTIFY_UI_INPUT )
+
 ////////////////////////////////////// PythonInterpJob /////////////////////////////////////////////
 
 bool PyInterpJob::operator()()
@@ -34,10 +37,16 @@ bool PyInterpJob::operator()()
                 break_called=true;
         } else
             m_break_mutex.Unlock();
-        if(!pctl->Continue(status))
+        bool line_input_request;
+        if(!pctl->Continue(status,line_input_request))
             return false; //TODO: maybe retry before failing out completely
 //        PyNotifyUIEvent pe(id,pyinst,parent,PYSTATE_NOTIFY);
         ::wxPostEvent(parent,pe);
+        if(line_input_request)
+        {
+            wxCommandEvent ie(wxEVT_PY_NOTIFY_UI_INPUT,0);
+            ::wxPostEvent(parent,ie);
+        }
         // sleep for some period of time
         if(status>0)
             Sleep(50); //TODO: Make the sleep period user-defined
@@ -393,7 +402,7 @@ bool PythonInterpCtrl::RunCode(const wxString &codestr, int &status)
     return false;
 }
 
-bool PythonInterpCtrl::Continue(int &status)
+bool PythonInterpCtrl::Continue(int &status, bool &line_input_request)
 {
     XmlRpc::XmlRpcValue args, result;
     args[0]=stdin_retrieve().utf8_str();
@@ -404,6 +413,7 @@ bool PythonInterpCtrl::Continue(int &status)
         stdout_append(wxString::FromUTF8(r1.c_str()));
         std::string r2=result[2];
         stderr_append(wxString::FromUTF8(r2.c_str()));
+        line_input_request=result[3];
         return true;
     }
     status=-4;

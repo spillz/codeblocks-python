@@ -4,9 +4,10 @@ import threading
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 
 class datastore:
-    def __init__(self,lock):
+    def __init__(self):
         self.data=''
-        self.lock=lock
+        self.lock=threading.Condition(threading.Lock())
+        self.inputrequest=False
     def write(self,textstr):
         #queue stdout string to be sent to client periodically
         #print >>sys.__stdout__, 'INTERCEPTED:',textstr
@@ -23,13 +24,41 @@ class datastore:
         self.data=''
         self.lock.release()
         return data
+    def readline(self):
+        #check data for a full line (terminated by \n or EOF)
+        #if the line is there, extract it and return
+        #if not a complete line, set a request for input from the client
+        #  with a hint containing the current data in the line
+        #  then wait on a mutex
+        ## TODO: Could optionally raise a keyboard interrupt
+        while 1:
+            self.lock.acquire()
+            ind=self.data.find('\n')
+            if ind>0:
+                line=self.data[:ind]
+                self.data=self.data[ind+1:]
+                self.lock.release()
+                return line
+            self.inputrequest=True
+            self.lock.wait()
+            self.inputrequest=False
+    def HasInputRequest(self):
+        self.lock.acquire()
+        a=self.inputrequest()
+        self.lock.release()
+        return a
+    def InputRequestNotify(self):
+        self.lock.acquire()
+        self.lock.notify()
+        self.lock.release()
+
 
 class PyInterp (code.InteractiveInterpreter):
     def __init__(self,lock):
         code.InteractiveInterpreter.__init__(self)
-        self._stdout=datastore(lock)
-        self._stdin=datastore(lock)
-        self._stderr=datastore(lock)
+        self._stdout=datastore()
+        self._stdin=datastore()
+        self._stderr=datastore()
         self._running=True
         self._runningeval=False
         self.lock=lock
@@ -46,11 +75,11 @@ class PyInterp (code.InteractiveInterpreter):
         else:
             return False
     def main_loop(self):
-        while self._running: #runs the eval_str queued by the server, then waits for the next until the server requests exit
+        while self._running: #runs the eval_str queued by the server, then waits for the next eval_str. the loop ends when the server requests exit
             try:
                 if self.eval_str!='':
                     print >>sys.__stdout__,'running code',self.eval_str
-                    #print self.eval_str
+                    print self.eval_str
                     try:
                         self.runsource(self.eval_str+'\n')
                         print >>sys.__stdout__,'ran code'
@@ -85,7 +114,7 @@ class AsyncServer(threading.Thread):
         self.server = SimpleXMLRPCServer(("localhost", self.port))
         self.server.logRequests=0
         self.server.register_introspection_functions()
-        #self.server.socket.settimeout(self.timeout)
+        #self.server.socket.settimeout(self.timeout) ##timeouts cause probs
         self.server.register_function(self.end,'end')
         self.server.register_function(self.run_code,'run_code')
         self.server.register_function(self.break_code,'break_code')
@@ -116,25 +145,27 @@ class AsyncServer(threading.Thread):
     def run_code(self,eval_str,stdin):
         print >>sys.__stdout__,"compiling code"
         try:
-            cobj=code.compile_command(eval_str)
+            cobj=code.compilesource(eval)
         except:
             print >>sys.__stderr__,"syntax error"
-            return -1,'',''
+            return -1,'','',False
         if cobj==None:
             print >>sys.__stderr__,"statement incomplete"
-            return -2,'',''
+            return -2,'','',False
         print >>sys.__stdout__,"running code"
         if self.interp.queue_code(eval_str):
             return self.cont(stdin)
         else:
-            return -3,self.interp._stdin.read(),self.interp._stderr.read()
+            return -3,self.interp._stdout.read(),self.interp._stderr.read(),self.interp._stdin.HasInputRequest()
     def cont(self,stdin):
         self.interp._stdin.write(stdin)
+        if self.interp._stdin.HasInputRequest():
+            self.interp._stdin.InputRequestNotify()
         self.lock.acquire()
         if self.interp._runningeval:
             self.lock.wait(self.timeout)
         self.lock.release()
-        return int(self.interp._runningeval),self.interp._stdout.read(),self.interp._stderr.read()
+        return int(self.interp._runningeval),self.interp._stdout.read(),self.interp._stderr.read(),self.interp._stdin.HasInputRequest()
         #return status, stdout, stderr
 
 def cmd_err():

@@ -70,6 +70,65 @@ void PyInterpJob::Break()
     m_break_mutex.Unlock();
 }
 
+////////////////////////////////////// PythonIOCtrl //////////////////////////////////////////////
+
+BEGIN_EVENT_TABLE(PythonIOCtrl, wxTextCtrl)
+    EVT_CHAR(PythonIOCtrl::OnUserInput)
+    EVT_TEXT(wxID_ANY, PythonIOCtrl::OnTextChange)
+    EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_INPUT, PythonIOCtrl::OnLineInputRequest)
+END_EVENT_TABLE()
+
+void PythonIOCtrl::OnUserInput(wxKeyEvent& ke)
+{
+    if(ke.GetModifiers()==wxMOD_CONTROL)
+    {
+//        wxMessageBox(_T("control pressed"));
+//        wxMessageBox(wxString::Format(_("Key: %i"),ke.GetKeyCode()));
+//        if(ke.GetKeyCode()==4)
+//        {
+//            m_pyctrl->DispatchCode(GetValue()); // would need to retrieve the code control's value
+////            if(m_pyctrl->DispatchCode(GetValue()))
+////                ChangeValue(_T(""));
+//            return;
+//        }
+        if(ke.GetKeyCode()==5)
+        {
+            m_pyctrl->BreakCode();
+            return;
+        }
+    }
+    if(!ke.HasModifiers())
+    {
+        if(ke.GetKeyCode()==WXK_RETURN)
+        {
+            if(!ke.ShiftDown())
+            {
+                m_line_entry_mode=false;
+                this->SetEditable(false);
+                this->AppendText(_T("\n"));
+                m_pyctrl->stdin_append(GetRange(m_line_entry_point,GetLastPosition()));
+                return;
+            }
+            return;
+        }
+    }
+    ke.Skip();
+}
+
+void PythonIOCtrl::OnTextChange(wxCommandEvent &e)
+{
+    if(m_line_entry_mode && this->GetInsertionPoint()<m_line_entry_point)
+        return;
+    e.Skip(true);
+}
+
+void PythonIOCtrl::OnLineInputRequest(wxCommandEvent &e)
+{
+    m_line_entry_mode=true;
+    m_line_entry_point=this->GetLastPosition();
+    this->SetSelection(m_line_entry_point,m_line_entry_point);
+    this->SetEditable(true);
+}
 ////////////////////////////////////// PythonCodeCtrl //////////////////////////////////////////////
 
 BEGIN_EVENT_TABLE(PythonCodeCtrl, wxTextCtrl)
@@ -125,6 +184,7 @@ BEGIN_EVENT_TABLE(PythonInterpCtrl, wxPanel)
 //    EVT_LEFT_DCLICK(PythonInterpCtrl::OnDClick)
     EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_NOTIFY, PythonInterpCtrl::OnPyNotify)
     EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_CODEOK, PythonInterpCtrl::OnPyCode)
+    EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_INPUT, PythonInterpCtrl::OnLineInputRequest)
     EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_STARTED, PythonInterpCtrl::OnPyNotify)
     EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_FINISHED, PythonInterpCtrl::OnPyJobDone)
     EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_ABORTED, PythonInterpCtrl::OnPyJobAbort)
@@ -225,6 +285,12 @@ void PythonInterpCtrl::OnPyNotify(wxCommandEvent& event)
     m_ioctrl->AppendText(stderr_retrieve());
 }
 
+void PythonInterpCtrl::OnLineInputRequest(wxCommandEvent& event)
+{
+    m_ioctrl->ProcessEvent(event);
+}
+
+
 void PythonInterpCtrl::OnPyCode(wxCommandEvent& event)
 {
     wxTextAttr oldta=m_ioctrl->GetDefaultStyle();
@@ -238,7 +304,6 @@ void PythonInterpCtrl::OnPyCode(wxCommandEvent& event)
     m_ioctrl->AppendText(_T("\n"));
 }
 
-
 void PythonInterpCtrl::OnPyJobDone(wxCommandEvent& event)
 {
     m_codectrl->ChangeValue(_T(""));
@@ -250,7 +315,6 @@ void PythonInterpCtrl::OnPyJobAbort(wxCommandEvent& event)
     m_codectrl->AppendText(_T("\n"));
     m_code=_T("");
 }
-
 
 void PythonInterpCtrl::OnEndProcess(wxCommandEvent &ce)
 {

@@ -41,6 +41,22 @@ public:
     DECLARE_EVENT_TABLE()
 };
 
+class PythonIOCtrl: public wxTextCtrl
+{
+public:
+    PythonIOCtrl(wxWindow *parent, PythonInterpCtrl *py)
+        : wxTextCtrl(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_RICH|wxTE_MULTILINE|wxTE_READONLY|wxTE_PROCESS_ENTER|wxTE_PROCESS_TAB|wxEXPAND)
+        {m_pyctrl = py; m_line_entry_mode=false;}
+    void OnUserInput(wxKeyEvent& ke);
+    void OnLineInputRequest(wxCommandEvent& e);
+    void OnTextChange(wxCommandEvent& e);
+    PythonInterpCtrl *m_pyctrl;
+    long m_line_entry_point;
+    bool m_line_entry_mode;
+    DECLARE_EVENT_TABLE()
+};
+
+
 // Allocates ports for xmlrpc connections (ensures unique port allocations)
 // TODO: define port as an object to automate release
 class PortAllocator: public std::map<int, bool>
@@ -91,7 +107,6 @@ public:
     }
 };
 
-
 namespace
 {
 ShellCtrlRegistrant<PythonInterpCtrl> reg(_T("Python Interpreter"));
@@ -114,6 +129,7 @@ class PythonInterpCtrl : public ShellCtrlBase
         void OnUserInput(wxKeyEvent& ke);
         void OnSize(wxSizeEvent& event);
         void OnPyNotify(wxCommandEvent& event);
+        void OnLineInputRequest(wxCommandEvent& event);
         void OnPyCode(wxCommandEvent& event);
         void OnPyJobDone(wxCommandEvent& event);
         void OnPyJobAbort(wxCommandEvent& event);
@@ -125,14 +141,15 @@ class PythonInterpCtrl : public ShellCtrlBase
 
         static PortAllocator m_portalloc;
 
-    protected:
-        friend class PyInterpJob;
         void stdin_append(const wxString &data);
         void stdout_append(const wxString &data);
         void stderr_append(const wxString &data);
         wxString stdin_retrieve();
         wxString stdout_retrieve();
         wxString stderr_retrieve();
+
+    protected:
+        friend class PyInterpJob;
         bool RunCode(const wxString &codestr, int &unfinished);
         bool Continue(int &unfinished, bool &line_input_request);
         bool SendKill();
@@ -147,11 +164,9 @@ class PythonInterpCtrl : public ShellCtrlBase
         int m_killlevel;
         int m_port;
 
-
 //        void OnEndProcess(wxProcessEvent &event);
     DECLARE_DYNAMIC_CLASS(PythonInterpCtrl)
     DECLARE_EVENT_TABLE()
 };
-
 
 #endif // PPCTRL_H

@@ -157,7 +157,8 @@ class PythonInterpCtrl : public ShellCtrlBase
     private:
         wxString stdin_data, stdout_data, stderr_data;
         wxMutex io_mutex;
-        wxTextCtrl *m_ioctrl, *m_codectrl;
+        PythonIOCtrl *m_ioctrl;
+        PythonCodeCtrl *m_codectrl;
         wxSplitterWindow *m_sw;
         PyInstance *m_pyinterp;
         wxString m_code; //currently running code

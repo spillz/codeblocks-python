@@ -80,7 +80,6 @@ class PyInterp (code.InteractiveInterpreter):
             try:
                 if self.eval_str!='':
                     print >>sys.__stdout__,'running code',self.eval_str
-                    print self.eval_str
                     try:
                         self.runsource(self.eval_str+'\n')
                         print >>sys.__stdout__,'ran code'

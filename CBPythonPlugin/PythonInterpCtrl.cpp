@@ -124,10 +124,13 @@ void PythonIOCtrl::OnTextChange(wxCommandEvent &e)
 
 void PythonIOCtrl::OnLineInputRequest(wxCommandEvent &e)
 {
-    m_line_entry_mode=true;
-    m_line_entry_point=this->GetLastPosition();
-    this->SetSelection(m_line_entry_point,m_line_entry_point);
-    this->SetEditable(true);
+    if(!m_line_entry_mode)
+    {
+        m_line_entry_mode=true;
+        m_line_entry_point=this->GetLastPosition();
+        this->SetSelection(m_line_entry_point,m_line_entry_point);
+        this->SetEditable(true);
+    }
 }
 ////////////////////////////////////// PythonCodeCtrl //////////////////////////////////////////////
 
@@ -199,7 +202,7 @@ PythonInterpCtrl::PythonInterpCtrl(wxWindow* parent, int id, const wxString &nam
     m_port=0;
     m_pyinterp=NULL;
     m_sw=new wxSplitterWindow(this, wxID_ANY);
-    m_ioctrl=new wxTextCtrl(m_sw, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_RICH|wxTE_MULTILINE|wxTE_READONLY|wxTE_PROCESS_ENTER|wxTE_PROCESS_TAB|wxEXPAND);
+    m_ioctrl=new PythonIOCtrl(m_sw, this);//new wxTextCtrl(m_sw, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_RICH|wxTE_MULTILINE|wxTE_READONLY|wxTE_PROCESS_ENTER|wxTE_PROCESS_TAB|wxEXPAND);
     m_codectrl=new PythonCodeCtrl(m_sw, this);
     m_codectrl->AppendText(_("print 'Python'"));
     int sash_pos=parent->GetClientSize().GetHeight()/5;
@@ -281,6 +284,8 @@ bool PythonInterpCtrl::DispatchCode(const wxString &code)
 
 void PythonInterpCtrl::OnPyNotify(wxCommandEvent& event)
 {
+    if(m_ioctrl->m_line_entry_mode)
+        return;
     m_ioctrl->AppendText(stdout_retrieve());
     m_ioctrl->AppendText(stderr_retrieve());
 }

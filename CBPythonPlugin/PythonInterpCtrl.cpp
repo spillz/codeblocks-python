@@ -44,12 +44,16 @@ bool PyInterpJob::operator()()
         ::wxPostEvent(parent,pe);
         if(line_input_request)
         {
+            pctl->m_input_mutex.Lock();
             wxCommandEvent ie(wxEVT_PY_NOTIFY_UI_INPUT,0);
             ::wxPostEvent(parent,ie);
+            pctl->m_input_cond->Wait();
+            pctl->m_input_mutex.Unlock();
         }
         // sleep for some period of time
-        if(status>0)
-            Sleep(50); //TODO: Make the sleep period user-defined
+        else
+            if(status>0)
+                Sleep(50); //TODO: Make the sleep period user-defined
     }
     if(status==0)
     {
@@ -74,7 +78,7 @@ void PyInterpJob::Break()
 
 BEGIN_EVENT_TABLE(PythonIOCtrl, wxTextCtrl)
     EVT_CHAR(PythonIOCtrl::OnUserInput)
-    EVT_TEXT(wxID_ANY, PythonIOCtrl::OnTextChange)
+//    EVT_TEXT(wxID_ANY, PythonIOCtrl::OnTextChange)
     EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_INPUT, PythonIOCtrl::OnLineInputRequest)
 END_EVENT_TABLE()
 
@@ -103,11 +107,16 @@ void PythonIOCtrl::OnUserInput(wxKeyEvent& ke)
         {
             if(!ke.ShiftDown())
             {
-                m_line_entry_mode=false;
-                this->SetEditable(false);
-                this->AppendText(_T("\n"));
-                m_pyctrl->stdin_append(GetRange(m_line_entry_point,GetLastPosition()));
-                return;
+                if(m_line_entry_mode)
+                {
+                    m_line_entry_mode=false;
+                    this->SetEditable(false);
+//                    this->AppendText(_T("\n"));
+                    m_pyctrl->stdin_append(GetRange(m_line_entry_point,GetLastPosition()));
+                    m_pyctrl->m_input_cond->Signal();
+                    m_pyctrl->m_input_mutex.Unlock();
+                    return;
+                }
             }
             return;
         }
@@ -117,8 +126,8 @@ void PythonIOCtrl::OnUserInput(wxKeyEvent& ke)
 
 void PythonIOCtrl::OnTextChange(wxCommandEvent &e)
 {
-    if(m_line_entry_mode && this->GetInsertionPoint()<m_line_entry_point)
-        return;
+//    if(m_line_entry_mode && this->GetInsertionPoint()<m_line_entry_point)
+//        return;
     e.Skip(true);
 }
 
@@ -126,6 +135,7 @@ void PythonIOCtrl::OnLineInputRequest(wxCommandEvent &e)
 {
     if(!m_line_entry_mode)
     {
+        m_pyctrl->m_input_mutex.Lock();
         m_line_entry_mode=true;
         m_line_entry_point=this->GetLastPosition();
         this->SetSelection(m_line_entry_point,m_line_entry_point);
@@ -201,6 +211,7 @@ PythonInterpCtrl::PythonInterpCtrl(wxWindow* parent, int id, const wxString &nam
     m_killlevel=0;
     m_port=0;
     m_pyinterp=NULL;
+    m_input_cond=new wxCondition(m_input_mutex);
     m_sw=new wxSplitterWindow(this, wxID_ANY);
     m_ioctrl=new PythonIOCtrl(m_sw, this);//new wxTextCtrl(m_sw, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_RICH|wxTE_MULTILINE|wxTE_READONLY|wxTE_PROCESS_ENTER|wxTE_PROCESS_TAB|wxEXPAND);
     m_codectrl=new PythonCodeCtrl(m_sw, this);

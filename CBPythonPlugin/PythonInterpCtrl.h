@@ -115,9 +115,9 @@ ShellCtrlRegistrant<PythonInterpCtrl> reg(_T("Python Interpreter"));
 class PythonInterpCtrl : public ShellCtrlBase
 {
     public:
-        PythonInterpCtrl() { m_pyinterp=NULL; }
+        PythonInterpCtrl() { m_pyinterp=NULL; m_input_cond=new wxCondition(m_input_mutex); }
         PythonInterpCtrl(wxWindow* parent, int id, const wxString &name, ShellManager *shellmgr=NULL);
-        virtual ~PythonInterpCtrl() { if (m_pyinterp) delete m_pyinterp; }
+        virtual ~PythonInterpCtrl() { if (m_pyinterp) delete m_pyinterp; delete m_input_cond;}
 
         virtual long LaunchProcess(const wxString &processcmd, const wxArrayString &options);
         virtual void KillProcess();
@@ -147,6 +147,9 @@ class PythonInterpCtrl : public ShellCtrlBase
         wxString stdin_retrieve();
         wxString stdout_retrieve();
         wxString stderr_retrieve();
+
+        wxMutex m_input_mutex;
+        wxCondition *m_input_cond;
 
     protected:
         friend class PyInterpJob;

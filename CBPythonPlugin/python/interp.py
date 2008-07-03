@@ -4,14 +4,21 @@ import threading
 import time
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 
+#def logmsg(msg,*kargs):
+#    print >>sys.__stdout__,msg,
+#    for x in kargs:
+#        print >>sys.__stdout__,x,
+#    print >>sys.__stdout__,''
+
+def logmsg(msg,*kargs):
+    return
+
 class datastore:
     def __init__(self):
         self.data=''
         self.lock=threading.Condition(threading.Lock())
         self.inputrequest=False
     def write(self,textstr):
-        #queue stdout string to be sent to client periodically
-        #print >>sys.__stdout__, 'INTERCEPTED:',textstr
         self.lock.acquire()
         self.data=self.data+textstr
         self.lock.release()
@@ -71,7 +78,6 @@ class PyInterp (code.InteractiveInterpreter):
             self._runningeval=True
             self.lock.notify()
             self.lock.release()
-            print >>sys.__stdout__,'queue lock released'
             return True
         else:
             return False
@@ -79,10 +85,10 @@ class PyInterp (code.InteractiveInterpreter):
         while self._running: #runs the eval_str queued by the server, then waits for the next eval_str. the loop ends when the server requests exit
             try:
                 if self.eval_str!='':
-                    print >>sys.__stdout__,'running code',self.eval_str
+                    logmsg('running code '+self.eval_str)
                     try:
                         self.runsource(self.eval_str+'\n')
-                        print >>sys.__stdout__,'ran code'
+                        logmsg('ran code')
                     except KeyboardInterrupt:
                         print 'Keyboard Interrupt'
                     except:
@@ -94,7 +100,8 @@ class PyInterp (code.InteractiveInterpreter):
                 self.lock.wait() #now await the next instruction
                 self.lock.release()
             except KeyboardInterrupt:
-                print >>sys.__stdout__,'keyboard interrupt',self.eval_str
+                logmsg('keyboard interrupt')
+                print 'Keyboard Interrupt'
 
 class AsyncServer(threading.Thread):
     def __init__(self,port):
@@ -117,7 +124,6 @@ class AsyncServer(threading.Thread):
         #self.server.socket.settimeout(self.timeout) ##timeouts cause probs
         self.server.register_function(self.end,'end')
         self.server.register_function(self.run_code,'run_code')
-        self.server.register_function(self.break_code,'break_code')
         self.server.register_function(self.cont,'cont')
         while not self._quit:
             self.server.handle_request()
@@ -130,48 +136,32 @@ class AsyncServer(threading.Thread):
         self.lock.notify()
         self.lock.release()
         return "Session Terminated"
-    def break_code(self):
-        print >>sys.__stdout__,'break requested'
-        if self.interp._runningeval:
-            print >>sys.__stdout__,'break request pending'
-            try:
-                raise KeyboardInterrupt
-            except KeyboardInterrupt:
-                print >>sys.__stdout__,'exception caught in server thread'
-                return True
-            print 'exception not caught in server thread'
-            return True
-        return False
     def run_code(self,eval_str,stdin):
-        print >>sys.__stdout__,"compiling code"
+        logmsg("compiling code")
         try:
             cobj=code.compile_command(eval_str)
         except:
-            print >>sys.__stderr__,"syntax error",eval_str
+            logmsg("syntax error")
             return -1,'','',False
         if cobj==None:
-            print >>sys.__stderr__,"statement incomplete"
+            logmsg("statement incomplete")
             return -2,'','',False
-        print >>sys.__stdout__,"running code",eval_str
+        logmsg("running code "+eval_str)
         if self.interp.queue_code(eval_str):
             return self.cont(stdin)
         else:
             return -3,self.interp._stdout.read(),self.interp._stderr.read(),self.interp._stdin.HasInputRequest()
     def cont(self,stdin):
-        print >>sys.__stdout__,'continuing',stdin
+        logmsg('continuing with stdin: '+stdin)
         self.interp._stdin.write(stdin)
-        print >>sys.__stdout__,'checking for input request'
         if self.interp._stdin.HasInputRequest():
-            print >>sys.__stdout__,'notifying input available'
             self.interp._stdin.InputRequestNotify()
-        print >>sys.__stdout__,'locking interp'
         self.lock.acquire()
         if self.interp._runningeval:
             self.lock.wait(self.timeout)
         self.lock.release()
-        print >>sys.__stdout__,'returning result'
         result=(int(self.interp._runningeval),self.interp._stdout.read(),self.interp._stderr.read(),self.interp._stdin.HasInputRequest())
-        print >>sys.__stdout__,'returning result',result
+        logmsg('returning result ',result)
         return result
         #return status, stdout, stderr
 
@@ -189,10 +179,10 @@ except:
 if port<=0:
     cmd_err()
 
-print 'starting server on port', port
+logmsg('starting server on port', port)
 
 interp_server=AsyncServer(port)
 interp_server.start()
 interp_server.start_interp()
 
-print 'server terminated'
+logmsg('server terminated')

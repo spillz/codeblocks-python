@@ -112,9 +112,11 @@ void PythonIOCtrl::OnUserInput(wxKeyEvent& ke)
                     m_line_entry_mode=false;
                     this->SetEditable(false);
 //                    this->AppendText(_T("\n"));
-                    m_pyctrl->stdin_append(GetRange(m_line_entry_point,GetLastPosition()));
+                    m_pyctrl->stdin_append(GetRange(m_line_entry_point,GetLastPosition())+_T("\n"));
+                    m_pyctrl->stdout_append(_T("\n"));
                     m_pyctrl->m_input_cond->Signal();
                     m_pyctrl->m_input_mutex.Unlock();
+                    ke.Skip();
                     return;
                 }
             }

@@ -151,7 +151,7 @@ long PyInstance::LaunchProcess(const wxString &processcmd)
     if(m_proc) //this should never happen
         m_proc->Detach(); //self cleanup
     m_proc=new wxProcess(this,ID_PY_PROC);
-//    m_proc->Redirect();
+    m_proc->Redirect();
     m_proc_id=wxExecute(processcmd,wxEXEC_ASYNC|wxEXEC_MAKE_GROUP_LEADER,m_proc);
     if(m_proc_id>0)
     {

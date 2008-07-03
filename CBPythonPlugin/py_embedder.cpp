@@ -104,16 +104,19 @@ END_EVENT_TABLE()
 
 PyInstance::~PyInstance()
 {
-    // check if any running jobs, kill them
-    // delete the client
-    delete m_client;
-
-    if (!m_proc_dead)
+    // kill python process if still running
+    if (!m_proc_dead) //TODO: killing while job running could cause probs...
     {
         m_proc->Detach();
-        wxProcess::Kill(m_proc_id,wxSIGKILL);
+        if(wxProcess::Exists(m_proc_id))
+            wxProcess::Kill(m_proc_id,wxSIGKILL,wxKILL_CHILDREN);
     }
-    // kill python process if still running
+    // check if any running jobs, kill them
+    // delete the client
+    wxMutexLocker ml(exec_mutex); //TODO: This may result in huge delays?
+    delete m_client;
+    m_client=NULL;
+
 }
 
 PyInstance::PyInstance(const wxString &processcmd, const wxString &hostaddress, int port, wxWindow *parent)
@@ -149,7 +152,7 @@ long PyInstance::LaunchProcess(const wxString &processcmd)
         m_proc->Detach(); //self cleanup
     m_proc=new wxProcess(this,ID_PY_PROC);
     m_proc->Redirect();
-    m_proc_id=wxExecute(processcmd,wxEXEC_ASYNC,m_proc);
+    m_proc_id=wxExecute(processcmd,wxEXEC_ASYNC|wxEXEC_MAKE_GROUP_LEADER,m_proc);
     if(m_proc_id>0)
     {
         m_proc_dead=false;
@@ -174,7 +177,9 @@ PyInstance::PyInstance(const PyInstance &copy)
 bool PyInstance::Exec(const wxString &method, XmlRpc::XmlRpcValue &inarg, XmlRpc::XmlRpcValue &result)
 {
     wxMutexLocker ml(exec_mutex);
-    return m_client->execute(method.utf8_str(), inarg, result);
+    if(m_client)
+        return m_client->execute(method.utf8_str(), inarg, result);
+    return false;
 }
 
 void PyInstance::OnEndProcess(wxProcessEvent &event)
@@ -183,7 +188,7 @@ void PyInstance::OnEndProcess(wxProcessEvent &event)
     m_proc_dead=true;
     delete m_proc;
     m_proc=NULL;
-    m_proc_id=0;
+    m_proc_id=-1;
     m_proc_killlevel=0;
     wxCommandEvent ce(wxEVT_PY_PROC_END,0);
     if(m_parent)
@@ -203,7 +208,7 @@ void PyInstance::Break()
         GenerateConsoleCtrlEvent(CTRL_C_EVENT,pid); //may need to #include <Windows.h> and link to Kernel32.dll
         // also need to check whether the pid is valid or something else needs to be used.
 #else
-        wxProcess::Kill(pid,wxSIGINT);
+        wxProcess::Kill(pid,wxSIGINT); //,wxKILL_CHILDREN?
 #endif
     }
 }
@@ -225,7 +230,7 @@ void PyInstance::KillProcess(bool force)
     {
         if(wxProcess::Exists(pid))
         {
-            wxProcess::Kill(pid,wxSIGKILL);
+            wxProcess::Kill(pid,wxSIGKILL,wxKILL_CHILDREN);
         }
     }
 }

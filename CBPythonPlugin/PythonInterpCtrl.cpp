@@ -241,7 +241,7 @@ long PythonInterpCtrl::LaunchProcess(const wxString &processcmd, const wxArraySt
         return -1;
     //TODO: get the command and working dir from the
 #ifdef __WXMSW__
-    wxString cmd=_T("cmd /c interp.py ")+wxString::Format(_T(" %i"),m_port);
+    wxString cmd=_T("cmd /c interp.py ")+wxString::Format(_T(" %i"),m_port); //TODO: this could have process destruction issues on earlier version of wxWidgets (kills cmd, but not python)
     wxString python=_T("\\python");
     wxString interp=_T("\\interp.py");
 #else

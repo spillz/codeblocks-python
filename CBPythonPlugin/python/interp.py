@@ -4,14 +4,14 @@ import threading
 import time
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 
-#def logmsg(msg,*kargs):
-#    print >>sys.__stdout__,msg,
-#    for x in kargs:
-#        print >>sys.__stdout__,x,
-#    print >>sys.__stdout__,''
-
 def logmsg(msg,*kargs):
-    return
+    print >>sys.__stdout__,msg,
+    for x in kargs:
+        print >>sys.__stdout__,x,
+    print >>sys.__stdout__,''
+
+#def logmsg(msg,*kargs):
+#    return
 
 class datastore:
     def __init__(self):
@@ -42,10 +42,11 @@ class datastore:
         self.lock.acquire()
         while 1:
             ind=self.data.find('\n')
-            if ind>0:
+            if ind>=0:
                 line=self.data[:ind]
                 self.data=self.data[ind+1:]
                 self.lock.release()
+                logmsg('received line of text:',line)
                 return line
             self.inputrequest=True
             self.lock.wait()

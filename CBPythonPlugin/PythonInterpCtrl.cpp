@@ -111,7 +111,9 @@ void PythonIOCtrl::OnUserInput(wxKeyEvent& ke)
                 {
                     m_line_entry_mode=false;
                     this->SetEditable(false);
-                    wxString line=GetRange(m_line_entry_point,GetLastPosition());
+                    wxString line;
+                    if(m_line_entry_point<GetLastPosition())
+                        line=GetRange(m_line_entry_point,GetLastPosition());
                     line.Replace(_T("\n"),_T("")); //will cause major problems if there is more than one line feed returned here, so we remove them (TODO: fix on server side?? server should treat buffered lines as new input without errors)
                     line.Append(_T("\n"));
                     m_pyctrl->stdin_append(line);

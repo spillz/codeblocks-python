@@ -4,14 +4,17 @@ import threading
 import time
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 
-def logmsg(msg,*kargs):
-    print >>sys.__stdout__,msg,
-    for x in kargs:
-        print >>sys.__stdout__,x,
-    print >>sys.__stdout__,''
+DEBUG=False
 
-#def logmsg(msg,*kargs):
-#    return
+if DEBUG:
+    def logmsg(msg,*kargs):
+        print >>sys.__stdout__,msg,
+        for x in kargs:
+            print >>sys.__stdout__,x,
+        print >>sys.__stdout__,''
+else:
+    def logmsg(msg,*kargs):
+        return
 
 class datastore:
     def __init__(self):
@@ -26,12 +29,24 @@ class datastore:
         self.lock.acquire()
         self.data=''
         self.lock.release()
-    def read(self):
+    def read(self,size=None):
         self.lock.acquire()
         data=self.data ##TODO: should this be before the lock?
         self.data=''
         self.lock.release()
         return data
+        if size:
+            self.lock.acquire()
+            while 1:
+                if(len(self.data)>=size):
+                    line=self.data[:size]
+                    self.data=self.data[size:]
+                    self.lock.release()
+                    logmsg('received',size,' chars of text:',line)
+                    return line
+                self.inputrequest=True
+                self.lock.wait()
+                self.inputrequest=False
     def readline(self):
         #check data for a full line (terminated by \n or EOF(?))
         #if the line is there, extract it and return
@@ -43,7 +58,7 @@ class datastore:
         while 1:
             ind=self.data.find('\n')
             if ind>=0:
-                line=self.data[:ind]
+                line=self.data[:ind+1]
                 self.data=self.data[ind+1:]
                 self.lock.release()
                 logmsg('received line of text:',line)

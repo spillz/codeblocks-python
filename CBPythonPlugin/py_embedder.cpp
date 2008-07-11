@@ -1,6 +1,7 @@
 #include "py_embedder.h"
 #include <wx/listimpl.cpp>
 #include <wx/arrimpl.cpp>
+#include "ExecHiddenMSW.h"
 WX_DEFINE_OBJARRAY(PyInstanceCollection);
 WX_DEFINE_LIST(PyJobQueue);
 
@@ -151,8 +152,13 @@ long PyInstance::LaunchProcess(const wxString &processcmd)
     if(m_proc) //this should never happen
         m_proc->Detach(); //self cleanup
     m_proc=new wxProcess(this,ID_PY_PROC);
-    m_proc->Redirect();
+//    m_proc->Redirect(); //TODO: this only needs to be done on windows and buffers must be flushed periodically if there is any I/O to/from the process
+#ifdef __WXMSW__
+    //by default wxExecute shows the terminal window on MSW (redirecting would hide it, but that breaks the process if buffers are not flushed periodically)
+    m_proc_id=wxExecuteHidden(processcmd,wxEXEC_ASYNC|wxEXEC_MAKE_GROUP_LEADER,m_proc);
+#else
     m_proc_id=wxExecute(processcmd,wxEXEC_ASYNC|wxEXEC_MAKE_GROUP_LEADER,m_proc);
+#endif /*__WXMSW__*/
     if(m_proc_id>0)
     {
         m_proc_dead=false;

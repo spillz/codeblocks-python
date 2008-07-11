@@ -110,6 +110,12 @@
 		</Compiler>
 		<Unit filename="ConfigDialog.cpp" />
 		<Unit filename="ConfigDialog.h" />
+		<Unit filename="ExecHiddenMSW.cpp">
+			<Option target="experimental" />
+		</Unit>
+		<Unit filename="ExecHiddenMSW.h">
+			<Option target="experimental" />
+		</Unit>
 		<Unit filename="PyEvents.cpp">
 			<Option target="experimental" />
 		</Unit>

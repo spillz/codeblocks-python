@@ -7,11 +7,19 @@
 ////////////////////////////////////// PipedProcessCtrl /////////////////////////////////////////////
 int ID_PROC=wxNewId();
 
+BEGIN_EVENT_TABLE(PipedTextCtrl, wxTextCtrl)
+    EVT_LEFT_DCLICK(PipedTextCtrl::OnDClick)
+END_EVENT_TABLE()
+
+void PipedTextCtrl::OnDClick(wxMouseEvent &e)
+{
+    m_pp->OnDClick(e);
+}
+
 
 BEGIN_EVENT_TABLE(PipedProcessCtrl, wxPanel)
     EVT_CHAR(PipedProcessCtrl::OnUserInput)
     EVT_END_PROCESS(ID_PROC, PipedProcessCtrl::OnEndProcess)
-    EVT_LEFT_DCLICK(PipedProcessCtrl::OnDClick)
     EVT_SIZE    (PipedProcessCtrl::OnSize)
 END_EVENT_TABLE()
 
@@ -25,7 +33,7 @@ PipedProcessCtrl::PipedProcessCtrl(wxWindow* parent, int id, const wxString &nam
     m_dead=true;
     m_proc=NULL;
     m_killlevel=0;
-    m_textctrl=new wxTextCtrl(this, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_RICH|wxTE_MULTILINE|wxTE_READONLY|wxTE_PROCESS_ENTER|wxEXPAND);
+    m_textctrl=new PipedTextCtrl(this,this);//(this, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_RICH|wxTE_MULTILINE|wxTE_READONLY|wxTE_PROCESS_ENTER|wxEXPAND);
     wxBoxSizer* bs = new wxBoxSizer(wxVERTICAL);
     bs->Add(m_textctrl, 1, wxEXPAND | wxALL);
     SetAutoLayout(TRUE);

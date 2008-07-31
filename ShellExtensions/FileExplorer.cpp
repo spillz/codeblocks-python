@@ -138,7 +138,7 @@ FileExplorer::FileExplorer(wxWindow *parent,wxWindowID id,
     bshloc->Add(m_Loc, 1, wxEXPAND);
     bshloc->Add(m_UpButton, 0, wxEXPAND);
     bs->Add(bshloc, 0, wxEXPAND);
-    bsh->Add(new wxStaticText(this,wxID_ANY,_T("Wildcard: ")),0,wxALIGN_CENTRE);
+    bsh->Add(new wxStaticText(this,wxID_ANY,_T("Mask: ")),0,wxALIGN_CENTRE);
     bsh->Add(m_WildCards,1);
     bs->Add(bsh, 0, wxEXPAND);
     bs->Add(m_Tree, 1, wxEXPAND | wxALL);

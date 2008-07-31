@@ -20,6 +20,16 @@ namespace
 ShellCtrlRegistrant<PipedProcessCtrl> reg(_T("Piped Process Control"));
 }
 
+class PipedTextCtrl: public wxTextCtrl
+{
+public:
+    PipedTextCtrl(wxWindow *parent, PipedProcessCtrl *pp) : wxTextCtrl(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, /*wxTE_RICH|*/ wxTE_RICH|wxTE_MULTILINE|wxTE_READONLY|wxTE_PROCESS_ENTER|wxEXPAND) {m_pp = pp;}
+    void OnDClick(wxMouseEvent& e);
+    PipedProcessCtrl *m_pp;
+    DECLARE_EVENT_TABLE()
+};
+
+
 class PipedProcessCtrl : public ShellCtrlBase
 {
     public:
@@ -40,7 +50,7 @@ class PipedProcessCtrl : public ShellCtrlBase
         void ParseLinks(bool parselinks=true, wxString LinkRegex=LinkRegexDefault) {m_parselinks=parselinks;}
         static wxString LinkRegexDefault;
     private:
-        wxTextCtrl *m_textctrl;
+        PipedTextCtrl *m_textctrl;
         wxProcess *m_proc;
         long m_procid;
         wxOutputStream *m_ostream;

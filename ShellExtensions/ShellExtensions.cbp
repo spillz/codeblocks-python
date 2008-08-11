@@ -201,6 +201,79 @@
 					<Add directory="$(#cb)\devel" />
 					<Add directory="$(#wx.lib)\gcc_dll$(WX_CFG)" />
 				</Linker>
+				<ExtraCommands>
+					<Add after='zip -j9 &quot;$(#cb)\devel\share\codeblocks\ShellExtensions.zip&quot; manifest.xml Resources\fileexplorersettings.xrc' />
+				</ExtraCommands>
+				<Environment>
+					<Variable name="WX_SUFFIX" value="u" />
+					<Variable name="WX_CFG" value="" />
+				</Environment>
+			</Target>
+			<Target title="se-lib-binary">
+				<Option output="$(#cb_bin)\ShellCtrlBase" prefix_auto="1" extension_auto="1" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Option createDefFile="1" />
+				<Option createStaticLib="1" />
+				<Compiler>
+					<Add option="-DBUILDING_PLUGIN" />
+					<Add option="-DHAVE_W32API_H" />
+					<Add option="-D__WXMSW__" />
+					<Add option="-DWXUSINGDLL" />
+					<Add option="-DcbDEBUG" />
+					<Add option="-DCB_PRECOMP" />
+					<Add option="-DWX_PRECOMP" />
+					<Add option="-DwxUSE_UNICODE" />
+					<Add directory="$(#cb.include)" />
+					<Add directory="$(#cb.include)\wxscintilla\include" />
+					<Add directory="$(#cb)\include\wxFlatNotebook\include" />
+					<Add directory="$(#wx.include)" />
+					<Add directory="$(#wx.lib)\gcc_dll$(WX_CFG)\msw$(WX_SUFFIX)" />
+				</Compiler>
+				<Linker>
+					<Add library="codeblocks" />
+					<Add library="wxmsw28u_gcc_cb" />
+					<Add directory="$(#cb_bin)" />
+				</Linker>
+				<Environment>
+					<Variable name="WX_SUFFIX" value="u" />
+					<Variable name="WX_CFG" value="" />
+				</Environment>
+			</Target>
+			<Target title="se-plugin-binary">
+				<Option output="$(#cb_bin)\share\codeblocks\plugins\ShellExtensions" prefix_auto="1" extension_auto="1" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Option parameters="--personality=debug" />
+				<Option host_application="$(#cb)\devel\codeblocks.exe" />
+				<Option createDefFile="1" />
+				<Option createStaticLib="1" />
+				<Compiler>
+					<Add option="-DBUILDING_PLUGIN" />
+					<Add option="-DHAVE_W32API_H" />
+					<Add option="-D__WXMSW__" />
+					<Add option="-DWXUSINGDLL" />
+					<Add option="-DcbDEBUG" />
+					<Add option="-DCB_PRECOMP" />
+					<Add option="-DWX_PRECOMP" />
+					<Add option="-DwxUSE_UNICODE" />
+					<Add directory="$(#cb.include)" />
+					<Add directory="$(#cb.include)\wxscintilla\include" />
+					<Add directory="$(#cb)\include\wxFlatNotebook\include" />
+					<Add directory="$(#wx.include)" />
+					<Add directory="$(#wx.lib)\gcc_dll$(WX_CFG)\msw$(WX_SUFFIX)" />
+				</Compiler>
+				<Linker>
+					<Add library="codeblocks" />
+					<Add library="wxmsw28u_gcc_cb" />
+					<Add library="$(#cb_bin)\ShellCtrlBase.dll" />
+					<Add directory="$(#cb_bin)" />
+				</Linker>
+				<ExtraCommands>
+					<Add after='zip -j9 &quot;$(#cb_bin)\share\codeblocks\ShellExtensions.zip&quot; manifest.xml Resources\fileexplorersettings.xrc' />
+					<Add after='strip &quot;$(#cb_bin)\share\codeblocks\plugins\ShellExtensions.dll&quot;' />
+					<Add after='zip -j9 &quot;$(#cb_bin)\share\codeblocks\ShellExtensions.cbplugin&quot; &quot;$(#cb_bin)\share\codeblocks\plugins\ShellExtensions.dll&quot; &quot;$(#cb_bin)\share\codeblocks\ShellExtensions.zip&quot;' />
+				</ExtraCommands>
 				<Environment>
 					<Variable name="WX_SUFFIX" value="u" />
 					<Variable name="WX_CFG" value="" />
@@ -218,42 +291,50 @@
 			<Option target="cbtearaway" />
 			<Option target="release" />
 			<Option target="se-plugin" />
+			<Option target="se-plugin-binary" />
 		</Unit>
 		<Unit filename="CmdConfigDialog.h">
 			<Option target="default" />
 			<Option target="cbtearaway" />
 			<Option target="release" />
 			<Option target="se-plugin" />
+			<Option target="se-plugin-binary" />
 		</Unit>
 		<Unit filename="FileExplorer.cpp">
 			<Option target="default" />
 			<Option target="cbtearaway" />
 			<Option target="release" />
 			<Option target="se-plugin" />
+			<Option target="se-plugin-binary" />
 		</Unit>
 		<Unit filename="FileExplorer.h">
 			<Option target="default" />
 			<Option target="cbtearaway" />
 			<Option target="release" />
 			<Option target="se-plugin" />
+			<Option target="se-plugin-binary" />
 		</Unit>
 		<Unit filename="FileExplorerSettings.cpp">
 			<Option target="default" />
 			<Option target="cbtearaway" />
 			<Option target="release" />
 			<Option target="se-plugin" />
+			<Option target="se-plugin-binary" />
 		</Unit>
 		<Unit filename="FileExplorerSettings.h">
 			<Option target="default" />
 			<Option target="cbtearaway" />
 			<Option target="release" />
 			<Option target="se-plugin" />
+			<Option target="se-plugin-binary" />
 		</Unit>
 		<Unit filename="PipedProcessCtrl.cpp">
 			<Option target="se-plugin" />
+			<Option target="se-plugin-binary" />
 		</Unit>
 		<Unit filename="PipedProcessCtrl.h">
 			<Option target="se-plugin" />
+			<Option target="se-plugin-binary" />
 		</Unit>
 		<Unit filename="Resources\dialogs.fbp">
 			<Option target="default" />
@@ -277,21 +358,25 @@
 		</Unit>
 		<Unit filename="ShellCtrlBase.cpp">
 			<Option target="se-lib" />
+			<Option target="se-lib-binary" />
 		</Unit>
 		<Unit filename="ShellCtrlBase.h">
 			<Option target="se-lib" />
+			<Option target="se-lib-binary" />
 		</Unit>
 		<Unit filename="ShellExtensions.cpp">
 			<Option target="default" />
 			<Option target="cbtearaway" />
 			<Option target="release" />
 			<Option target="se-plugin" />
+			<Option target="se-plugin-binary" />
 		</Unit>
 		<Unit filename="ShellExtensions.h">
 			<Option target="default" />
 			<Option target="cbtearaway" />
 			<Option target="release" />
 			<Option target="se-plugin" />
+			<Option target="se-plugin-binary" />
 		</Unit>
 		<Unit filename="manifest.xml">
 			<Option target="default" />
@@ -308,24 +393,28 @@
 			<Option target="cbtearaway" />
 			<Option target="release" />
 			<Option target="se-plugin" />
+			<Option target="se-plugin-binary" />
 		</Unit>
 		<Unit filename="se_globals.h">
 			<Option target="default" />
 			<Option target="cbtearaway" />
 			<Option target="release" />
 			<Option target="se-plugin" />
+			<Option target="se-plugin-binary" />
 		</Unit>
 		<Unit filename="shellproperties.cpp">
 			<Option target="default" />
 			<Option target="cbtearaway" />
 			<Option target="release" />
 			<Option target="se-plugin" />
+			<Option target="se-plugin-binary" />
 		</Unit>
 		<Unit filename="shellproperties.h">
 			<Option target="default" />
 			<Option target="cbtearaway" />
 			<Option target="release" />
 			<Option target="se-plugin" />
+			<Option target="se-plugin-binary" />
 		</Unit>
 		<Extensions>
 			<code_completion />

@@ -637,6 +637,32 @@ void ShellExtensions::BuildModuleMenu(const ModuleType type, wxMenu* menu, const
 	{
 	    if(data)
 	    {
+            if(data->GetKind()==FileTreeData::ftdkProject)
+            {
+                cbProject* prj = data->GetProject();
+                wxString filename=wxFileName(prj->GetFilename()).GetPath();
+                wxString name=_T("");
+                size_t sep_pos=menu->GetMenuItemCount();
+                size_t added=0;
+                for(unsigned int i=0;i<m_ic.interps.size();i++)
+                    if(WildCardListMatch(m_ic.interps[i].wildcards,name))
+                    {
+                        m_RunTarget=filename;
+                        if(m_ic.interps[i].command.Find(_T("$dir"))>=0 ||
+                            m_ic.interps[i].command.Find(_T("$reldir"))>=0 ||
+                            m_ic.interps[i].command.Find(_T("$path"))>=0 ||
+                            m_ic.interps[i].command.Find(_T("$relpath"))>=0 ||
+                            m_ic.interps[i].command.Find(_T("$mpaths"))>=0)
+                        {
+                            wxString menutext=m_ic.interps[i].name;
+                            m_contextvec.Add(i);
+                            AddModuleMenuEntry(menu,i,added);
+                            added++;
+                        }
+                    }
+                if(added>0)
+                    menu->InsertSeparator(sep_pos);
+            }
             if(data->GetKind()==FileTreeData::ftdkFile)
             {
                 ProjectFile *f=data->GetProjectFile();

@@ -13,6 +13,7 @@ int ID_LangMenu_Settings=wxNewId();
 int ID_LangMenu_RunPiped=wxNewId();
 int ID_LangMenu_ShowConsole=wxNewId();
 int ID_PipedProcess=wxNewId();
+int ID_ProjectOpenInFileBrowser=wxNewId();
 
 int ID_LaunchPythonProcess=wxNewId();
 
@@ -126,6 +127,7 @@ BEGIN_EVENT_TABLE(ShellExtensions, cbPlugin)
     EVT_MENU(ID_LangMenu_ShowConsole,ShellExtensions::OnShowConsole)
     EVT_MENU(ID_LaunchPythonProcess,ShellExtensions::OnLaunchPythonProcess)
     EVT_UPDATE_UI(ID_LangMenu_ShowConsole, ShellExtensions::OnUpdateUI)
+    EVT_MENU(ID_ProjectOpenInFileBrowser, ShellExtensions::OnOpenProjectInFileBrowser)
 END_EVENT_TABLE()
 
 
@@ -135,6 +137,14 @@ void ShellExtensions::OnUpdateUI(wxUpdateUIEvent& event)
     // allow other UpdateUI handlers to process this event
     // *very* important! don't forget it...
     event.Skip();
+}
+
+
+void ShellExtensions::OnOpenProjectInFileBrowser(wxCommandEvent& event)
+{
+    wxFlatNotebook *m_nb=Manager::Get()->GetProjectManager()->GetNotebook();
+    m_nb->SetSelection(m_nb->GetPageIndex(m_fe));
+    m_fe->SetRootFolder(m_RunTarget);
 }
 
 
@@ -660,6 +670,7 @@ void ShellExtensions::BuildModuleMenu(const ModuleType type, wxMenu* menu, const
                             added++;
                         }
                     }
+                    menu->Append( ID_ProjectOpenInFileBrowser, _T("Open Project Folder in File Browser"), _("Opens the folder containing the project file in the file browser"));
                 if(added>0)
                     menu->InsertSeparator(sep_pos);
             }

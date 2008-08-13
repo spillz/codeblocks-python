@@ -623,20 +623,22 @@ void FileExplorer::OnSetLoc(wxCommandEvent &event)
 
 void FileExplorer::OnOpenInEditor(wxCommandEvent &event)
 {
-    wxFileName path(GetFullPath(m_selectti[0])); //SINGLE: m_Tree->GetSelection()
-    wxString filename=path.GetFullPath();
-    if(!path.FileExists())
-        return;
-    EditorManager* em = Manager::Get()->GetEditorManager();
-    EditorBase* eb = em->IsOpen(filename);
-    if (eb)
+    for(int i=0;i<m_ticount;i++)
     {
-        // open files just get activated
-        eb->Activate();
-        return;
-    } else
-    em->Open(filename);
-
+        wxFileName path(GetFullPath(m_selectti[i]));  //SINGLE: m_Tree->GetSelection()
+        wxString filename=path.GetFullPath();
+        if(!path.FileExists())
+            continue;
+        EditorManager* em = Manager::Get()->GetEditorManager();
+        EditorBase* eb = em->IsOpen(filename);
+        if (eb)
+        {
+            // open files just get activated
+            eb->Activate();
+            return;
+        } else
+        em->Open(filename);
+    }
 }
 
 void FileExplorer::OnActivate(wxTreeEvent &event)
@@ -716,11 +718,14 @@ void FileExplorer::OnRightClick(wxTreeEvent &event)
                 m_Popup->Append(ID_FILERENAME,_T("&Rename..."));
             } else
             {
-                m_Popup->Append(ID_OPENINED,_T("&Open in CB Editor"));
                 m_Popup->Append(ID_FILERENAME,_T("&Rename..."));
             }
-        if(IsFilesOnly(m_selectti)&&Manager::Get()->GetProjectManager()->GetActiveProject())
-            m_Popup->Append(ID_FILEADDTOPROJECT,_T("&Add to Active Project..."));
+        if(IsFilesOnly(m_selectti))
+        {
+            m_Popup->Append(ID_OPENINED,_T("&Open in CB Editor"));
+            if(Manager::Get()->GetProjectManager()->GetActiveProject())
+                m_Popup->Append(ID_FILEADDTOPROJECT,_T("&Add to Active Project..."));
+        }
         m_Popup->Append(ID_FILEDUP,_T("&Duplicate"));
         m_Popup->Append(ID_FILECOPY,_T("&Copy To..."));
         m_Popup->Append(ID_FILEMOVE,_T("&Move To..."));
@@ -755,7 +760,27 @@ void FileExplorer::OnRightClick(wxTreeEvent &event)
 
 void FileExplorer::OnNewFile(wxCommandEvent &event)
 {
-//    cbMessageBox(_T("Not Implemented"));
+    wxString workingdir=GetFullPath(m_selectti[0]); //SINGLE: m_Tree->GetSelection()
+    wxTextEntryDialog te(this,_T("Name Your New File: "));
+    if(te.ShowModal()!=wxID_OK)
+        return;
+    wxString name=te.GetValue();
+    wxFileName file(workingdir);
+    file.Assign(file.GetFullPath(),name);
+    wxString newfile=file.GetFullPath();
+    if(!wxFileName::FileExists(newfile) &&!wxFileName::DirExists(newfile))
+    {
+        wxFile fileobj;
+        if(fileobj.Create(newfile))
+        {
+            fileobj.Close();
+            Refresh(m_selectti[0]); //SINGLE: m_Tree->GetSelection()
+        }
+        else
+            cbMessageBox(_T("File Creation Failed"),_T("Error"));
+    }
+    else
+        cbMessageBox(_T("File/Directory Already Exists with Name ")+name, _T("Error"));
 }
 
 

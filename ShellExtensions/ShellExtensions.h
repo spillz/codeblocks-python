@@ -140,6 +140,7 @@ class ShellExtensions : public cbPlugin
         void OnRunTarget(wxCommandEvent& event);
         void OnRun(wxCommandEvent& event);
         void OnRunPiped(wxCommandEvent &event);
+        void OnOpenProjectInFileBrowser(wxCommandEvent& event);
         void OnShowConsole(wxCommandEvent& event);
         void OnUpdateUI(wxUpdateUIEvent& event);
 

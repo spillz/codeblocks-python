@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="CodeChecker" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="default">
+				<Option output="CodeChecker" prefix_auto="1" extension_auto="1" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Option host_application="$(#cb)\devel\codeblocks.exe" />
+				<Compiler>
+					<Add option="-g" />
+					<Add option="-pipe" />
+					<Add option="-mthreads" />
+					<Add option="-fmessage-length=0" />
+					<Add option="-fexceptions" />
+					<Add option="-Winvalid-pch" />
+					<Add option="-DBUILDING_PLUGIN" />
+					<Add option="-DHAVE_W32API_H" />
+					<Add option="-D__WXMSW__" />
+					<Add option="-DWXUSINGDLL" />
+					<Add option="-DcbDEBUG" />
+					<Add option="-DCB_PRECOMP" />
+					<Add option="-DWX_PRECOMP" />
+					<Add option="-DwxUSE_UNICODE" />
+					<Add directory="$(#cb)\include" />
+					<Add directory="$(#cb)\include\wxscintilla\include" />
+					<Add directory="$(#wx.include)" />
+					<Add directory="$(#wx.lib)\gcc_dll\mswu" />
+				</Compiler>
+				<Linker>
+					<Add library="codeblocks" />
+					<Add library="wxmsw28u" />
+					<Add library="wxscintilla" />
+					<Add directory="$(#cb)\devel" />
+					<Add directory="$(#wx.lib)\gcc_dll" />
+				</Linker>
+				<ExtraCommands>
+					<Add after="zip -j9 CodeChecker.zip manifest.xml" />
+					<Add after="zip -j9 CodeChecker.cbplugin CodeChecker.dll CodeChecker.zip" />
+					<Add after="cmd /c copy CodeChecker.zip $(#cb)\devel\share\Codeblocks" />
+					<Add after="cmd /c copy CodeChecker.dll $(#cb)\devel\share\Codeblocks\plugins" />
+					<Mode after="always" />
+				</ExtraCommands>
+			</Target>
+		</Build>
+		<Unit filename="asyncprocess.cpp" />
+		<Unit filename="asyncprocess.h" />
+		<Unit filename="codechecker.cpp" />
+		<Unit filename="codechecker.h" />
+		<Unit filename="manifest.xml" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

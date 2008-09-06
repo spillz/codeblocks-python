@@ -1,4 +1,4 @@
-#include "AsyncProcess.h"
+#include "asyncprocess.h"
 #include <wx/txtstrm.h>
 
 

@@ -33,9 +33,9 @@ CodeChecker::CodeChecker()
     // Make sure our resources are available.
     // In the generated boilerplate code we have no resources but when
     // we add some, it will be nice that this code is in place already ;)
-    if(!Manager::LoadResource(_T("CodeChecker.zip")))
+    if(!Manager::LoadResource(_T("codechecker.zip")))
     {
-        NotifyMissingFile(_T("CodeChecker.zip"));
+        NotifyMissingFile(_T("codechecker.zip"));
     }
 }
 
@@ -50,7 +50,7 @@ void CodeChecker::OnAttach()
     Manager::Get()->RegisterEventSink(cbEVT_EDITOR_OPEN, new cbEventFunctor<CodeChecker, CodeBlocksEvent>(this, &CodeChecker::OnAnalyze));
     m_process=new AsyncProcess(this);
     LangData ld;
-    ld.command=_T("C:\\python25\python -m py_compile $file");
+    ld.command=_T("python -m py_compile $file");
     ld.regexp=_T("File \"([^\\n]*)\", line (\\d*)\n(.*)");
     m_commands[wxSCI_LEX_PYTHON]=ld;
     LogMessage(_("Attached Code Checker"));

@@ -7,36 +7,36 @@
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="default">
-				<Option output="CodeChecker" prefix_auto="1" extension_auto="1" />
+				<Option output="libcodechecker" prefix_auto="1" extension_auto="1" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option host_application="$(#cb)/devel/codeblocks.exe" />
+				<Option host_application="$(#cb)/devel/codeblocks" />
 				<Compiler>
-                    <Add option="-Wall" />
-                    <Add option="-g" />
-                    <Add option="`wx-config --cflags`" />
-                    <Add option="-fmessage-length=0" />
-                    <Add option="-fexceptions" />
-                    <Add option="-Winvalid-pch" />
-                    <Add option="-Ulinux" />
-                    <Add option="-Uunix" />
-                    <Add option="-fPIC" />
-                    <Add option="-DcbDEBUG" />
-                    <Add option="-DCB_PRECOMP" />
+					<Add option="-Wall" />
+					<Add option="-g" />
+					<Add option="`wx-config --cflags`" />
+					<Add option="-fmessage-length=0" />
+					<Add option="-fexceptions" />
+					<Add option="-Winvalid-pch" />
+					<Add option="-Ulinux" />
+					<Add option="-Uunix" />
+					<Add option="-fPIC" />
+					<Add option="-DcbDEBUG" />
+					<Add option="-DCB_PRECOMP" />
 					<Add directory="$(#cb)/include" />
 					<Add directory="$(#cb)/include/wxscintilla/include" />
 				</Compiler>
 				<Linker>
-                    <Add option="`wx-config --libs`" />
+					<Add option="`wx-config --libs`" />
 					<Add library="codeblocks" />
 					<Add library="wxscintilla" />
 					<Add directory="$(#cb)/devel" />
 				</Linker>
 				<ExtraCommands>
-					<Add after="zip -j9 CodeChecker.zip manifest.xml" />
-					<Add after="zip -j9 CodeChecker.cbplugin CodeChecker.dll CodeChecker.zip" />
-					<Add after="cp CodeChecker.zip $(#cb)/devel/share/Codeblocks" />
-					<Add after="cp CodeChecker.dll $(#cb)/devel/share/Codeblocks/plugins" />
+					<Add after="zip -j9 codechecker.zip manifest.xml" />
+					<Add after="zip -j9 codechecker.cbplugin libcodechecker.so codechecker.zip" />
+					<Add after="/bin/cp codechecker.zip $(#cb)/devel/share/codeblocks" />
+					<Add after="/bin/cp libcodechecker.so $(#cb)/devel/share/codeblocks/plugins" />
 					<Mode after="always" />
 				</ExtraCommands>
 			</Target>

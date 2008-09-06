@@ -77,6 +77,23 @@ void CodeChecker::OnRelease(bool appShutDown)
     delete m_process;
 }
 
+//TODO: Tooltips for error messages
+//    pm->RegisterEventSink(cbEVT_EDITOR_TOOLTIP, new cbEventFunctor<CodeCompletion, CodeBlocksEvent>(this, &CodeCompletion::OnValueTooltip));
+//void CodeCompletion::OnValueTooltip(CodeBlocksEvent& event)
+//{
+//        if (ed->GetControl()->CallTipActive())
+//            ed->GetControl()->CallTipCancel();
+////        Manager::Get()->GetLogManager()->DebugLog(F(_T("CodeCompletion::OnValueTooltip: %p"), ed));
+//        /* NOTE: The following 2 lines of codes can fix [Bug #11785].
+//        *       The solution may not the best one and it requires the editor
+//        *       to have the focus (even if C::B has the focus) in order to pop-up the tooltip. */
+//        if (wxWindow::FindFocus() != static_cast<wxWindow*>(ed->GetControl()))
+//            return;
+//        ed->GetControl()->CallTipShow(pos, msg);
+//}
+
+
+
 void CodeChecker::OnQueueTimer(wxTimerEvent &e)
 {
     if(m_processqueue.empty())

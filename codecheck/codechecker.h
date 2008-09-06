@@ -22,8 +22,12 @@
 
 struct LangData
 {
+    LangData() {regexp_indfile=1;regexp_indline=2;regexp_indmsg=3;}
     wxString command;
     wxString regexp;
+    int regexp_indfile;
+    int regexp_indline;
+    int regexp_indmsg;
 };
 
 typedef std::map<int,LangData> Languages;

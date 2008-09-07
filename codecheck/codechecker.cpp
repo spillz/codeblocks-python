@@ -50,11 +50,12 @@ void CodeChecker::OnAttach()
 {
     Manager::Get()->RegisterEventSink(cbEVT_EDITOR_SAVE, new cbEventFunctor<CodeChecker, CodeBlocksEvent>(this, &CodeChecker::OnAnalyze));
     Manager::Get()->RegisterEventSink(cbEVT_EDITOR_OPEN, new cbEventFunctor<CodeChecker, CodeBlocksEvent>(this, &CodeChecker::OnAnalyze));
+    Manager::Get()->RegisterEventSink(cbEVT_EDITOR_TOOLTIP, new cbEventFunctor<CodeChecker, CodeBlocksEvent>(this, &CodeChecker::OnTooltip));
     m_process=new AsyncProcess(this);
 
     LangData ld1,ld2;
     ld1.command=_T("python -m py_compile $file");
-    ld1.regexp=_T("File \"([^\\n]+)\", line (\\d+)\n");
+    ld1.regexp=_T("File \"([^\\n]+)\", line (\\d+)\\n(.*)");
     m_commands[wxSCI_LEX_PYTHON]=ld1;
 
     ld2.command=_T("php -I $file");
@@ -78,19 +79,37 @@ void CodeChecker::OnRelease(bool appShutDown)
 }
 
 //TODO: Tooltips for error messages
-//    pm->RegisterEventSink(cbEVT_EDITOR_TOOLTIP, new cbEventFunctor<CodeCompletion, CodeBlocksEvent>(this, &CodeCompletion::OnValueTooltip));
-//void CodeCompletion::OnValueTooltip(CodeBlocksEvent& event)
-//{
-//        if (ed->GetControl()->CallTipActive())
-//            ed->GetControl()->CallTipCancel();
-////        Manager::Get()->GetLogManager()->DebugLog(F(_T("CodeCompletion::OnValueTooltip: %p"), ed));
-//        /* NOTE: The following 2 lines of codes can fix [Bug #11785].
-//        *       The solution may not the best one and it requires the editor
-//        *       to have the focus (even if C::B has the focus) in order to pop-up the tooltip. */
-//        if (wxWindow::FindFocus() != static_cast<wxWindow*>(ed->GetControl()))
-//            return;
-//        ed->GetControl()->CallTipShow(pos, msg);
-//}
+void CodeChecker::OnTooltip(CodeBlocksEvent& e)
+{
+    EditorBase *edb=e.GetEditor();
+    if(!edb->IsBuiltinEditor())
+        return;
+    cbEditor *ed=(cbEditor *)edb;
+    int lexer=ed->GetControl()->GetLexer();
+    if(m_commands.find(lexer)==m_commands.end())
+        return;
+    /* NOTE: The following 2 lines of codes can fix [Bug #11785].
+    *       The solution may not the best one and it requires the editor
+    *       to have the focus (even if C::B has the focus) in order to pop-up the tooltip. */
+    if (wxWindow::FindFocus() != static_cast<wxWindow*>(ed->GetControl()))
+        return;
+    int pos = ed->GetControl()->PositionFromPointClose(e.GetX(), e.GetY());
+    if(pos==wxSCI_INVALID_POSITION)
+        return;
+    int line = ed->GetControl()->LineFromPosition(pos);
+    if(m_issues.find(ed->GetFilename())==m_issues.end())
+        return;
+    CodeIssues &ci=m_issues[ed->GetFilename()];
+    for(CodeIssues::iterator it=ci.begin();it!=ci.end();++it)
+        if(line==it->line)
+        {
+            if (ed->GetControl()->CallTipActive())
+                ed->GetControl()->CallTipCancel();
+            LogMessage(wxString::Format(_("Tooltip dear: X - %i, Y - %i, pos - %i"),e.GetX(),e.GetY(),pos));
+            wxString msg=it->msg;//_T("Goodnight Dear");
+            ed->GetControl()->CallTipShow(pos, msg);
+        }
+}
 
 
 
@@ -123,7 +142,7 @@ void CodeChecker::OnProcessTerminate(wxProcessEvent &e)
         {
             CodeIssue ci;
             ci.line=linenum-1;
-            ci.msg=_T("");
+            ci.msg=re.GetMatch(data,ld.regexp_indmsg);//_T("");
             m_issues[file].push_back(ci);
         }
         size_t start,end;
@@ -131,9 +150,9 @@ void CodeChecker::OnProcessTerminate(wxProcessEvent &e)
         data=data.Mid(end);
     }
 
-    LogMessage(_("Syntax Check Results"));
-    LogMessage(out);
-    LogMessage(err);
+//    LogMessage(_("Syntax Check Results"));
+//    LogMessage(out);
+//    LogMessage(err);
     EditorManager* em = Manager::Get()->GetEditorManager();
     EditorBase* eb = em->IsOpen(file);
     if (eb && eb->IsBuiltinEditor())
@@ -160,20 +179,13 @@ void CodeChecker::OnProcessTerminate(wxProcessEvent &e)
 
 void CodeChecker::OnAnalyze(CodeBlocksEvent &e)
 {
-    LogMessage(_("Code Checker: Open or change"));
     EditorBase *edb=e.GetEditor();
     if(!edb->IsBuiltinEditor())
-    {
-        LogMessage(_("Code Checker: Not built in editor"));
         return;
-    }
     cbEditor *ed=(cbEditor *)edb;
     int lexer=ed->GetControl()->GetLexer();
     if(m_commands.find(lexer)==m_commands.end())
-    {
-        LogMessage(_("Code Checker: Lexer not found"));
         return;
-    }
     ProcessQueueItems p;
     p.lang=lexer;
     p.file=ed->GetFilename();
@@ -186,7 +198,6 @@ void CodeChecker::OnAnalyze(CodeBlocksEvent &e)
         m_processqueue.push_back(p);
         if(m_processqueue.size()==1)
             m_queuetimer.Start(1000,true);
-        LogMessage(_("Code Checker: Request queued"));
     }
 }
 

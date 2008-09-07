@@ -66,6 +66,8 @@ class CodeChecker : public cbPlugin
         /** Called if a new file is opened or saved in the editor */
         void OnAnalyze(CodeBlocksEvent &e);
 
+        void OnTooltip(CodeBlocksEvent& e);
+
         /** Called if a new file is opened or saved in the editor */
         void OnQueueTimer(wxTimerEvent &e);
 

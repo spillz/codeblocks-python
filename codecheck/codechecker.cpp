@@ -76,6 +76,8 @@ void CodeChecker::OnRelease(bool appShutDown)
     // NOTE: after this function, the inherited member variable
     // m_IsAttached will be FALSE...
     delete m_process;
+    m_commands.clear();
+    m_issues.clear();
 }
 
 //TODO: Tooltips for error messages

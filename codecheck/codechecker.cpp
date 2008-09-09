@@ -54,16 +54,17 @@ void CodeChecker::OnAttach()
     m_process=new AsyncProcess(this);
 
     LangData ld1,ld2;
-    ld1.command=_T("python -m py_compile $file");
+    ld1.command=_T("c:\\python25\\python -m py_compile $file");
     ld1.regexp=_T("File \"([^\\n]+)\", line (\\d+)\\n(.*)");
     m_commands[wxSCI_LEX_PYTHON]=ld1;
 
-    ld2.command=_T("php -I $file");
+    ld2.command=_T("php -l $file");
     ld2.regexp=_T("(.*) in (.*) on line ([0-9]+)");
     ld2.regexp_indmsg=1;
     ld2.regexp_indfile=2;
     ld2.regexp_indline=3;
     m_commands[wxSCI_LEX_PHPSCRIPT]=ld2;
+    m_commands[wxSCI_LEX_HTML]=ld2;
     LogMessage(_("Attached Code Checker"));
     m_queuetimer.SetOwner(this);
 }
@@ -107,7 +108,7 @@ void CodeChecker::OnTooltip(CodeBlocksEvent& e)
         {
             if (ed->GetControl()->CallTipActive())
                 ed->GetControl()->CallTipCancel();
-            LogMessage(wxString::Format(_("Tooltip dear: X - %i, Y - %i, pos - %i"),e.GetX(),e.GetY(),pos));
+//            LogMessage(wxString::Format(_("Tooltip dear: X - %i, Y - %i, pos - %i"),e.GetX(),e.GetY(),pos));
             wxString msg=it->msg;//_T("Goodnight Dear");
             ed->GetControl()->CallTipShow(pos, msg);
         }
@@ -152,9 +153,9 @@ void CodeChecker::OnProcessTerminate(wxProcessEvent &e)
         data=data.Mid(end);
     }
 
-//    LogMessage(_("Syntax Check Results"));
-//    LogMessage(out);
-//    LogMessage(err);
+    LogMessage(_("Syntax Check Results"));
+    LogMessage(out);
+    LogMessage(err);
     EditorManager* em = Manager::Get()->GetEditorManager();
     EditorBase* eb = em->IsOpen(file);
     if (eb && eb->IsBuiltinEditor())

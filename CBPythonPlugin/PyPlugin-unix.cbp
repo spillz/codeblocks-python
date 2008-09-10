@@ -83,12 +83,6 @@
 		</Unit>
 		<Unit filename="ConfigDialog.cpp" />
 		<Unit filename="ConfigDialog.h" />
-		<Unit filename="PyEvalJob.cpp">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="PyEvalJob.h">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
 		<Unit filename="PyEvents.cpp">
 			<Option target="experimental" />
 		</Unit>

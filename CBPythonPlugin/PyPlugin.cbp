@@ -111,7 +111,6 @@
 				<Option host_application="$(#cb)\devel\codeblocks.exe" />
 				<Compiler>
 					<Add option="-Wall" />
-					<Add option="-g" />
 					<Add option="-pipe" />
 					<Add option="-mthreads" />
 					<Add option="-fmessage-length=0" />
@@ -133,9 +132,9 @@
 					<Add directory="$(#xmlrpc.include)" />
 				</Compiler>
 				<Linker>
+					<Add library="$(#cb_bin)\wxmsw28u_gcc_cb.dll" />
 					<Add library="$(#cb_bin)\ShellCtrlBase.dll" />
 					<Add library="codeblocks" />
-					<Add library="wxmsw28u_gcc_cb" />
 					<Add library="libxmlrpc" />
 					<Add library="xmlrpc" />
 					<Add library="kernel32" />

@@ -1,0 +1,556 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<wxFormBuilder_Project>
+    <FileVersion major="1" minor="3" />
+    <object class="Project">
+        <property name="code_generation">C++</property>
+        <property name="file"></property>
+        <property name="first_id">1000</property>
+        <property name="internationalize">0</property>
+        <property name="name">MyProject2</property>
+        <property name="path">.</property>
+        <property name="relative_path">1</property>
+        <property name="use_enum">0</property>
+        <property name="use_microsoft_bom">0</property>
+        <object class="Panel">
+            <property name="bg"></property>
+            <property name="enabled">1</property>
+            <property name="fg"></property>
+            <property name="font"></property>
+            <property name="hidden">0</property>
+            <property name="id">ID_DEFAULT</property>
+            <property name="minimum_size"></property>
+            <property name="name">ConfigDialog</property>
+            <property name="pos"></property>
+            <property name="size">348,224</property>
+            <property name="tooltip"></property>
+            <property name="window_extra_style"></property>
+            <property name="window_style">wxTAB_TRAVERSAL</property>
+        </object>
+        <object class="Dialog">
+            <property name="bg"></property>
+            <property name="enabled">1</property>
+            <property name="extra_style"></property>
+            <property name="fg"></property>
+            <property name="font"></property>
+            <property name="hidden">0</property>
+            <property name="id">ID_DEFAULT</property>
+            <property name="minimum_size"></property>
+            <property name="name">SendCommandDlg</property>
+            <property name="pos"></property>
+            <property name="size">527,129</property>
+            <property name="style">wxDEFAULT_DIALOG_STYLE</property>
+            <property name="title">Interpreter</property>
+            <property name="tooltip"></property>
+            <property name="window_extra_style"></property>
+            <property name="window_style"></property>
+            <object class="wxBoxSizer">
+                <property name="minimum_size"></property>
+                <property name="name">bSizer7</property>
+                <property name="orient">wxHORIZONTAL</property>
+                <object class="sizeritem">
+                    <property name="border">5</property>
+                    <property name="flag">wxEXPAND|wxTOP|wxBOTTOM</property>
+                    <property name="proportion">1</property>
+                    <object class="wxBoxSizer">
+                        <property name="minimum_size"></property>
+                        <property name="name">bSizer9</property>
+                        <property name="orient">wxVERTICAL</property>
+                        <object class="sizeritem">
+                            <property name="border">5</property>
+                            <property name="flag">wxEXPAND</property>
+                            <property name="proportion">1</property>
+                            <object class="wxBoxSizer">
+                                <property name="minimum_size"></property>
+                                <property name="name">bSizer10</property>
+                                <property name="orient">wxHORIZONTAL</property>
+                                <object class="sizeritem">
+                                    <property name="border">5</property>
+                                    <property name="flag">wxALL|wxALIGN_CENTER_VERTICAL</property>
+                                    <property name="proportion">0</property>
+                                    <object class="wxStaticText">
+                                        <property name="bg"></property>
+                                        <property name="enabled">1</property>
+                                        <property name="fg"></property>
+                                        <property name="font"></property>
+                                        <property name="hidden">0</property>
+                                        <property name="id">wxID_DEFAULT</property>
+                                        <property name="label">Command</property>
+                                        <property name="minimum_size"></property>
+                                        <property name="name">m_staticText8</property>
+                                        <property name="permission">protected</property>
+                                        <property name="pos"></property>
+                                        <property name="size"></property>
+                                        <property name="style"></property>
+                                        <property name="tooltip"></property>
+                                        <property name="window_extra_style"></property>
+                                        <property name="window_style"></property>
+                                    </object>
+                                </object>
+                                <object class="sizeritem">
+                                    <property name="border">5</property>
+                                    <property name="flag">wxALL|wxALIGN_CENTER_VERTICAL</property>
+                                    <property name="proportion">1</property>
+                                    <object class="wxTextCtrl">
+                                        <property name="bg"></property>
+                                        <property name="enabled">1</property>
+                                        <property name="fg"></property>
+                                        <property name="font"></property>
+                                        <property name="hidden">0</property>
+                                        <property name="id">ID_CMD</property>
+                                        <property name="minimum_size"></property>
+                                        <property name="name">m_cmd</property>
+                                        <property name="permission">protected</property>
+                                        <property name="pos"></property>
+                                        <property name="size"></property>
+                                        <property name="style"></property>
+                                        <property name="tooltip"></property>
+                                        <property name="value"></property>
+                                        <property name="window_extra_style"></property>
+                                        <property name="window_style"></property>
+                                    </object>
+                                </object>
+                            </object>
+                        </object>
+                        <object class="sizeritem">
+                            <property name="border">5</property>
+                            <property name="flag">wxEXPAND</property>
+                            <property name="proportion">1</property>
+                            <object class="wxBoxSizer">
+                                <property name="minimum_size"></property>
+                                <property name="name">bSizer11</property>
+                                <property name="orient">wxHORIZONTAL</property>
+                                <object class="sizeritem">
+                                    <property name="border">5</property>
+                                    <property name="flag">wxALL</property>
+                                    <property name="proportion">0</property>
+                                    <object class="wxCheckBox">
+                                        <property name="bg"></property>
+                                        <property name="checked">1</property>
+                                        <property name="enabled">1</property>
+                                        <property name="fg"></property>
+                                        <property name="font"></property>
+                                        <property name="hidden">0</property>
+                                        <property name="id">ID_NEWLINE</property>
+                                        <property name="label">Insert Newline After Command</property>
+                                        <property name="minimum_size"></property>
+                                        <property name="name">m_newline</property>
+                                        <property name="permission">protected</property>
+                                        <property name="pos"></property>
+                                        <property name="size"></property>
+                                        <property name="style"></property>
+                                        <property name="tooltip"></property>
+                                        <property name="window_extra_style"></property>
+                                        <property name="window_style"></property>
+                                    </object>
+                                </object>
+                            </object>
+                        </object>
+                    </object>
+                </object>
+                <object class="sizeritem">
+                    <property name="border">5</property>
+                    <property name="flag"></property>
+                    <property name="proportion">0</property>
+                    <object class="wxBoxSizer">
+                        <property name="minimum_size"></property>
+                        <property name="name">bSizer12</property>
+                        <property name="orient">wxVERTICAL</property>
+                        <object class="sizeritem">
+                            <property name="border">5</property>
+                            <property name="flag">wxBOTTOM</property>
+                            <property name="proportion">1</property>
+                            <object class="wxBoxSizer">
+                                <property name="minimum_size"></property>
+                                <property name="name">bSizer8</property>
+                                <property name="orient">wxVERTICAL</property>
+                                <object class="sizeritem">
+                                    <property name="border">5</property>
+                                    <property name="flag">wxALIGN_BOTTOM</property>
+                                    <property name="proportion">0</property>
+                                    <object class="wxButton">
+                                        <property name="bg"></property>
+                                        <property name="enabled">1</property>
+                                        <property name="fg"></property>
+                                        <property name="font"></property>
+                                        <property name="hidden">0</property>
+                                        <property name="id">wxID_OK</property>
+                                        <property name="label">OK</property>
+                                        <property name="minimum_size"></property>
+                                        <property name="name">m_OK</property>
+                                        <property name="permission">protected</property>
+                                        <property name="pos"></property>
+                                        <property name="size"></property>
+                                        <property name="style"></property>
+                                        <property name="tooltip"></property>
+                                        <property name="window_extra_style"></property>
+                                        <property name="window_style"></property>
+                                    </object>
+                                </object>
+                                <object class="sizeritem">
+                                    <property name="border">5</property>
+                                    <property name="flag">wxALIGN_BOTTOM</property>
+                                    <property name="proportion">0</property>
+                                    <object class="wxButton">
+                                        <property name="bg"></property>
+                                        <property name="enabled">1</property>
+                                        <property name="fg"></property>
+                                        <property name="font"></property>
+                                        <property name="hidden">0</property>
+                                        <property name="id">wxID_CANCEL</property>
+                                        <property name="label">Cancel</property>
+                                        <property name="minimum_size"></property>
+                                        <property name="name">m_cancel</property>
+                                        <property name="permission">protected</property>
+                                        <property name="pos"></property>
+                                        <property name="size"></property>
+                                        <property name="style"></property>
+                                        <property name="tooltip"></property>
+                                        <property name="window_extra_style"></property>
+                                        <property name="window_style"></property>
+                                    </object>
+                                </object>
+                                <object class="spacer">
+                                    <property name="border">5</property>
+                                    <property name="flag">wxALL</property>
+                                    <property name="height">0</property>
+                                    <property name="proportion">1</property>
+                                    <property name="width">0</property>
+                                </object>
+                                <object class="spacer">
+                                    <property name="border">5</property>
+                                    <property name="flag">wxALL</property>
+                                    <property name="height">0</property>
+                                    <property name="proportion">1</property>
+                                    <property name="width">0</property>
+                                </object>
+                            </object>
+                        </object>
+                    </object>
+                </object>
+            </object>
+        </object>
+        <object class="Panel">
+            <property name="bg"></property>
+            <property name="enabled">1</property>
+            <property name="fg"></property>
+            <property name="font"></property>
+            <property name="hidden">0</property>
+            <property name="id">ID_DEFAULT</property>
+            <property name="minimum_size"></property>
+            <property name="name">ConfigDialog</property>
+            <property name="pos"></property>
+            <property name="size">588,361</property>
+            <property name="tooltip"></property>
+            <property name="window_extra_style"></property>
+            <property name="window_style">wxTAB_TRAVERSAL</property>
+            <object class="wxBoxSizer">
+                <property name="minimum_size"></property>
+                <property name="name">bSizer12</property>
+                <property name="orient">wxVERTICAL</property>
+                <object class="sizeritem">
+                    <property name="border">5</property>
+                    <property name="flag">wxALL</property>
+                    <property name="proportion">0</property>
+                    <object class="wxStaticText">
+                        <property name="bg"></property>
+                        <property name="enabled">1</property>
+                        <property name="fg"></property>
+                        <property name="font"></property>
+                        <property name="hidden">0</property>
+                        <property name="id">ID_DEFAULT</property>
+                        <property name="label">Python Interpreter Settings</property>
+                        <property name="minimum_size"></property>
+                        <property name="name">m_staticText1</property>
+                        <property name="permission">protected</property>
+                        <property name="pos"></property>
+                        <property name="size"></property>
+                        <property name="style"></property>
+                        <property name="tooltip"></property>
+                        <property name="window_extra_style"></property>
+                        <property name="window_style"></property>
+                    </object>
+                </object>
+                <object class="sizeritem">
+                    <property name="border">5</property>
+                    <property name="flag">wxEXPAND</property>
+                    <property name="proportion">1</property>
+                    <object class="wxBoxSizer">
+                        <property name="minimum_size"></property>
+                        <property name="name">bSizer18</property>
+                        <property name="orient">wxVERTICAL</property>
+                        <object class="sizeritem">
+                            <property name="border">5</property>
+                            <property name="flag">wxEXPAND</property>
+                            <property name="proportion">0</property>
+                            <object class="wxBoxSizer">
+                                <property name="minimum_size"></property>
+                                <property name="name">bSizer20</property>
+                                <property name="orient">wxHORIZONTAL</property>
+                                <object class="sizeritem">
+                                    <property name="border">5</property>
+                                    <property name="flag">wxALL|wxALIGN_CENTER_VERTICAL</property>
+                                    <property name="proportion">0</property>
+                                    <object class="wxStaticText">
+                                        <property name="bg"></property>
+                                        <property name="enabled">1</property>
+                                        <property name="fg"></property>
+                                        <property name="font"></property>
+                                        <property name="hidden">0</property>
+                                        <property name="id">ID_DEFAULT</property>
+                                        <property name="label">Interpreter Executable</property>
+                                        <property name="minimum_size"></property>
+                                        <property name="name">m_staticText3</property>
+                                        <property name="permission">protected</property>
+                                        <property name="pos"></property>
+                                        <property name="size"></property>
+                                        <property name="style"></property>
+                                        <property name="tooltip"></property>
+                                        <property name="window_extra_style"></property>
+                                        <property name="window_style"></property>
+                                    </object>
+                                </object>
+                                <object class="sizeritem">
+                                    <property name="border">5</property>
+                                    <property name="flag">wxALL|wxALIGN_CENTER_VERTICAL</property>
+                                    <property name="proportion">1</property>
+                                    <object class="wxTextCtrl">
+                                        <property name="bg"></property>
+                                        <property name="enabled">1</property>
+                                        <property name="fg"></property>
+                                        <property name="font"></property>
+                                        <property name="hidden">0</property>
+                                        <property name="id">ID_EXEC</property>
+                                        <property name="minimum_size"></property>
+                                        <property name="name">m_editexec</property>
+                                        <property name="permission">protected</property>
+                                        <property name="pos"></property>
+                                        <property name="size"></property>
+                                        <property name="style"></property>
+                                        <property name="tooltip"></property>
+                                        <property name="value"></property>
+                                        <property name="window_extra_style"></property>
+                                        <property name="window_style"></property>
+                                    </object>
+                                </object>
+                                <object class="sizeritem">
+                                    <property name="border">5</property>
+                                    <property name="flag">wxALIGN_CENTER_VERTICAL</property>
+                                    <property name="proportion">0</property>
+                                    <object class="wxButton">
+                                        <property name="bg"></property>
+                                        <property name="enabled">1</property>
+                                        <property name="fg"></property>
+                                        <property name="font"></property>
+                                        <property name="hidden">0</property>
+                                        <property name="id">ID_BROWSE_EXEC</property>
+                                        <property name="label">...</property>
+                                        <property name="minimum_size"></property>
+                                        <property name="name">m_butbrowse</property>
+                                        <property name="permission">protected</property>
+                                        <property name="pos"></property>
+                                        <property name="size">30,-1</property>
+                                        <property name="style"></property>
+                                        <property name="tooltip"></property>
+                                        <property name="window_extra_style"></property>
+                                        <property name="window_style"></property>
+                                    </object>
+                                </object>
+                            </object>
+                        </object>
+                        <object class="sizeritem">
+                            <property name="border">5</property>
+                            <property name="flag">wxEXPAND</property>
+                            <property name="proportion">0</property>
+                            <object class="wxBoxSizer">
+                                <property name="minimum_size"></property>
+                                <property name="name">bSizer21</property>
+                                <property name="orient">wxHORIZONTAL</property>
+                                <object class="sizeritem">
+                                    <property name="border">5</property>
+                                    <property name="flag">wxALL|wxALIGN_CENTER_VERTICAL</property>
+                                    <property name="proportion">0</property>
+                                    <object class="wxStaticText">
+                                        <property name="bg"></property>
+                                        <property name="enabled">1</property>
+                                        <property name="fg"></property>
+                                        <property name="font"></property>
+                                        <property name="hidden">0</property>
+                                        <property name="id">ID_DEFAULT</property>
+                                        <property name="label">File Extensions (example: *.py;*.pyw)</property>
+                                        <property name="minimum_size"></property>
+                                        <property name="name">m_staticText5</property>
+                                        <property name="permission">protected</property>
+                                        <property name="pos"></property>
+                                        <property name="size"></property>
+                                        <property name="style"></property>
+                                        <property name="tooltip"></property>
+                                        <property name="window_extra_style"></property>
+                                        <property name="window_style"></property>
+                                    </object>
+                                </object>
+                                <object class="sizeritem">
+                                    <property name="border">5</property>
+                                    <property name="flag">wxALL|wxALIGN_CENTER_VERTICAL</property>
+                                    <property name="proportion">1</property>
+                                    <object class="wxTextCtrl">
+                                        <property name="bg"></property>
+                                        <property name="enabled">1</property>
+                                        <property name="fg"></property>
+                                        <property name="font"></property>
+                                        <property name="hidden">0</property>
+                                        <property name="id">ID_EXT</property>
+                                        <property name="minimum_size"></property>
+                                        <property name="name">m_editext</property>
+                                        <property name="permission">protected</property>
+                                        <property name="pos"></property>
+                                        <property name="size"></property>
+                                        <property name="style"></property>
+                                        <property name="tooltip"></property>
+                                        <property name="value"></property>
+                                        <property name="window_extra_style"></property>
+                                        <property name="window_style"></property>
+                                    </object>
+                                </object>
+                            </object>
+                        </object>
+                        <object class="sizeritem">
+                            <property name="border">5</property>
+                            <property name="flag">wxEXPAND</property>
+                            <property name="proportion">0</property>
+                            <object class="wxBoxSizer">
+                                <property name="minimum_size"></property>
+                                <property name="name">bSizer14</property>
+                                <property name="orient">wxHORIZONTAL</property>
+                                <object class="sizeritem">
+                                    <property name="border">5</property>
+                                    <property name="flag">wxALL|wxALIGN_CENTER_VERTICAL</property>
+                                    <property name="proportion">0</property>
+                                    <object class="wxStaticText">
+                                        <property name="bg"></property>
+                                        <property name="enabled">1</property>
+                                        <property name="fg"></property>
+                                        <property name="font"></property>
+                                        <property name="hidden">0</property>
+                                        <property name="id">ID_DEFAULT</property>
+                                        <property name="label">Debugger: Command Line</property>
+                                        <property name="minimum_size"></property>
+                                        <property name="name">m_staticText6</property>
+                                        <property name="permission">protected</property>
+                                        <property name="pos"></property>
+                                        <property name="size"></property>
+                                        <property name="style"></property>
+                                        <property name="tooltip"></property>
+                                        <property name="window_extra_style"></property>
+                                        <property name="window_style"></property>
+                                    </object>
+                                </object>
+                                <object class="sizeritem">
+                                    <property name="border">5</property>
+                                    <property name="flag">wxALL</property>
+                                    <property name="proportion">1</property>
+                                    <object class="wxTextCtrl">
+                                        <property name="bg"></property>
+                                        <property name="enabled">1</property>
+                                        <property name="fg"></property>
+                                        <property name="font"></property>
+                                        <property name="hidden">0</property>
+                                        <property name="id">ID_DEBUGCMDLINE</property>
+                                        <property name="minimum_size"></property>
+                                        <property name="name">m_debugcmdline</property>
+                                        <property name="permission">protected</property>
+                                        <property name="pos"></property>
+                                        <property name="size"></property>
+                                        <property name="style"></property>
+                                        <property name="tooltip"></property>
+                                        <property name="value"></property>
+                                        <property name="window_extra_style"></property>
+                                        <property name="window_style"></property>
+                                    </object>
+                                </object>
+                            </object>
+                        </object>
+                        <object class="sizeritem">
+                            <property name="border">5</property>
+                            <property name="flag">wxALL|wxALIGN_CENTER_VERTICAL</property>
+                            <property name="proportion">0</property>
+                            <object class="wxStaticText">
+                                <property name="bg"></property>
+                                <property name="enabled">1</property>
+                                <property name="fg"></property>
+                                <property name="font"></property>
+                                <property name="hidden">0</property>
+                                <property name="id">ID_DEFAULT</property>
+                                <property name="label">Debugger: Input Commands and Output Regular Expressions</property>
+                                <property name="minimum_size"></property>
+                                <property name="name">m_staticText4</property>
+                                <property name="permission">protected</property>
+                                <property name="pos"></property>
+                                <property name="size"></property>
+                                <property name="style"></property>
+                                <property name="tooltip"></property>
+                                <property name="window_extra_style"></property>
+                                <property name="window_style"></property>
+                            </object>
+                        </object>
+                        <object class="sizeritem">
+                            <property name="border">5</property>
+                            <property name="flag">wxEXPAND</property>
+                            <property name="proportion">1</property>
+                            <object class="wxBoxSizer">
+                                <property name="minimum_size"></property>
+                                <property name="name">bSizer10</property>
+                                <property name="orient">wxHORIZONTAL</property>
+                                <object class="sizeritem">
+                                    <property name="border">5</property>
+                                    <property name="flag">wxEXPAND|wxALL</property>
+                                    <property name="proportion">1</property>
+                                    <object class="wxListBox">
+                                        <property name="bg"></property>
+                                        <property name="choices"></property>
+                                        <property name="enabled">1</property>
+                                        <property name="fg"></property>
+                                        <property name="font"></property>
+                                        <property name="hidden">0</property>
+                                        <property name="id">ID_INTERP_LIST</property>
+                                        <property name="minimum_size"></property>
+                                        <property name="name">m_interplist</property>
+                                        <property name="permission">protected</property>
+                                        <property name="pos"></property>
+                                        <property name="size"></property>
+                                        <property name="style">wxLB_SINGLE</property>
+                                        <property name="tooltip"></property>
+                                        <property name="window_extra_style"></property>
+                                        <property name="window_style"></property>
+                                    </object>
+                                </object>
+                                <object class="sizeritem">
+                                    <property name="border">5</property>
+                                    <property name="flag">wxALL</property>
+                                    <property name="proportion">0</property>
+                                    <object class="wxButton">
+                                        <property name="bg"></property>
+                                        <property name="enabled">1</property>
+                                        <property name="fg"></property>
+                                        <property name="font"></property>
+                                        <property name="hidden">0</property>
+                                        <property name="id">ID_EDIT</property>
+                                        <property name="label">Edit...</property>
+                                        <property name="minimum_size"></property>
+                                        <property name="name">m_buttedit</property>
+                                        <property name="permission">protected</property>
+                                        <property name="pos"></property>
+                                        <property name="size"></property>
+                                        <property name="style"></property>
+                                        <property name="tooltip"></property>
+                                        <property name="window_extra_style"></property>
+                                        <property name="window_style"></property>
+                                    </object>
+                                </object>
+                            </object>
+                        </object>
+                    </object>
+                </object>
+            </object>
+        </object>
+    </object>
+</wxFormBuilder_Project>

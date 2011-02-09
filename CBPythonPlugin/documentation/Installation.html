@@ -1,0 +1,25 @@
+<html>
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+        <title>Installation</title>
+        <link type="text/css" rel="stylesheet" href="wikistyle.css">
+    </head>
+    <body>
+<span class="parent-nodes">parent nodes: <span class="parent-node"><a href="PythonPlugin.html">PythonPlugin</a></span></span><br /><br />
+<h2>Installation</h2>
+DISCLAIMER: Others have reported difficulty building from my supplied project files. If this is the case you may need to change build settings and folder locations (a unicode wxwidgets build is assumed). Please report any problems and any fixes.<br />
+<ol><li />Download the codeblocks source, wxwidgets and gnu compiler suite (mingw for windows users)<br />
+<ul><li />Follow the instructions here: <a href="http://wiki.codeblocks.org/index.php?title=Installing_Code::Blocks_from_source_on_Windows">http://wiki.codeblocks.org/index.php?title=Installing_Code::Blocks_from_source_on_Windows</a><li />Make sure that CB and WX variables define appropriate paths under Settings-&gt;Global Variables. For CB this is the "src" folder of your codeblocks source install, and for wxwidgets the root folder of you wxwidgets install<br />
+</ul>
+<li />Download and install Python from <a href="http://www.python.org">http://www.python.org</a> (I've tested with versions 2.4 and 2.5, but others should work)<li />Download the python plugin source files and extract the source somewhere useful (link?)<li />The plugin source contains a required patch for C::B in the resources folder called debug_breakpoints.patch<br />
+<ul><li />To apply the patch you must have a patch tool. On win32, I use <a href="http://gnuwin32.sourceforge.net/packages/patch.htm">http://gnuwin32.sourceforge.net/packages/patch.htm</a><li />It is best to install to the patch tool to a location in the windows path (I used the mingw\bin folder)<li />Copy the patch file to the root folder of your C::B source<li />At the command line, change directory to your C::B source and type<br />
+patch -p0 -i debug_breakpoints.patch<li />This should make the required changes to C::B<br />
+</ul>
+<li />Open the CBPythonPlugin project file in C::B and build it. The build automatically copies PythonPlugin.dll and PythonPlugin.zip to the default build location of your C::B source (from the root it should be src\devel\share\Codeblocks\plugins\ and src\devel\share\Codeblocks\<li />Now close down C::B and copy the PythonPlugin.dll and PythonPlugin.zip files to the appropriate folders in your C::B executable installation<li />The python plugin should load without errors and you should see a Python menu on the menubar.<li />Goto Settings-&gt;Environment and scoll down to the python settings (it users a gear icon for now, that will change to our friend, the snake, in the future...)<br />
+<ul><li />Set the python executable (the default python.exe should work for windows users if python is in your windows path - if it is not then specify the full path - e.g. c:python25python.exe)<li />The default debug command line will work with Python 2.5, 2.4 and probably earlier Python versions that have pdb (the python debugger)<li />The default python file extensions will be acceptable to most windows users<li />The list box for regular expression is presently not functional (and may never be)<br />
+</ul>
+<li />Go to Project-&gt;Project Tree-&gt;Edit Files types &amp; Categories and add a python category for extensions .py (and optionally .pyw). This will keep python sources separate from other file categories in the project tree.<li />The first time you open a python file, you will be prompted whether to use the internal editor or an external program - use the internal editor.<br />
+<br />
+</ol>
+    </body>
+</html>

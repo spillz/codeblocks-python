@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="PyDebugger" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="default">
+				<Option output="$(#cb)\devel\share\codeblocks\plugins\PyDebugger" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="$(#cb)\devel" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Option parameters="--personality=debug" />
+				<Option host_application="$(#cb)\devel\codeblocks.exe" />
+				<Compiler>
+					<Add option="-Wall" />
+					<Add option="-g" />
+					<Add option="-pipe" />
+					<Add option="-mthreads" />
+					<Add option="-fmessage-length=0" />
+					<Add option="-fexceptions" />
+					<Add option="-Winvalid-pch" />
+					<Add option="-DBUILDING_PLUGIN" />
+					<Add option="-DHAVE_W32API_H" />
+					<Add option="-D__WXMSW__" />
+					<Add option="-DWXUSINGDLL" />
+					<Add option="-DcbDEBUG" />
+					<Add option="-DCB_PRECOMP" />
+					<Add option="-DWX_PRECOMP" />
+					<Add option="-DwxUSE_UNICODE" />
+					<Add directory="$(#cb.include)" />
+					<Add directory="$(#cb.include)\wxscintilla\include" />
+					<Add directory="$(#wx.include)" />
+					<Add directory="$(#wx.lib)\gcc_dll\mswu" />
+				</Compiler>
+				<Linker>
+					<Add library="codeblocks" />
+					<Add library="wxmsw28u" />
+					<Add directory="$(#cb)\devel" />
+					<Add directory="$(#wx.lib)\gcc_dll" />
+				</Linker>
+				<ExtraCommands>
+					<Add after="zip -j9 $(#cb)\devel\share\codeblocks\PyDebugger.zip manifest.xml" />
+				</ExtraCommands>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-DCB_PRECOMP" />
+			<Add option="-DWX_PRECOMP" />
+		</Compiler>
+		<Unit filename="ConfigDialog.cpp" />
+		<Unit filename="ConfigDialog.h" />
+		<Unit filename="ExecHiddenMSW.cpp">
+			<Option target="experimental" />
+			<Option target="experimental-binary" />
+		</Unit>
+		<Unit filename="ExecHiddenMSW.h">
+			<Option target="experimental" />
+			<Option target="experimental-binary" />
+		</Unit>
+		<Unit filename="PyDebugger.cpp" />
+		<Unit filename="PyDebugger.h" />
+		<Unit filename="Resources\dialogs.fbp">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="dialogs.cpp" />
+		<Unit filename="dialogs.h" />
+		<Unit filename="manifest.xml">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="pdb2.py">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

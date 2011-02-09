@@ -11,7 +11,7 @@
 #include <configurationpanel.h>
 
 
-class PyPlugin;
+class PyDebugger;
 class InterpreterCollection;
 
 class ConfigDialog : public cbConfigurationPanel
@@ -19,7 +19,7 @@ class ConfigDialog : public cbConfigurationPanel
   private:
 
   public:
-    ConfigDialog(wxWindow* parent, PyPlugin* plugin);
+    ConfigDialog(wxWindow* parent, PyDebugger* plugin);
     virtual ~ConfigDialog();
 
     virtual wxString GetTitle() const { return _("Python"); }
@@ -66,7 +66,7 @@ class ConfigDialog : public cbConfigurationPanel
     int m_activeinterp;
 
   private:
-    PyPlugin *m_plugin;
+    PyDebugger *m_plugin;
     void UpdateEntry(int index);
     void ChooseFile();
 

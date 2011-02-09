@@ -1,11 +1,14 @@
-#include "PyPlugin.h"
+#include "PyDebugger.h"
 #include <configurationpanel.h>
 #include <wx/regex.h>
+
+
+
 // Register the plugin with Code::Blocks.
 // We are using an anonymous namespace so we don't litter the global one.
 namespace
 {
-    PluginRegistrant<PyPlugin> reg(_T("PyPlugin"));
+    PluginRegistrant<PyDebugger> reg(_T("PyDebugger"));
 }
 
 
@@ -40,42 +43,42 @@ int ID_TimerPollDebugger=wxNewId();
 int ID_LangMenu_RunPiped = wxNewId();//XRCID("idPyDebuggerMenuDebug");
 
 // events handling
-BEGIN_EVENT_TABLE(PyPlugin, cbDebuggerPlugin)
+BEGIN_EVENT_TABLE(PyDebugger, cbDebuggerPlugin)
 	// add any events you want to handle here
-    EVT_MENU(ID_LangMenu_Run,PyPlugin::OnRun)
-    EVT_MENU(ID_LangMenu_RunPiped,PyPlugin::OnDebugTarget)
-    EVT_MENU(XRCID("idPyDebuggerMenuDebug"),PyPlugin::OnContinue)
-    EVT_MENU(XRCID("idPyDebuggerMenuNext"),PyPlugin::OnNext)
-    EVT_MENU(XRCID("idPyDebuggerMenuStep"),PyPlugin::OnStep)
-    EVT_MENU(XRCID("idPyDebuggerMenuStop"),PyPlugin::OnStop)
-    EVT_MENU(ID_LangMenu_DebugSendCommand,PyPlugin::OnSendCommand)
-    EVT_MENU(ID_LangMenu_ShowWatch,PyPlugin::OnViewWatch)
-    EVT_MENU(ID_LangMenu_UpdateWatch,PyPlugin::OnUpdateWatch)
-    EVT_END_PROCESS(ID_PipedProcess, PyPlugin::OnTerminatePipedProcess)
-    EVT_TIMER(ID_TimerPollDebugger, PyPlugin::OnTimer)
+////    EVT_MENU(ID_LangMenu_Run,PyDebugger::OnRun)
+////    EVT_MENU(ID_LangMenu_RunPiped,PyDebugger::OnDebugTarget)
+////    EVT_MENU(XRCID("idPyDebuggerMenuDebug"),PyDebugger::OnContinue)
+////    EVT_MENU(XRCID("idPyDebuggerMenuNext"),PyDebugger::OnNext)
+////    EVT_MENU(XRCID("idPyDebuggerMenuStep"),PyDebugger::OnStep)
+////    EVT_MENU(XRCID("idPyDebuggerMenuStop"),PyDebugger::OnStop)
+////    EVT_MENU(ID_LangMenu_DebugSendCommand,PyDebugger::OnSendCommand)
+////    EVT_MENU(ID_LangMenu_ShowWatch,PyDebugger::OnViewWatch)
+////    EVT_MENU(ID_LangMenu_UpdateWatch,PyDebugger::OnUpdateWatch)
+    EVT_END_PROCESS(ID_PipedProcess, PyDebugger::OnTerminatePipedProcess)
+    EVT_TIMER(ID_TimerPollDebugger, PyDebugger::OnTimer)
 END_EVENT_TABLE()
 
 
 
 // Updates the Dialog controls to the stored values for the current interpreter
-void PyPlugin::ReadPluginConfig()
+void PyDebugger::ReadPluginConfig()
 {
-    ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("PyPlugin"));
+    ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("PyDebugger"));
     m_DefaultDebugCmdLine=cfg->Read(_T("debug_cmd_line"),_T(" -u -m pdb "));
     m_DefaultInterpreter=cfg->Read(_T("python_executable"),_T("python")); //TODO: make default command platform specific
     m_PythonFileExtensions=cfg->Read(_T("python_file_extensions"),_T("*.py;*.pyc"));
 }
 
 // Retrieve configuration values from the dialog widgets and store them appropriately
-//void PyPlugin::WritePluginConfig()
+//void PyDebugger::WritePluginConfig()
 //{
-//    ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("PyPlugin"));
+//    ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("PyDebugger"));
 //    cfg->Write(_T("debug_cmd_line"),m_DefaultDebugCmdLine);
 //    cfg->Write(_T("python_executable"),m_DefaultInterpreter);
 //    cfg->Write(_T("python_file_extensions"),m_PythonFileExtensions);
 //}
 
-void PyPlugin::OnPipedOutput(wxCommandEvent& event)
+void PyDebugger::OnPipedOutput(wxCommandEvent& event)
 {
     wxMessageBox(_T("Piped output"));
     wxString msg = event.GetString();
@@ -86,31 +89,31 @@ void PyPlugin::OnPipedOutput(wxCommandEvent& event)
     }
 }
 
-void PyPlugin::OnIdle(wxIdleEvent& event)
+void PyDebugger::OnIdle(wxIdleEvent& event)
 {
 }
 
-void PyPlugin::OnStep(wxCommandEvent &event)
+void PyDebugger::OnStep(wxCommandEvent &event)
 {
     Step();
 }
 
-void PyPlugin::OnStop(wxCommandEvent &event)
+void PyDebugger::OnStop(wxCommandEvent &event)
 {
     Stop();
 }
 
-void PyPlugin::OnNext(wxCommandEvent &event)
+void PyDebugger::OnNext(wxCommandEvent &event)
 {
     Next();
 }
 
-void PyPlugin::OnContinue(wxCommandEvent &event)
+void PyDebugger::OnContinue(wxCommandEvent &event)
 {
     Continue();
 }
 
-void PyPlugin::OnSendCommand(wxCommandEvent &event)
+void PyDebugger::OnSendCommand(wxCommandEvent &event)
 {
     if(!m_DebuggerActive /* || m_TimerPollDebugger.IsRunning() */) //could be unsafe, but allows user to provide program input
         return;
@@ -127,7 +130,7 @@ void PyPlugin::OnSendCommand(wxCommandEvent &event)
 
 
 // sends a newline delimited string of cmdcount debugger commands
-bool PyPlugin::DispatchCommands(const wxString& cmd, int cmdtype, bool poll)
+bool PyDebugger::DispatchCommands(const wxString& cmd, int cmdtype, bool poll)
 {
     if(m_TimerPollDebugger.IsRunning())
         return false;
@@ -156,35 +159,33 @@ bool PyPlugin::DispatchCommands(const wxString& cmd, int cmdtype, bool poll)
     return true;
 }
 
-bool PyPlugin::IsPythonFile(const wxString &file)
+bool PyDebugger::IsPythonFile(const wxString &file) const
 {
     if(WildCardListMatch(m_PythonFileExtensions,file))
         return true;
     return false;
 }
 
-wxString PyPlugin::AssembleBreakpointCommands()
+wxString PyDebugger::AssembleBreakpointCommands()
 {
     wxString commands;
     for(BPList::iterator itr=m_bplist.begin();itr!=m_bplist.end();itr++)
     {
-        wxString sfile=itr->filename;
+        wxString sfile=(*itr)->GetFilename();
         if(sfile.Contains(_T(" ")))
         {
             wxFileName f(sfile);
             sfile=f.GetShortPath();
         }
-        for(BPLtype::iterator bp=itr->linenums.begin();bp!=itr->linenums.end();bp++)
-        {
-            wxString cmd=_T("break ")+sfile+_T(":")+wxString::Format(_T("%i"),(*bp)+1)+_T("\n");
-            commands+=cmd;
-        }
+        int line=(*itr)->GetLine();
+        wxString cmd=_T("break ")+sfile+_T(":")+wxString::Format(_T("%i"),line+1)+_T("\n");
+        commands+=cmd;
     }
     return commands;
 }
 
 
-wxString PyPlugin::AssembleWatchCommands()
+wxString PyDebugger::AssembleWatchCommands()
 { //TODO: get this working
     wxString commands;
     wxString watchtext=m_WatchDlg->m_WatchText->GetValue();
@@ -242,7 +243,7 @@ wxString PyPlugin::AssembleWatchCommands()
     return commands;
 }
 
-wxString PyPlugin::AssembleAliasCommands()
+wxString PyDebugger::AssembleAliasCommands()
 {
     wxString commands;
     //Print instance variables (usage "pi classInst")
@@ -257,7 +258,7 @@ wxString PyPlugin::AssembleAliasCommands()
 }
 
 
-void PyPlugin::ClearActiveMarkFromAllEditors()
+void PyDebugger::ClearActiveMarkFromAllEditors()
 {
     EditorManager* edMan = Manager::Get()->GetEditorManager();
     for (int i = 0; i < edMan->GetEditorsCount(); ++i)
@@ -268,32 +269,8 @@ void PyPlugin::ClearActiveMarkFromAllEditors()
     }
 }
 
-void PyPlugin::SyncEditor(const wxString& filename, int line, bool setMarker)
-{
-    if (setMarker)
-        ClearActiveMarkFromAllEditors();
-    cbProject* project = Manager::Get()->GetProjectManager()->GetActiveProject();
-    ProjectFile* f = project ? project->GetFileByFilename(filename, false, true) : 0;
-    wxFileName fname(filename);
-    if (project && fname.IsRelative())
-        fname.MakeAbsolute(project->GetBasePath());
-    if(fname.FileExists())
-    {
-        cbEditor* ed = Manager::Get()->GetEditorManager()->Open(fname.GetLongPath());
-        if (ed)
-        {
-            ed->Show(true);
-            if (f && !ed->GetProjectFile())
-                ed->SetProjectFile(f);
-            ed->GotoLine(line - 1, false);
-            if (setMarker)
-                ed->SetDebugLine(line - 1);
-        }
-    }
-}
 
-
-void PyPlugin::OnTimer(wxTimerEvent& event)
+void PyDebugger::OnTimer(wxTimerEvent& event)
 {
     bool debugoutputmode=false;
     if (m_pp && m_pp->IsInputAvailable())
@@ -398,6 +375,7 @@ void PyPlugin::OnTimer(wxTimerEvent& event)
         if(m_DebugCommandCount==0)
         { //TODO: clear debug and program output strings as well
             if(m_changeposition)
+            {
                 if(m_curline<1)
                 {
                     wxMessageBox(_T("Invalid line position reported by PDB"));
@@ -406,6 +384,7 @@ void PyPlugin::OnTimer(wxTimerEvent& event)
                 {
                     SyncEditor(m_curfile,m_curline);
                 }
+            }
             m_changeposition=false;
             m_outbuf=_T("");
             m_bufpos=0;
@@ -421,7 +400,21 @@ void PyPlugin::OnTimer(wxTimerEvent& event)
     }
 }
 
-void PyPlugin::OnDebugTarget(wxCommandEvent &event)
+
+bool PyDebugger::IsAttachedToProcess() const
+{
+//    return false;
+    EditorBase *ed=Manager::Get()->GetEditorManager()->GetActiveEditor();
+    if(!ed)
+        return false;
+    wxString s=ed->GetFilename();
+    if(!(wxFileName(s).FileExists() && IsPythonFile(s)))
+        return false;
+    return true;
+}
+
+
+void PyDebugger::OnDebugTarget(wxCommandEvent &event)
 {
     if(m_DebuggerActive)
         return;
@@ -437,10 +430,10 @@ void PyPlugin::OnDebugTarget(wxCommandEvent &event)
         wxFileName f(m_RunTarget);
         m_RunTarget=f.GetShortPath();
     }
-    Debug();
+    Debug(false);
 }
 
-int PyPlugin::Debug()
+bool PyDebugger::Debug(bool breakOnEntry)
 {
 // TODO: need to setup path finding for a pdb runner that will be embedded in the plugins resources
 //    m_DefaultDebugCmdLine=_T(" -u c:\\codeblockssrc\\cbpythonplugin\\pdb2.py ");
@@ -460,6 +453,17 @@ int PyPlugin::Debug()
     m_outprogbuf=_T("");
     m_watchstr=_T("");
     ReadPluginConfig();
+    if(!m_RunTarget)
+    {
+        EditorBase *ed=Manager::Get()->GetEditorManager()->GetActiveEditor();
+        if(!ed)
+            return false;
+        wxString s=ed->GetFilename();
+        if(!(wxFileName(s).FileExists() && IsPythonFile(s)))
+            return false;
+        m_RunTarget=s;
+    }
+
 //    m_DebugLog->Clear();
     m_TimerPollDebugger.SetOwner(this, ID_TimerPollDebugger);
     m_pp=new wxProcess(this,ID_PipedProcess);
@@ -469,7 +473,7 @@ int PyPlugin::Debug()
     wxSetWorkingDirectory(wxFileName(m_RunTarget).GetPath());
     target.Replace(_T("\\"),_T("/"),true);
     wxString commandln=wxFileName(m_DefaultInterpreter).GetShortPath()+m_DefaultDebugCmdLine+target;
-    cbMessageBox(commandln);
+//    cbMessageBox(commandln);
     #ifdef EXPERIMENTAL_PYTHON_DEBUG
 //    LogMessage(wxString::Format(_("Launching '%s': %s (in %s)"), consolename.c_str(), commandstr.c_str(), workingdir.c_str()));
 //    InterpretedLangs* plugin = Manager::Get()->GetPluginManager()->LoadPlugin(_T("InterpretedLangs"));
@@ -506,7 +510,7 @@ int PyPlugin::Debug()
     return 0;
 }
 
-void PyPlugin::Continue()
+void PyDebugger::Continue()
 {
     if(m_DebuggerActive)
     {
@@ -516,7 +520,7 @@ void PyPlugin::Continue()
     }
 }
 
-void PyPlugin::Next()
+void PyDebugger::Next()
 {
     if(m_DebuggerActive)
     {
@@ -526,7 +530,7 @@ void PyPlugin::Next()
     }
 }
 
-void PyPlugin::Step()
+void PyDebugger::Step()
 {
     if(m_DebuggerActive)
     {
@@ -536,7 +540,7 @@ void PyPlugin::Step()
     }
 }
 
-void PyPlugin::Stop()
+void PyDebugger::Stop()
 {
     if(m_DebuggerActive)
     {
@@ -547,96 +551,103 @@ void PyPlugin::Stop()
         }
         DispatchCommands(_T("exit\n"));
     }
+    m_RunTarget=_("");
 }
 
-bool PyPlugin::AddBreakpoint(const wxString& file, int line)
+cbBreakpoint* PyDebugger::GetBreakpoint(int index)
+{
+    return m_bplist[index].get();
+}
+
+const cbBreakpoint* PyDebugger::GetBreakpoint(int index) const
+{
+    return m_bplist[index].get();
+}
+
+
+cbBreakpoint* PyDebugger::AddBreakpoint(const wxString& file, int line)
 {
     if(!IsPythonFile(file))
-        return false;
-    wxFileName f(file);
+        return NULL;
     for (BPList::iterator itr=m_bplist.begin(); itr!=m_bplist.end(); ++itr)
-        if(itr->filename=f.GetFullPath())
+    {
+        if((*itr)->GetFilename()==file && (*itr)->GetLine()==line)
+            return NULL;
+    }
+    Pointer p(new cbBreakpoint(file,line));
+    m_bplist.push_back(p);
+    if(m_DebuggerActive) // if the debugger is running already we need to send a message to the interpreter to add the new breakpoint
+    {
+        wxString sfile=file;
+        if(sfile.Contains(_T(" ")))
         {
-            if(!itr->linenums.insert(line).second)
-                return false; // already a bp here
-            if(m_DebuggerActive) // if the debugger is running already we need to send a message to the interpreter to add the new breakpoint
-            {
-        /*        if(m_TimerPollDebugger.IsRunning())
-                {
-                    char cmd=3; // send a ctrl-c message
-                    m_ostream->Write(&cmd,1);
-                    m_TimerPollDebugger.Stop();
-                }*/
-                wxString sfile=file;
-                if(sfile.Contains(_T(" ")))
-                {
-                    wxFileName f(sfile);
-                    sfile=f.GetShortPath();
-                }
-                wxString cmd=_T("break ")+sfile+_T(":")+wxString::Format(_T("%i"),line+1)+_T("\n");
-                DispatchCommands(cmd,DBGCMDTYPE_BREAKPOINT);
-            }
-            return true;
+            wxFileName f(sfile);
+            sfile=f.GetShortPath();
         }
-    FileBreakpoints fbp;
-    fbp.filename=f.GetFullPath();
-    fbp.linenums.insert(line);
-    m_bplist.push_back(fbp);
-    return true;
+        wxString cmd=_T("break ")+sfile+_T(":")+wxString::Format(_T("%i"),line)+_T("\n");
+        DispatchCommands(cmd,DBGCMDTYPE_BREAKPOINT);
+    }
+    return p.get();
 }
 
-bool PyPlugin::RemoveBreakpoint(const wxString& file, int line)
+void PyDebugger::DeleteBreakpoint(cbBreakpoint *bp)
 {
-    if(!IsPythonFile(file))
-        return false;
-    wxFileName f(file);
+    if(!IsPythonFile(bp->GetFilename()))
+        return;
+    wxString sfile=bp->GetFilename();
+    int line = bp->GetLine();
 
     for (size_t i=0;i<m_bplist.size();++i)
-        if(m_bplist[i].filename==f.GetFullPath())
+    {
+        if(m_bplist[i].get()!=bp)
+            continue;
+//        if(m_bplist[i]->GetFilename()==bp->GetFilename() && m_bplist[i]->GetLine()==bp->GetLine())
+        m_bplist.erase(m_bplist.begin()+i);
+        if(m_DebuggerActive)
         {
-            if(m_bplist[i].linenums.empty()) // this shouldn't happen... if the linenum list is empty the file should not be here
+            if(sfile.Contains(_T(" ")))
             {
-                wxMessageBox(_("Python Plugin Warning: request to remove a non-existent line"));
-                m_bplist.erase(m_bplist.begin()+i);
-                return false;
+                wxFileName f(sfile);
+                sfile=f.GetShortPath();
             }
-            if(m_bplist[i].linenums.erase(line)<=0)
-            {
-                wxMessageBox(_("Python Plugin Warning: request to remove a non-existent line"));
-                return false; // no bp here
-            }
-            if(m_bplist[i].linenums.empty()) //delete this file from the list
-                m_bplist.erase(m_bplist.begin()+i);
-            if(m_DebuggerActive)
-            {
-        /*        if(m_TimerPollDebugger.IsRunning())
-                {
-                    char cmd=3; // send a ctrl-c message
-                    m_ostream->Write(&cmd,1);
-                    m_TimerPollDebugger.Stop();
-                }*/
-                wxString sfile=file;
-                if(sfile.Contains(_T(" ")))
-                {
-                    wxFileName f(sfile);
-                    sfile=f.GetShortPath();
-                }
-                wxString cmd=_T("clear ")+sfile+_T(":")+wxString::Format(_T("%i"),line+1)+_T("\n");
-                DispatchCommands(cmd,DBGCMDTYPE_BREAKPOINT);
-             }
-             return true;
-        }
-    return false;
+            wxString cmd=_T("clear ")+sfile+_T(":")+wxString::Format(_T("%i"),line)+_T("\n");
+            DispatchCommands(cmd,DBGCMDTYPE_BREAKPOINT);
+         }
+         return;
+    }
 }
 
 
-void PyPlugin::OnRunPiped(wxCommandEvent &event)
+void PyDebugger::DeleteAllBreakpoints()
+{
+
+    for (size_t i=0;i<m_bplist.size();++i)
+    {
+        cbBreakpoint *bp=m_bplist[i].get();
+        wxString sfile=bp->GetFilename();
+        int line = bp->GetLine();
+        m_bplist.erase(m_bplist.begin()+i);
+        if(m_DebuggerActive)
+        {
+            if(sfile.Contains(_T(" ")))
+            {
+                wxFileName f(sfile);
+                sfile=f.GetShortPath();
+            }
+            wxString cmd=_T("clear ")+sfile+_T(":")+wxString::Format(_T("%i"),line)+_T("\n");
+            DispatchCommands(cmd,DBGCMDTYPE_BREAKPOINT);
+         }
+    }
+}
+
+
+void PyDebugger::OnRunPiped(wxCommandEvent &event)
 {
     m_RunTarget=_T("");
     OnDebugTarget(event);
 }
 
-void PyPlugin::OnTerminatePipedProcess(wxProcessEvent &event)
+void PyDebugger::OnTerminatePipedProcess(wxProcessEvent &event)
 {
     wxMessageBox(_("Debug Terminated"));
     m_DebugLog->Append(_T("\n*** SESSION TERMINATED ***"));
@@ -646,16 +657,16 @@ void PyPlugin::OnTerminatePipedProcess(wxProcessEvent &event)
     delete m_pp;
 }
 
-void PyPlugin::OnSettings(wxCommandEvent& event)
+void PyDebugger::OnSettings(wxCommandEvent& event)
 {
     wxMessageBox(_T("Settings..."));
 }
 
-void PyPlugin::OnSubMenuSelect(wxUpdateUIEvent& event)
+void PyDebugger::OnSubMenuSelect(wxUpdateUIEvent& event)
 {
 }
 
-void PyPlugin::OnSetTarget(wxCommandEvent& event)
+void PyDebugger::OnSetTarget(wxCommandEvent& event)
 {
     //TODO: use default file extensions
     wxFileDialog *fd=new wxFileDialog(NULL,_T("Choose the interpreter Target"),_T(""),_T(""),m_PythonFileExtensions,wxOPEN|wxFILE_MUST_EXIST);
@@ -667,11 +678,11 @@ void PyPlugin::OnSetTarget(wxCommandEvent& event)
     delete fd;
 }
 
-void PyPlugin::OnRunTarget(wxCommandEvent& event)
+void PyDebugger::OnRunTarget(wxCommandEvent& event)
 {
 }
 
-void PyPlugin::OnRun(wxCommandEvent& event)
+void PyDebugger::OnRun(wxCommandEvent& event)
 {
     if(!m_RunTargetSelected)
         OnSetTarget(event);
@@ -694,7 +705,7 @@ void PyPlugin::OnRun(wxCommandEvent& event)
 }
 
 
-void PyPlugin::OnViewWatch(wxCommandEvent& event)
+void PyDebugger::OnViewWatch(wxCommandEvent& event)
 {
     // This toggles display of watch
     CodeBlocksDockEvent evt(event.IsChecked() ? cbEVT_SHOW_DOCK_WINDOW : cbEVT_HIDE_DOCK_WINDOW);
@@ -707,7 +718,7 @@ void PyPlugin::OnViewWatch(wxCommandEvent& event)
 }
 
 
-void PyPlugin::OnUpdateWatch(wxCommandEvent& event)
+void PyDebugger::OnUpdateWatch(wxCommandEvent& event)
 {
     if(m_DebuggerActive)
     {
@@ -719,14 +730,14 @@ void PyPlugin::OnUpdateWatch(wxCommandEvent& event)
 
 
 // constructor
-PyPlugin::PyPlugin()
+PyDebugger::PyDebugger()
 {
     // Make sure our resources are available.
     // In the generated boilerplate code we have no resources but when
     // we add some, it will be nice that this code is in place already ;)
-    if(!Manager::LoadResource(_T("PyPlugin.zip")))
+    if(!Manager::LoadResource(_T("PyDebugger.zip")))
     {
-        NotifyMissingFile(_T("PyPlugin.zip"));
+        NotifyMissingFile(_T("PyDebugger.zip"));
     }
     m_DebuggerActive=false;
     m_RunTargetSelected=false;
@@ -734,7 +745,7 @@ PyPlugin::PyPlugin()
 
 }
 
-cbConfigurationPanel* PyPlugin::GetConfigurationPanel(wxWindow* parent)
+cbConfigurationPanel* PyDebugger::GetConfigurationPanel(wxWindow* parent)
 {
 //    MyDialog* dlg = new MyDialog(this, *m_pKeyProfArr, parent,
 //        wxT("Keybindings"), mode);
@@ -743,12 +754,12 @@ cbConfigurationPanel* PyPlugin::GetConfigurationPanel(wxWindow* parent)
 }
 
 // destructor
-PyPlugin::~PyPlugin()
+PyDebugger::~PyDebugger()
 {
 
 }
 
-void PyPlugin::OnAttach()
+void PyDebugger::OnAttachReal()
 {
 	// do whatever initialization you need for your plugin
 	// NOTE: after this function, the inherited member variable
@@ -767,15 +778,16 @@ void PyPlugin::OnAttach()
     CodeBlocksLogEvent evtlog(cbEVT_ADD_LOG_WINDOW,m_DebugLog, _("PyDebugger"));
     Manager::Get()->ProcessEvent(evtlog);
     CodeBlocksDockEvent evt(cbEVT_ADD_DOCK_WINDOW);
-    evt.name = _T("PyWatch");
-    evt.title = _T("PyWatch");
+    evt.name = _T("Python Watch");
+    evt.title = _T("Python Watch");
     evt.pWindow = m_WatchDlg;
     evt.dockSide = CodeBlocksDockEvent::dsFloating;
     evt.desiredSize.Set(150, 250);
     evt.floatingSize.Set(150, 250);
     evt.minimumSize.Set(150, 150);
     Manager::Get()->ProcessEvent(evt);
-
+    DebuggerManager &dbg_manager = *Manager::Get()->GetDebuggerManager();
+    dbg_manager.RegisterDebugger(this, _T("python"));
     // set log image
     // wxString prefix = ConfigManager::GetDataFolder() + _T("/images/");
     //bmp = cbLoadBitmap(prefix + _T("contents_16x16.png"), wxBITMAP_TYPE_PNG);
@@ -783,7 +795,7 @@ void PyPlugin::OnAttach()
 
 }
 
-void PyPlugin::OnRelease(bool appShutDown)
+void PyDebugger::OnReleaseReal(bool appShutDown)
 {
 	// do de-initialization for your plugin
 	// if appShutDown is false, the plugin is unloaded because Code::Blocks is being shut down,
@@ -809,7 +821,7 @@ void PyPlugin::OnRelease(bool appShutDown)
 
 }
 
-int PyPlugin::Configure()
+int PyDebugger::Configure()
 {
 	//create and display the configuration dialog for the plugin
 	cbConfigurationDialog dlg(Manager::Get()->GetAppWindow(), wxID_ANY, _("Python Language Properties"));
@@ -823,28 +835,30 @@ int PyPlugin::Configure()
 	return -1;
 }
 
-void PyPlugin::CreateMenu()
+void PyDebugger::CreateMenu()
 {
-    LangMenu->Append(ID_LangMenu_Run,_T("Python &Run..."),_T(""));
-    LangMenu->AppendSeparator();
-    LangMenu->Append(ID_LangMenu_RunPiped,_T("Start &Debug..."),_T(""));
-    LangMenu->Append(XRCID("idPyDebuggerMenuDebug"),_T("&Continue"),_T(""));
-    LangMenu->Append(XRCID("idPyDebuggerMenuNext"),_T("&Next"),_T(""));
-    LangMenu->Append(XRCID("idPyDebuggerMenuStep"),_T("Step &Into"),_T(""));
-    LangMenu->Append(XRCID("idPyDebuggerMenuStop"),_T("&Stop"),_T(""));
+    //TODO: This should all disappear and use native SDK implementations
+//    LangMenu->Append(ID_LangMenu_Run,_T("Python &Run..."),_T(""));
+//    LangMenu->AppendSeparator();
+//    LangMenu->Append(ID_LangMenu_RunPiped,_T("Start &Debug..."),_T(""));
+//    LangMenu->Append(XRCID("idPyDebuggerMenuDebug"),_T("&Continue"),_T(""));
+//    LangMenu->Append(XRCID("idPyDebuggerMenuNext"),_T("&Next"),_T(""));
+//    LangMenu->Append(XRCID("idPyDebuggerMenuStep"),_T("Step &Into"),_T(""));
+//    LangMenu->Append(XRCID("idPyDebuggerMenuStop"),_T("&Stop"),_T(""));
     LangMenu->Append(ID_LangMenu_DebugSendCommand,_T("&Send Debugger Command"),_T(""));
     LangMenu->Append(ID_LangMenu_ShowWatch,_T("Toggle &Watch"),_T(""),wxITEM_CHECK);
     LangMenu->Append(ID_LangMenu_UpdateWatch,_T("&Update Watch"),_T(""));
 }
 
 
-void PyPlugin::UpdateMenu()
+void PyDebugger::UpdateMenu()
 {
 }
 
 
-void PyPlugin::BuildMenu(wxMenuBar* menuBar)
+void PyDebugger::BuildMenu(wxMenuBar* menuBar)
 {
+    //TODO: This should all be deleted once native implementations are in place
 	//The application is offering its menubar for your plugin,
 	//to add any menu items you want...
 	//Append any items you need in the menu...
@@ -861,7 +875,7 @@ void PyPlugin::BuildMenu(wxMenuBar* menuBar)
     }
 }
 
-void PyPlugin::BuildModuleMenu(const ModuleType type, wxMenu* menu, const FileTreeData* data)
+void PyDebugger::BuildModuleMenu(const ModuleType type, wxMenu* menu, const FileTreeData* data)
 {
 	//Some library module is ready to display a pop-up menu.
 	//Check the parameter \"type\" and see which module it is
@@ -926,15 +940,3 @@ void PyPlugin::BuildModuleMenu(const ModuleType type, wxMenu* menu, const FileTr
 	}
 }
 
-bool PyPlugin::BuildToolBar(wxToolBar* toolBar)
-{
-    m_pTbar = toolBar;
-    /* Loads toolbar using new Manager class functions */
-    if (!IsAttached() || !toolBar)
-        return false;
-    wxString my_16x16=Manager::isToolBar16x16(toolBar) ? _T("_16x16") : _T("");
-    Manager::AddonToolBar(toolBar,wxString(_T("py_debugger_toolbar"))+my_16x16);
-    toolBar->Realize();
-//    toolBar->SetBestFittingSize();
-    return true;
-}

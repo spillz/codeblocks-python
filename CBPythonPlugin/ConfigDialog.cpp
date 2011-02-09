@@ -1,5 +1,5 @@
 #include "ConfigDialog.h"
-#include "PyPlugin.h"
+#include "PyDebugger.h"
 
 #include <vector>
 
@@ -27,7 +27,7 @@ BEGIN_EVENT_TABLE(ConfigDialog, wxPanel)
 //  EVT_BUTTON(ID_CANCEL, ConfigDialog::OnEditCancel)
 END_EVENT_TABLE()
 
-ConfigDialog::ConfigDialog(wxWindow* parent, PyPlugin* plugin) //: cbConfigurationPanel()
+ConfigDialog::ConfigDialog(wxWindow* parent, PyDebugger* plugin) //: cbConfigurationPanel()
 {
     m_plugin=plugin;
 
@@ -133,7 +133,7 @@ void ConfigDialog::ChangeSelection(wxCommandEvent& event)
 // Updates the Dialog controls to the stored values for the current interpreter
 void ConfigDialog::ReadDialogItems()
 {
-    ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("PyPlugin"));
+    ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("PyDebugger"));
     m_debugcmdline->SetValue(cfg->Read(_T("debug_cmd_line"),_T(" -u -m pdb ")));
     m_editexec->SetValue(cfg->Read(_T("python_executable"),_T("python"))); //TODO: make default command platform specific
     m_editext->SetValue(cfg->Read(_T("python_file_extensions"),_T("*.py;*.pyc")));
@@ -142,7 +142,7 @@ void ConfigDialog::ReadDialogItems()
 // Retrieve configuration values from the dialog widgets and store them appropriately
 void ConfigDialog::WriteDialogItems()
 {
-    ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("PyPlugin"));
+    ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("PyDebugger"));
     cfg->Write(_T("debug_cmd_line"),m_debugcmdline->GetValue());
     cfg->Write(_T("python_executable"),m_editexec->GetValue());
     cfg->Write(_T("python_file_extensions"),m_editext->GetValue());

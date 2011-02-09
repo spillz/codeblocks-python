@@ -9,7 +9,7 @@
 
 #include <sdk.h>
 
-class PyPlugin;
+class PyDebugger;
 
 class SendCommandDlg : public wxDialog
 {
@@ -31,11 +31,11 @@ class SendCommandDlg : public wxDialog
 class DebuggerWatch : public wxPanel
 {
     public:
-        DebuggerWatch(wxWindow* parent, PyPlugin* debugger);
+        DebuggerWatch(wxWindow* parent, PyDebugger* debugger);
         virtual ~DebuggerWatch();
         wxTextCtrl *m_WatchText; // contains the watch variables and results
     protected:
-        PyPlugin *m_debugger;
+        PyDebugger *m_debugger;
     private:
 
         DECLARE_EVENT_TABLE()

@@ -64,7 +64,7 @@ SendCommandDlg::SendCommandDlg( wxWindow* parent, int id, wxString title, wxPoin
 BEGIN_EVENT_TABLE(DebuggerWatch, wxPanel)
 END_EVENT_TABLE()
 
-DebuggerWatch::DebuggerWatch(wxWindow* parent, PyPlugin* debugger)
+DebuggerWatch::DebuggerWatch(wxWindow* parent, PyDebugger* debugger)
     : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL | wxCLIP_CHILDREN),
     m_debugger(debugger)
 {

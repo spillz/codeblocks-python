@@ -1,0 +1,31 @@
+NOTES FOR CREATING A DEBUGGER PLUGIN
+---------------------------------------------------
+
+PRELIMINARIES
+---------------------------------------------------
+
+Create a code::blocks plugin project
+
+Derive from cbDebuggerPlugin instead of cbPlugin
+
+Implement the host of virtuals using stubs.
+
+IMPLEMENTATION
+----------------------------------------------------
+
+Plugin must keep track of: 
+* current file and line position (Framework will request by calling method GetCurrentState)
+* has the debugger started (Framework will request by calling method IsRunning)
+* paused on a breakpoint (Framework will request by calling method IsStopped)
+* 
+
+Do normal plugin initialization in OnAttachReal (And realease it on OnReleaseReal). Make sure your plugin does not implement OnAttach or OnRelease.
+
+Workaround: Implement IsAttachedToProcess and return true to always have the debugger in a ready to debug state
+
+EVENT HANDLING AND SIGNALLING
+----------------------------------------------------
+// Notify debugger plugins for end of debug session
+PluginManager *plm = Manager::Get()->GetPluginManager();
+CodeBlocksEvent evt(cbEVT_DEBUGGER_PAUSED);
+plm->NotifyPlugins(evt);

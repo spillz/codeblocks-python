@@ -1,7 +1,7 @@
 #include "PyDebugger.h"
 #include <configurationpanel.h>
 #include <wx/regex.h>
-
+#include <backtracedlg.h>
 
 
 // Register the plugin with Code::Blocks.
@@ -51,9 +51,9 @@ BEGIN_EVENT_TABLE(PyDebugger, cbDebuggerPlugin)
 ////    EVT_MENU(XRCID("idPyDebuggerMenuNext"),PyDebugger::OnNext)
 ////    EVT_MENU(XRCID("idPyDebuggerMenuStep"),PyDebugger::OnStep)
 ////    EVT_MENU(XRCID("idPyDebuggerMenuStop"),PyDebugger::OnStop)
-////    EVT_MENU(ID_LangMenu_DebugSendCommand,PyDebugger::OnSendCommand)
-////    EVT_MENU(ID_LangMenu_ShowWatch,PyDebugger::OnViewWatch)
-////    EVT_MENU(ID_LangMenu_UpdateWatch,PyDebugger::OnUpdateWatch)
+    EVT_MENU(ID_LangMenu_DebugSendCommand,PyDebugger::OnSendCommand)
+    EVT_MENU(ID_LangMenu_ShowWatch,PyDebugger::OnViewWatch)
+    EVT_MENU(ID_LangMenu_UpdateWatch,PyDebugger::OnUpdateWatch)
     EVT_END_PROCESS(ID_PipedProcess, PyDebugger::OnTerminatePipedProcess)
     EVT_TIMER(ID_TimerPollDebugger, PyDebugger::OnTimer)
 END_EVENT_TABLE()
@@ -178,7 +178,7 @@ wxString PyDebugger::AssembleBreakpointCommands()
             sfile=f.GetShortPath();
         }
         int line=(*itr)->GetLine();
-        wxString cmd=_T("break ")+sfile+_T(":")+wxString::Format(_T("%i"),line+1)+_T("\n");
+        wxString cmd=_T("break ")+sfile+_T(":")+wxString::Format(_T("%i"),line)+_T("\n");
         commands+=cmd;
     }
     return commands;
@@ -355,6 +355,51 @@ void PyDebugger::OnTimer(wxTimerEvent& event)
                     m_DebugLog->Append(logout);
                 }
             }
+            if(cmd.type==DBGCMDTYPE_CALLSTACK)
+            {
+                wxRegEx re;
+                re.Compile(_T("[> ] \\<string\\>\\(1\\)\\<module\\>\\(\\)\\n"),wxRE_ADVANCED);
+                if(!re.Matches(exprresult))
+                    break;
+                size_t start,len;
+                wxString matchstr;
+                re.GetMatch(&start,&len,0);
+                matchstr=exprresult.Mid(start+len);
+                re.Compile(_T("[> ] ([^\\n]*)\\((\\d+)\\)([^\\n]*)\\n\\-\\> ([^\\n]*)\\n"),wxRE_ADVANCED); // Group 1 is the file, Group 2 is the line location, Group 3 is the source of the current line
+                m_stackinfo.frames.clear();
+                int n=0;
+                while(true)
+                {
+                    if(!re.Matches(matchstr))
+                        break;
+                    wxString file=re.GetMatch(matchstr,1);
+                    wxString line=re.GetMatch(matchstr,2);
+//                    unsigned long line;
+//                    re.GetMatch(exprresult,2).ToULong(&line);
+                    wxString Module=re.GetMatch(matchstr,3);
+                    wxString Code=re.GetMatch(matchstr,4);
+                    bool active=(re.GetMatch(matchstr,0).Left(1)==_T(">"));
+                    m_changeposition=true;
+                    cbStackFrame f;
+                    f.SetFile(file,line);
+                    f.SetNumber(n);
+                    f.SetSymbol(Module);
+                    f.SetAddress(0);
+                    m_stackinfo.frames.push_back(f);
+                    if(active)
+                    {
+                        m_stackinfo.activeframe=n;
+                        m_curfile=file;
+                        line.ToULong(&m_curline);
+                    }
+                    re.GetMatch(&start,&len,0);
+                    matchstr=matchstr.Mid(start+len);
+                    n++;
+                }
+                DebuggerManager &dbg_manager = *Manager::Get()->GetDebuggerManager();
+                dbg_manager.GetBacktraceDialog()->Reload();
+            }
+
             if(debugoutputmode) //in debug output mode, dump everything to the debugger log
             {
                 m_DebugLog->Append(cmd.cmdtext);
@@ -505,7 +550,7 @@ bool PyDebugger::Debug(bool breakOnEntry)
     DispatchCommands(bpcommands,DBGCMDTYPE_BREAKPOINT,false);
     wxString wcommands=AssembleWatchCommands();
     DispatchCommands(wcommands,DBGCMDTYPE_WATCHEXPRESSION,false);
-    DispatchCommands(_T("w\n"),DBGCMDTYPE_FLOWCONTROL,true); //where
+    DispatchCommands(_T("w\n"),DBGCMDTYPE_CALLSTACK,true); //where
     m_DebuggerActive=true;
     return 0;
 }
@@ -516,7 +561,8 @@ void PyDebugger::Continue()
     {
         DispatchCommands(_T("cont\n"),DBGCMDTYPE_FLOWCONTROL,false);
         wxString wcommands=AssembleWatchCommands();
-        DispatchCommands(wcommands,DBGCMDTYPE_WATCHEXPRESSION,true);
+        DispatchCommands(wcommands,DBGCMDTYPE_WATCHEXPRESSION,false);
+        DispatchCommands(_T("w\n"),DBGCMDTYPE_CALLSTACK,true);
     }
 }
 
@@ -526,8 +572,14 @@ void PyDebugger::Next()
     {
         DispatchCommands(_T("next\n"),DBGCMDTYPE_FLOWCONTROL,false);
         wxString wcommands=AssembleWatchCommands();
-        DispatchCommands(wcommands,DBGCMDTYPE_WATCHEXPRESSION,true);
+        DispatchCommands(wcommands,DBGCMDTYPE_WATCHEXPRESSION,false);
+        DispatchCommands(_T("w\n"),DBGCMDTYPE_CALLSTACK,true);
     }
+}
+
+void PyDebugger::NextInstruction()
+{
+    Next();
 }
 
 void PyDebugger::Step()
@@ -536,9 +588,27 @@ void PyDebugger::Step()
     {
         DispatchCommands(_T("step\n"),DBGCMDTYPE_FLOWCONTROL,false);
         wxString wcommands=AssembleWatchCommands();
-        DispatchCommands(wcommands,DBGCMDTYPE_WATCHEXPRESSION,true);
+        DispatchCommands(wcommands,DBGCMDTYPE_WATCHEXPRESSION,false);
+        DispatchCommands(_T("w\n"),DBGCMDTYPE_CALLSTACK,true);
     }
 }
+
+void PyDebugger::StepIntoInstruction()
+{
+    Step();
+}
+
+void PyDebugger::StepOut()
+{
+    if(m_DebuggerActive)
+    {
+        DispatchCommands(_T("r\n"),DBGCMDTYPE_FLOWCONTROL,false);
+        wxString wcommands=AssembleWatchCommands();
+        DispatchCommands(wcommands,DBGCMDTYPE_WATCHEXPRESSION,false);
+        DispatchCommands(_T("w\n"),DBGCMDTYPE_CALLSTACK,true);
+    }
+}
+
 
 void PyDebugger::Stop()
 {
@@ -546,13 +616,43 @@ void PyDebugger::Stop()
     {
         if(m_TimerPollDebugger.IsRunning()) //TODO: there is a risk this will kill the process...
         {
-            char cmd=3; // send a ctrl-c message
-            m_ostream->Write(&cmd,1);
-        }
-        DispatchCommands(_T("exit\n"));
+            long pid = m_pp->GetPid();
+            if(wxProcess::Exists(pid))
+                wxProcess::Kill(pid,wxSIGKILL);
+//            char cmd=3; // send a ctrl-c message
+//            m_ostream->Write(&cmd,1);
+        } else
+            DispatchCommands(_T("exit\n"));
     }
     m_RunTarget=_("");
 }
+
+bool PyDebugger::RunToCursor(const wxString& filename, int line, const wxString& line_text)
+{
+    if(filename!=m_curfile)
+        return false;
+    if(!m_DebuggerActive)
+        return false;
+    DispatchCommands(wxString::Format(_T("until %i\n"),line),DBGCMDTYPE_FLOWCONTROL,false);
+    wxString wcommands=AssembleWatchCommands();
+    DispatchCommands(wcommands,DBGCMDTYPE_WATCHEXPRESSION,false);
+    DispatchCommands(_T("w\n"),DBGCMDTYPE_CALLSTACK,true);
+    return true;
+}
+
+void PyDebugger::SetNextStatement(const wxString& filename, int line)
+{
+    if(filename!=m_curfile)
+        return;
+    if(m_DebuggerActive)
+    {
+        DispatchCommands(wxString::Format(_T("j %i\n"),line),DBGCMDTYPE_FLOWCONTROL,false);
+        wxString wcommands=AssembleWatchCommands();
+        DispatchCommands(wcommands,DBGCMDTYPE_WATCHEXPRESSION,false);
+        DispatchCommands(_T("w\n"),DBGCMDTYPE_CALLSTACK,true);
+    }
+}
+
 
 cbBreakpoint* PyDebugger::GetBreakpoint(int index)
 {
@@ -640,6 +740,54 @@ void PyDebugger::DeleteAllBreakpoints()
     }
 }
 
+
+int PyDebugger::GetStackFrameCount() const
+{
+    return m_stackinfo.frames.size();
+}
+
+const cbStackFrame& PyDebugger::GetStackFrame(int index) const
+{
+    return m_stackinfo.frames[index];
+}
+
+void PyDebugger::SwitchToFrame(int number)
+{
+    if(number<0)
+        return;
+    if(number>=m_stackinfo.frames.size())
+    {
+        wxMessageBox(_("Frame out of bounds"));
+        return;
+    }
+    int frames_to_move = number - m_stackinfo.activeframe;
+    if(m_DebuggerActive) // if the debugger is running already we need to send a message to the interpreter to add the new breakpoint
+    {
+        if(frames_to_move>0)
+        {
+            for(int i=0;i<frames_to_move;++i)
+            {
+                wxString cmd=_T("down\n");
+                DispatchCommands(cmd,DBGCMDTYPE_OTHER,false);
+            }
+            DispatchCommands(_T("w\n"),DBGCMDTYPE_CALLSTACK,true);
+        }
+        if(frames_to_move<0)
+        {
+            for(int i=0;i<-frames_to_move;++i)
+            {
+                wxString cmd=_T("up\n");
+                DispatchCommands(cmd,DBGCMDTYPE_OTHER,false);
+            }
+            DispatchCommands(_T("w\n"),DBGCMDTYPE_CALLSTACK,true);
+        }
+    }
+}
+
+int PyDebugger::GetActiveStackFrame() const
+{
+    return m_stackinfo.activeframe;
+}
 
 void PyDebugger::OnRunPiped(wxCommandEvent &event)
 {

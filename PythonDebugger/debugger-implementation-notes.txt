@@ -13,11 +13,11 @@ Implement the host of virtuals using stubs.
 IMPLEMENTATION
 ----------------------------------------------------
 
-Plugin must keep track of: 
-* current file and line position (Framework will request by calling method GetCurrentState)
+Plugin must keep track of:
+* current file and line position (Framework will request by calling method GetCurrentPosition)
 * has the debugger started (Framework will request by calling method IsRunning)
 * paused on a breakpoint (Framework will request by calling method IsStopped)
-* 
+*
 
 Do normal plugin initialization in OnAttachReal (And realease it on OnReleaseReal). Make sure your plugin does not implement OnAttach or OnRelease.
 
@@ -29,3 +29,89 @@ EVENT HANDLING AND SIGNALLING
 PluginManager *plm = Manager::Get()->GetPluginManager();
 CodeBlocksEvent evt(cbEVT_DEBUGGER_PAUSED);
 plm->NotifyPlugins(evt);
+
+
+CHANGES TO THE SDK
+
+typedef std::tr1::shared_ptr<cbBreakpoint> Pointer;
+typedef std::vector<Pointer> BPList;
+
+
+struct cbBreakpointInternal
+{
+    public:
+        enum Type
+        {
+            Code,
+            Data
+        };
+        wxString m_filename;
+        wxString m_condition;
+        int m_line;
+        int m_ignoreCount;
+        Type m_type;
+        bool m_enabled;
+        bool m_useIgnoreCount;
+        bool m_useCondition;
+        wxString m_dataExpression;
+        bool m_breakOnRead;
+        bool m_breakOnWrite;
+};
+
+class cbBreakpoint:std::tr1::shared_ptr<cbBreakpointInternal>
+{
+    public:
+        cbBreakpoint();
+        cbBreakpoint(const wxString &filename, int line);
+        cbBreakpoint(const wxString &dataExpression, bool breakOnRead, bool breakOnWrite);
+        bool IsValid(); //returns false to indicate an invalid breakpoint (i.e. one that has not been added to the debuggers list of breakpoints)
+        void SetValid(bool); //If false sets the state of the breakpoint to invalid. The framework will interpret this as a non-existent breakpoint (it won't appear in UI etc)
+
+        void SetLine(int line);
+        void SetCondition(wxString const &condition);
+        void SetIgnoreCount(int count);
+        void SetEnabled(bool flag);
+        void SetUseIgnoreCount(bool flag);
+        void SetUseCondition(bool flag);
+
+        const wxString & GetFilename() const;
+        const wxString & GetCondition() const;
+        int GetLine() const;
+        int GetIgnoreCount() const;
+        Type GetType() const;
+        bool IsEnabled() const;
+        bool UseIgnoreCount() const;
+        bool UseCondition() const;
+
+        const wxString& GetDataExpression() const;
+        bool GetBreakOnRead() const;
+        bool GetBreakOnWrite() const;
+}
+
+class cbBreakpoint
+{
+    public:
+        cbBreakpoint();
+        cbBreakpoint(const wxString &filename, int line);
+        // ...
+    private:
+        std::tr1::shared_ptr<cbBreakpointInternal>
+}
+
+class BreakpointList
+{
+    cbBreakpoint &operator[](...); //array style access
+    int GetCount(); //returns number of breakpoints
+    cbBreakpoint Add(file, line);    //returns invalid breakpoint if request invalid
+    bool Remove(cbBreakpoint);  //returns true if successful
+    int Find(cbBreakpoint); //find index of breakpoint
+    void RemoveAll();
+}
+
+CURRENT BUGS
+---------------------------------------------------------------
+Breakpoints off by 1
+Stop does not kill process
+Breakpoints set while debugger running are not honored
+Watch does not use SDK-provided gui
+Need watch on hover

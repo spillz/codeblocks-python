@@ -30,7 +30,8 @@
 #define DBGCMDTYPE_WATCHEXPRESSION 3
 #define DBGCMDTYPE_EVALUATE 4
 #define DBGCMDTYPE_USERCOMMAND 5
-#define DBGCMDTYPE_OTHER 6
+#define DBGCMDTYPE_CALLSTACK 6
+#define DBGCMDTYPE_OTHER 7
 
 //class ConfigDialog;
 
@@ -39,15 +40,15 @@
 
 typedef std::set<int> BPLtype;
 
-struct FileBreakpoints
-{
-    wxString filename;
-    BPLtype linenums;
-};
-
 typedef std::tr1::shared_ptr<cbBreakpoint> Pointer;
-typedef std::vector<FileBreakpoints> BPList2;
 typedef std::vector<Pointer> BPList;
+typedef std::vector<cbStackFrame> StackList;
+
+struct StackInfo
+{
+    int activeframe;
+    StackList frames;
+};
 
 struct PythonCmdDispatchData
 {
@@ -76,25 +77,25 @@ class PyDebugger : public cbDebuggerPlugin
 //        virtual void Continue() = 0;
 //
 //        /** @brief Run the debugged program until it reaches the cursor at the current editor */
-        virtual bool RunToCursor(const wxString& filename, int line, const wxString& line_text) {return false;}
+//        virtual bool RunToCursor(const wxString& filename, int line, const wxString& line_text) {return false;}
 //
 //        /** @brief Sets the position of the Program counter to the specified filename:line */
-        virtual void SetNextStatement(const wxString& filename, int line) {}
+//        virtual void SetNextStatement(const wxString& filename, int line) {}
 //
 //        /** @brief Execute the next instruction and return control to the debugger. */
 //        virtual void Next() = 0;
 //
 //        /** @brief Execute the next instruction and return control to the debugger. */
-        virtual void NextInstruction() {}
+//        virtual void NextInstruction() {}
 //
 //        /** @brief Execute the next instruction and return control to the debugger, if the instruction is a function call step into it. */
-        virtual void StepIntoInstruction() {}
+//        virtual void StepIntoInstruction() {}
 //
 //        /** @brief Execute the next instruction, stepping into function calls if needed, and return control to the debugger. */
 //        virtual void Step() = 0;
 //
 //        /** @brief Execute the next instruction, stepping out of function calls if needed, and return control to the debugger. */
-        virtual void StepOut() {}
+//        virtual void StepOut() {}
 //
 //        /** @brief Break the debugging process (stop the debuggee for debugging). */
 //        virtual void Break() = 0;
@@ -112,10 +113,10 @@ class PyDebugger : public cbDebuggerPlugin
 //        virtual int GetExitCode() const  {}
 
         // stack frame calls;
-        virtual int GetStackFrameCount() const  {return 0;}
-        virtual const cbStackFrame& GetStackFrame(int index) const  {}
-        virtual void SwitchToFrame(int number)  {}
-        virtual int GetActiveStackFrame() const  {return 0;}
+        virtual int GetStackFrameCount() const;
+        virtual const cbStackFrame& GetStackFrame(int index) const;
+        virtual void SwitchToFrame(int number);
+        virtual int GetActiveStackFrame() const;
 
         // breakpoints calls
         /** @brief Request to add a breakpoint.
@@ -173,9 +174,14 @@ class PyDebugger : public cbDebuggerPlugin
         virtual bool Debug(bool breakOnEntry);
 		virtual void Continue();
 		virtual void Next();
+        virtual void NextInstruction();
 		virtual void Step();
+        virtual void StepIntoInstruction();
+        virtual void StepOut();
 		virtual void Stop();
 		virtual void Break() {}
+        virtual bool RunToCursor(const wxString& filename, int line, const wxString& line_text);
+        virtual void SetNextStatement(const wxString& filename, int line);
         bool IsRunning() const { return m_DebuggerActive; } /** Is the plugin currently debugging? */
         int GetExitCode() const { return 0; }
 // Misc Plugin Virtuals
@@ -252,6 +258,7 @@ class PyDebugger : public cbDebuggerPlugin
 
         // breakpoint list
         BPList m_bplist;
+        StackInfo m_stackinfo;
 
         bool m_DebuggerActive;
         wxString m_DefaultInterpreter;

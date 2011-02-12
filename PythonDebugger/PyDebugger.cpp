@@ -527,7 +527,8 @@ bool PyDebugger::Debug(bool breakOnEntry)
 //    ilShellTermEvent e;
 //    ProcessEvent(e);
     #else
-    if(!wxExecute(commandln,wxEXEC_ASYNC,m_pp))
+    m_pid=wxExecute(commandln,wxEXEC_ASYNC,m_pp);
+    if(!m_pid)
     {
         wxSetWorkingDirectory(olddir);
         return -1;
@@ -609,6 +610,22 @@ void PyDebugger::StepOut()
     }
 }
 
+void PyDebugger::Break()
+{
+    if(!m_DebuggerActive)
+        return;
+    if(IsStopped())
+        return;
+    if(m_TimerPollDebugger.IsRunning()) //TODO: there is a risk this will kill the process...
+    {
+        if(wxProcess::Exists(m_pid))
+            wxProcess::Kill(m_pid,wxSIGINT);
+        wxString wcommands=AssembleWatchCommands();
+        DispatchCommands(wcommands,DBGCMDTYPE_WATCHEXPRESSION,false);
+        DispatchCommands(_T("w\n"),DBGCMDTYPE_CALLSTACK,true);
+    }
+}
+
 
 void PyDebugger::Stop()
 {
@@ -616,11 +633,8 @@ void PyDebugger::Stop()
     {
         if(m_TimerPollDebugger.IsRunning()) //TODO: there is a risk this will kill the process...
         {
-            long pid = m_pp->GetPid();
-            if(wxProcess::Exists(pid))
-                wxProcess::Kill(pid,wxSIGKILL);
-//            char cmd=3; // send a ctrl-c message
-//            m_ostream->Write(&cmd,1);
+            if(wxProcess::Exists(m_pid))
+                wxProcess::Kill(m_pid,wxSIGKILL);
         } else
             DispatchCommands(_T("exit\n"));
     }
@@ -804,12 +818,13 @@ void PyDebugger::OnRunPiped(wxCommandEvent &event)
 
 void PyDebugger::OnTerminatePipedProcess(wxProcessEvent &event)
 {
-    wxMessageBox(_("Debug Terminated"));
-    m_DebugLog->Append(_T("\n*** SESSION TERMINATED ***"));
+//    wxMessageBox(_("Debug Terminated"));
     ClearActiveMarkFromAllEditors();
+    m_DispatchedCommands.clear();
     m_DebuggerActive=false;
     m_TimerPollDebugger.Stop();
     delete m_pp;
+    m_DebugLog->Append(_T("\n*** SESSION TERMINATED ***"));
 }
 
 void PyDebugger::OnSettings(wxCommandEvent& event)
@@ -1020,9 +1035,9 @@ void PyDebugger::BuildMenu(wxMenuBar* menuBar)
 	//NOTE: Be careful in here... The application's menubar is at your disposal.
 	LangMenu=new wxMenu;
 	CreateMenu();
-	int pos = menuBar->FindMenu(_T("Plugins"));
+	int pos = menuBar->FindMenu(_("P&lugins"));
 	if(pos!=wxNOT_FOUND)
-        menuBar->Insert(pos, LangMenu, _T("P&yDebug"));
+        menuBar->Insert(pos, LangMenu, _("P&yDebug"));
     else
     {
         delete LangMenu;

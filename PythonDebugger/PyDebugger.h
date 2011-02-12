@@ -179,7 +179,7 @@ class PyDebugger : public cbDebuggerPlugin
         virtual void StepIntoInstruction();
         virtual void StepOut();
 		virtual void Stop();
-		virtual void Break() {}
+		virtual void Break();
         virtual bool RunToCursor(const wxString& filename, int line, const wxString& line_text);
         virtual void SetNextStatement(const wxString& filename, int line);
         bool IsRunning() const { return m_DebuggerActive; } /** Is the plugin currently debugging? */
@@ -252,6 +252,7 @@ class PyDebugger : public cbDebuggerPlugin
         wxOutputStream *m_ostream;
         wxInputStream *m_istream;
         wxProcess *m_pp;
+        long m_pid;
         wxTimer m_TimerPollDebugger;
         int m_DebugCommandCount; //number of commands dispatched to the debugger that have yet to be handled
         std::list<PythonCmdDispatchData> m_DispatchedCommands;

@@ -633,7 +633,14 @@ bool PyDebugger::RunToCursor(const wxString& filename, int line, const wxString&
         return false;
     if(!m_DebuggerActive)
         return false;
-    DispatchCommands(wxString::Format(_T("until %i\n"),line),DBGCMDTYPE_FLOWCONTROL,false);
+    wxString sfile=filename;
+    if(sfile.Contains(_T(" ")))
+    {
+        wxFileName f(sfile);
+        sfile=f.GetShortPath();
+    }
+    DispatchCommands(_T("tbreak ")+sfile+wxString::Format(_T(":%i\n"),line),DBGCMDTYPE_FLOWCONTROL,false);
+    DispatchCommands(wxString::Format(_T("c\n"),line),DBGCMDTYPE_FLOWCONTROL,false);
     wxString wcommands=AssembleWatchCommands();
     DispatchCommands(wcommands,DBGCMDTYPE_WATCHEXPRESSION,false);
     DispatchCommands(_T("w\n"),DBGCMDTYPE_CALLSTACK,true);

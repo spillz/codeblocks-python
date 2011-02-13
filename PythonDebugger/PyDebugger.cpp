@@ -2,7 +2,7 @@
 #include <configurationpanel.h>
 #include <wx/regex.h>
 #include <backtracedlg.h>
-
+#include <cbstyledtextctrl.h>
 
 // Register the plugin with Code::Blocks.
 // We are using an anonymous namespace so we don't litter the global one.
@@ -247,13 +247,16 @@ wxString PyDebugger::AssembleAliasCommands()
 {
     wxString commands;
     //Print instance variables (usage "pi classInst")
+    //NB: \001 is the separator character used when parsing in OnTimer
     commands+=_T("alias pm1 print '%1: \\001',;print type(%1)\n");
     commands+=_T("alias pm2 for k in %1.__dict__.keys(): print '...',k,'\\001',type(k),'\\001',%1.__dict__[k],'\\002',\n");
     //Print variable name, type and value
     commands+=_T("alias ps print '%1 \\001',;print type(%1), '\\001', %1\n");
     //Print comment
     commands+=_T("alias pc print '%1'\n");
-    //NB: \001 is the separator character used when parsing in OnTimer
+
+    //Alias for creating tooltip watch output
+    commands+=_T("alias pw print '%1  ', type(%1),'  ', %1\n");
     return commands;
 }
 
@@ -330,6 +333,14 @@ void PyDebugger::OnTimer(wxTimerEvent& event)
 //                    m_WatchDlg->UpdateVariable(exprresult); //TODO: implement this
                 }
             }
+            if(cmd.type==DBGCMDTYPE_WATCHTOOLTIP)
+            {
+                if(reprompt.GetMatchCount()>1)
+                {
+                    SetWatchTooltip(exprresult);
+                }
+            }
+
             if(cmd.type==DBGCMDTYPE_FLOWCONTROL)
             {
                 wxRegEx re;
@@ -945,6 +956,8 @@ void PyDebugger::OnAttachReal()
 //    m_DebugLogPageIndex = msgMan->AddLog(m_DebugLog, _("PyDebugger"));
     m_WatchDlg = new DebuggerWatch(Manager::Get()->GetAppWindow(), this);
 
+    Manager::Get()->RegisterEventSink(cbEVT_EDITOR_TOOLTIP, new cbEventFunctor<PyDebugger, CodeBlocksEvent>(this, &PyDebugger::OnValueTooltip));
+
     CodeBlocksLogEvent evtlog(cbEVT_ADD_LOG_WINDOW,m_DebugLog, _("PyDebugger"));
     Manager::Get()->ProcessEvent(evtlog);
     CodeBlocksDockEvent evt(cbEVT_ADD_DOCK_WINDOW);
@@ -990,6 +1003,72 @@ void PyDebugger::OnReleaseReal(bool appShutDown)
     m_DebugLog = 0L;
 
 }
+
+void PyDebugger::SetWatchTooltip(const wxString &tip)
+{
+    EditorManager* edMan = Manager::Get()->GetEditorManager();
+    EditorBase* base = edMan->GetActiveEditor();
+    cbEditor* ed = base && base->IsBuiltinEditor() ? static_cast<cbEditor*>(base) : 0;
+    if (!ed)
+        return;
+    ed->GetControl()->CallTipShow(m_watch_tooltip_pos, tip);
+
+}
+void PyDebugger::OnValueTooltip(CodeBlocksEvent& event)
+{
+    event.Skip();
+    if (!m_DebuggerActive)
+        return;
+    if (!IsStopped())
+        return;
+//    if (!Manager::Get()->GetConfigManager(_T("debugger"))->ReadBool(_T("eval_tooltip"), false))
+//        return;
+
+    EditorBase* base = event.GetEditor();
+    cbEditor* ed = base && base->IsBuiltinEditor() ? static_cast<cbEditor*>(base) : 0;
+    if (!ed)
+        return;
+
+    if(ed->IsContextMenuOpened())
+    {
+    	return;
+    }
+
+	// get rid of other calltips (if any) [for example the code completion one, at this time we
+	// want the debugger value call/tool-tip to win and be shown]
+    if(ed->GetControl()->CallTipActive())
+    {
+    	ed->GetControl()->CallTipCancel();
+    }
+//
+//    const int style = event.GetInt();
+//    if (style != wxSCI_C_DEFAULT && style != wxSCI_C_OPERATOR && style != wxSCI_C_IDENTIFIER)
+//        return;
+//
+    wxPoint pt;
+    pt.x = event.GetX();
+    pt.y = event.GetY();
+    int pos = ed->GetControl()->PositionFromPoint(pt);
+    int start = ed->GetControl()->WordStartPosition(pos, true);
+    int end = ed->GetControl()->WordEndPosition(pos, true);
+    wxString token;
+    if (start >= ed->GetControl()->GetSelectionStart() &&
+        end <= ed->GetControl()->GetSelectionEnd())
+    {
+        token = ed->GetControl()->GetSelectedText();
+    }
+    else
+        token = ed->GetControl()->GetTextRange(start,end);
+    if (token.IsEmpty())
+        return;
+
+
+    wxString cmd;
+    cmd+=_T("pw ")+token+_T("\n");
+    DispatchCommands(cmd,DBGCMDTYPE_WATCHTOOLTIP,true);
+    m_watch_tooltip_pos=pos;
+}
+
 
 int PyDebugger::Configure()
 {

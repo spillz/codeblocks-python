@@ -28,10 +28,11 @@
 #define DBGCMDTYPE_FLOWCONTROL 1
 #define DBGCMDTYPE_BREAKPOINT 2
 #define DBGCMDTYPE_WATCHEXPRESSION 3
-#define DBGCMDTYPE_EVALUATE 4
-#define DBGCMDTYPE_USERCOMMAND 5
-#define DBGCMDTYPE_CALLSTACK 6
-#define DBGCMDTYPE_OTHER 7
+#define DBGCMDTYPE_WATCHTOOLTIP 4
+#define DBGCMDTYPE_EVALUATE 5
+#define DBGCMDTYPE_USERCOMMAND 6
+#define DBGCMDTYPE_CALLSTACK 7
+#define DBGCMDTYPE_OTHER 8
 
 //class ConfigDialog;
 
@@ -192,6 +193,10 @@ class PyDebugger : public cbDebuggerPlugin
         virtual cbConfigurationPanel* GetProjectConfigurationPanel(wxWindow* parent, cbProject* project){ return 0; } /** Return plugin's configuration panel for projects.*/
         virtual void BuildMenu(wxMenuBar* menuBar); /** add plugin items to the main menu bar*/
         virtual void BuildModuleMenu(const ModuleType type, wxMenu* menu, const FileTreeData* data = 0); /** add context menu items for the plugin*/
+
+        void OnValueTooltip(CodeBlocksEvent& event);
+        void SetWatchTooltip(const wxString &tip);
+
     protected:
 //        virtual void OnAttach();
 //        virtual void OnRelease(bool appShutDown);
@@ -241,6 +246,8 @@ class PyDebugger : public cbDebuggerPlugin
         unsigned long m_curline;
         wxString m_curfile;
         bool m_changeposition;
+
+        long m_watch_tooltip_pos;
 
         // Output from the debugger and program held in buffers
         wxString m_outbuf; //contains buffer of streamed output from Python console since last action

@@ -256,7 +256,7 @@ wxString PyDebugger::AssembleAliasCommands()
     commands+=_T("alias pc print '%1'\n");
 
     //Alias for creating tooltip watch output
-    commands+=_T("alias pw print '%1  ', type(%1),'  ', %1\n");
+    commands+=_T("alias pw print '%1',type(%1);print %1\n");
     return commands;
 }
 
@@ -337,7 +337,34 @@ void PyDebugger::OnTimer(wxTimerEvent& event)
             {
                 if(reprompt.GetMatchCount()>1)
                 {
-                    SetWatchTooltip(exprresult);
+                    wxString output;
+                    wxString lines=exprresult;
+                    if(lines.EndsWith(_T("\n")))
+                        lines=lines.Left(lines.Length()-1);
+                    int i=0;
+                    int def_end=0;
+                    while(lines!=_T(""))
+                    {
+                        if(i==1)
+                            def_end=output.Length();
+                        if(i>0)
+                            output+=_T("\n");
+                        wxString line=lines.BeforeFirst(_T('\n'));
+                        lines=lines.AfterFirst(_T('\n'));
+                        output+=line;
+                        i++;
+                        if(i>10)
+                            break;
+                    }
+                    if(lines!=_T(""))
+                    {
+                        if(lines.BeforeLast(_T('\n'))!=_T(""))
+                            output+=_T("\n...");
+                        output+=_T("\n")+lines.AfterLast(_T('\n'));
+                    }
+//                    exprresult.Replace(_T("\t"),_T("\\t"),true);
+//                    exprresult.Replace(_T("\n"),_T("\\n"),true);
+                    SetWatchTooltip(output, def_end);
                 }
             }
 
@@ -1004,7 +1031,7 @@ void PyDebugger::OnReleaseReal(bool appShutDown)
 
 }
 
-void PyDebugger::SetWatchTooltip(const wxString &tip)
+void PyDebugger::SetWatchTooltip(const wxString &tip, int definition_length)
 {
     EditorManager* edMan = Manager::Get()->GetEditorManager();
     EditorBase* base = edMan->GetActiveEditor();
@@ -1012,8 +1039,10 @@ void PyDebugger::SetWatchTooltip(const wxString &tip)
     if (!ed)
         return;
     ed->GetControl()->CallTipShow(m_watch_tooltip_pos, tip);
+    ed->GetControl()->CallTipSetHighlight(0,definition_length);
 
 }
+
 void PyDebugger::OnValueTooltip(CodeBlocksEvent& event)
 {
     event.Skip();
@@ -1040,17 +1069,19 @@ void PyDebugger::OnValueTooltip(CodeBlocksEvent& event)
     {
     	ed->GetControl()->CallTipCancel();
     }
-//
-//    const int style = event.GetInt();
-//    if (style != wxSCI_C_DEFAULT && style != wxSCI_C_OPERATOR && style != wxSCI_C_IDENTIFIER)
-//        return;
-//
+
+    const int style = event.GetInt();
+    if (style != wxSCI_P_DEFAULT && style != wxSCI_P_OPERATOR && style != wxSCI_P_IDENTIFIER && style != wxSCI_P_CLASSNAME)
+        return;
+
     wxPoint pt;
     pt.x = event.GetX();
     pt.y = event.GetY();
     int pos = ed->GetControl()->PositionFromPoint(pt);
     int start = ed->GetControl()->WordStartPosition(pos, true);
     int end = ed->GetControl()->WordEndPosition(pos, true);
+    while(ed->GetControl()->GetCharAt(start-1)==_T('.'))
+        start=ed->GetControl()->WordStartPosition(start-2, true);
     wxString token;
     if (start >= ed->GetControl()->GetSelectionStart() &&
         end <= ed->GetControl()->GetSelectionEnd())
@@ -1061,7 +1092,6 @@ void PyDebugger::OnValueTooltip(CodeBlocksEvent& event)
         token = ed->GetControl()->GetTextRange(start,end);
     if (token.IsEmpty())
         return;
-
 
     wxString cmd;
     cmd+=_T("pw ")+token+_T("\n");

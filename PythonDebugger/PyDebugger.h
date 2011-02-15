@@ -195,7 +195,7 @@ class PyDebugger : public cbDebuggerPlugin
         virtual void BuildModuleMenu(const ModuleType type, wxMenu* menu, const FileTreeData* data = 0); /** add context menu items for the plugin*/
 
         void OnValueTooltip(CodeBlocksEvent& event);
-        void SetWatchTooltip(const wxString &tip);
+        void SetWatchTooltip(const wxString &tip, int definition_length);
 
     protected:
 //        virtual void OnAttach();

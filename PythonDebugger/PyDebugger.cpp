@@ -3,6 +3,7 @@
 #include <wx/regex.h>
 #include <backtracedlg.h>
 #include <cbstyledtextctrl.h>
+#include <watchesdlg.h>
 
 // Register the plugin with Code::Blocks.
 // We are using an anonymous namespace so we don't litter the global one.
@@ -44,16 +45,7 @@ int ID_LangMenu_RunPiped = wxNewId();//XRCID("idPyDebuggerMenuDebug");
 
 // events handling
 BEGIN_EVENT_TABLE(PyDebugger, cbDebuggerPlugin)
-	// add any events you want to handle here
-////    EVT_MENU(ID_LangMenu_Run,PyDebugger::OnRun)
-////    EVT_MENU(ID_LangMenu_RunPiped,PyDebugger::OnDebugTarget)
-////    EVT_MENU(XRCID("idPyDebuggerMenuDebug"),PyDebugger::OnContinue)
-////    EVT_MENU(XRCID("idPyDebuggerMenuNext"),PyDebugger::OnNext)
-////    EVT_MENU(XRCID("idPyDebuggerMenuStep"),PyDebugger::OnStep)
-////    EVT_MENU(XRCID("idPyDebuggerMenuStop"),PyDebugger::OnStop)
     EVT_MENU(ID_LangMenu_DebugSendCommand,PyDebugger::OnSendCommand)
-    EVT_MENU(ID_LangMenu_ShowWatch,PyDebugger::OnViewWatch)
-    EVT_MENU(ID_LangMenu_UpdateWatch,PyDebugger::OnUpdateWatch)
     EVT_END_PROCESS(ID_PipedProcess, PyDebugger::OnTerminatePipedProcess)
     EVT_TIMER(ID_TimerPollDebugger, PyDebugger::OnTimer)
 END_EVENT_TABLE()
@@ -186,59 +178,15 @@ wxString PyDebugger::AssembleBreakpointCommands()
 
 
 wxString PyDebugger::AssembleWatchCommands()
-{ //TODO: get this working
+{
     wxString commands;
-    wxString watchtext=m_WatchDlg->m_WatchText->GetValue();
-    wxRegEx re,re1,re2,re3,re4;
-    //Not sure regexes are really required, something simpler would also work...
-    re1.Compile(_T("^ *([^\\t]*)(\\t.*)*"),wxRE_ADVANCED); // evaluate expression: syntax "expr = value" expr may contain == so regex must only match on single =
-    re2.Compile(_T("^ *([^\\t]*)\\: *(\\t.*)*$"),wxRE_ADVANCED); // evaluate members: syntax "objname:"
-    re3.Compile(_T("^ *[\\.\\*]"),wxRE_ADVANCED); // subordinates of object in the form ".varname\tvalue" and errors will be deleted
-    re4.Compile(_T("^ *(\\#.*)"),wxRE_ADVANCED); // comment line syntax "# blah blah blah" no command processing
 
-    //pull one line at a time and look for a regex match in each line
-    while( watchtext.Len()>0 )
-    {
-        int watchtextpos=watchtext.Find(_T("\n"));
-        wxString watchline;
-        if(watchtextpos<0) // not found
-        {
-            watchline=watchtext;
-            watchtext=_("");
-        } else
-        {
-            watchline=(watchtextpos==0?_T(""):watchtext.Mid(0,watchtextpos));
-            watchtext=watchtext.Mid(watchtextpos+1);
-        }
-        wxString expr, cmd;
-        if(watchline.Len()==0)
-            continue;
-        if(re4.Matches(watchline))
-        {
-            expr=re4.GetMatch(watchline,1);
-            expr.Replace(_T("\t"),_T("\001"));
-            cmd=_T("pc ")+expr+_T("\n");
-            commands+=cmd;
-            continue;
-        }
-        if(re3.Matches(watchline))
-            continue;
-        if(re2.Matches(watchline)&&re2.GetMatchCount()>=2)
-        {
-            expr=re2.GetMatch(watchline,1);
-            cmd=_T("pm1 ")+expr+_T("\n")+_T("pm2 ")+expr+_T("\n");
-            commands+=cmd;
-            continue;
-        }
-        if(re1.Matches(watchline)&&re1.GetMatchCount()>=2)
-        {
-            expr=re1.GetMatch(watchline,1);
-            if(expr==_T(""))
-                continue;
-            cmd=_T("ps ")+expr+_T("\n");
-            commands+=cmd;
-            continue;
-        }
+    for (unsigned int i=0;i<m_watchlist.size();++i)
+    { //TODO: ITERATE INTO CHILD WATCHES
+        PythonWatch *w=m_watchlist[i].get();
+        wxString s;
+        w->GetSymbol(s);
+        commands+=_T("ps ")+s+_T("\n");
     }
     return commands;
 }
@@ -251,7 +199,7 @@ wxString PyDebugger::AssembleAliasCommands()
     commands+=_T("alias pm1 print '%1: \\001',;print type(%1)\n");
     commands+=_T("alias pm2 for k in %1.__dict__.keys(): print '...',k,'\\001',type(k),'\\001',%1.__dict__[k],'\\002',\n");
     //Print variable name, type and value
-    commands+=_T("alias ps print '%1 \\001',;print type(%1), '\\001', %1\n");
+    commands+=_T("alias ps print '%1\\001',;print str(type(%1))+'\\001',;print %1\n");
     //Print comment
     commands+=_T("alias pc print '%1'\n");
 
@@ -320,17 +268,34 @@ void PyDebugger::OnTimer(wxTimerEvent& event)
             wxString exprresult=reprompt.GetMatch(m_outdebugbuf.Mid(m_debugbufpos),1);
             if(cmd.type==DBGCMDTYPE_WATCHEXPRESSION)
             {
+                /*commands+=_T("alias ps print '%1 \\001',;print type(%1), '\\001', %1\n");*/
                 // exprresult;
                 if(reprompt.GetMatchCount()>1)
                 {
+                    exprresult.RemoveLast();
                     exprresult.Replace(_T("\t"),_T("\\t"),true);
                     exprresult.Replace(_T("\n"),_T("\\n"),true);
-                    exprresult.Replace(_T(" \001 "),_T("\t"),true);
-                    exprresult.Replace(_T(" \002"),_T("\n"),true);
-                    if(exprresult.Mid(exprresult.Len()-2,2)==_T("\\n"))
-                        exprresult=exprresult.Mid(0,exprresult.Len()-2);
-                    m_watchstr+=exprresult+_T("\n");
-//                    m_WatchDlg->UpdateVariable(exprresult); //TODO: implement this
+                    wxString symbol=exprresult.BeforeFirst(_T('\001'));
+                    exprresult=exprresult.AfterFirst(_T('\001'));
+                    wxString type=exprresult.BeforeFirst(_T('\001'));
+                    wxString value=exprresult.AfterFirst(_T('\001'));
+                    for(int i=0;i<m_watchlist.size();++i)
+                    {
+                        PythonWatch *p;
+                        wxString s;
+                        m_watchlist[i].get()->GetSymbol(s);
+                        if (s==symbol)
+                            p=m_watchlist[i].get();
+                        else
+                            p=dynamic_cast<PythonWatch*>(m_watchlist[i]->FindChild(symbol));
+                        if(p)
+                        {
+                            p->SetType(type);
+                            p->SetValue(value);
+                        }
+                    }
+                    DebuggerManager &dbg_manager = *Manager::Get()->GetDebuggerManager();
+                    dbg_manager.GetWatchesDialog()->UpdateWatches();
                 }
             }
             if(cmd.type==DBGCMDTYPE_WATCHTOOLTIP)
@@ -476,9 +441,6 @@ void PyDebugger::OnTimer(wxTimerEvent& event)
             m_outprogbuf=_T("");
             m_progbufpos=0;
             m_TimerPollDebugger.Stop();
-            if(m_watchstr!=_T(""))
-                m_WatchDlg->m_WatchText->SetValue(m_watchstr);
-            m_watchstr=_T("");
         }
     }
 }
@@ -534,7 +496,6 @@ bool PyDebugger::Debug(bool breakOnEntry)
     m_outbuf=_T("");
     m_outdebugbuf=_T("");
     m_outprogbuf=_T("");
-    m_watchstr=_T("");
     ReadPluginConfig();
     if(!m_RunTarget)
     {
@@ -800,6 +761,68 @@ void PyDebugger::DeleteAllBreakpoints()
 }
 
 
+cbWatch* PyDebugger::AddWatch(const wxString& symbol)
+{
+    PythonWatch::Pointer pwatch(new PythonWatch(symbol));
+    m_watchlist.push_back(pwatch);
+
+    if(IsRunning())
+        DispatchCommands(_T("ps ")+symbol+_T("\n"),DBGCMDTYPE_WATCHEXPRESSION);
+    return pwatch.get();
+}
+
+void PyDebugger::DeleteWatch(cbWatch *watch)
+{
+    //this will delete the root node of watch
+    //TODO: Why do we need to delete root node?
+    cbWatch *root_watch = GetRootWatch(watch);
+    unsigned int i;
+    for (i=0;i<m_watchlist.size();++i)
+    {
+        if (m_watchlist[i].get()==root_watch)
+            break;
+    }
+    if(i==m_watchlist.size())
+        return;
+
+    m_watchlist.erase(m_watchlist.begin()+i);
+}
+
+bool PyDebugger::HasWatch(cbWatch *watch)
+{
+    cbWatch *root_watch = GetRootWatch(watch);
+    unsigned int i;
+    for (i=0;i<m_watchlist.size();++i)
+    {
+        if (m_watchlist[i].get()==root_watch)
+            break;
+    }
+    return i<m_watchlist.size();
+}
+
+void PyDebugger::ShowWatchProperties(cbWatch *watch)
+{
+}
+
+bool PyDebugger::SetWatchValue(cbWatch *watch, const wxString &value)
+{
+    return false;
+}
+
+void PyDebugger::ExpandWatch(cbWatch *watch)
+{
+}
+
+void PyDebugger::CollapseWatch(cbWatch *watch)
+{
+}
+
+void PyDebugger::OnWatchesContextMenu(wxMenu &menu, const cbWatch &watch, wxObject *property)
+{
+}
+
+
+
 int PyDebugger::GetStackFrameCount() const
 {
     return m_stackinfo.frames.size();
@@ -913,30 +936,6 @@ void PyDebugger::OnRun(wxCommandEvent& event)
 }
 
 
-void PyDebugger::OnViewWatch(wxCommandEvent& event)
-{
-    // This toggles display of watch
-    CodeBlocksDockEvent evt(event.IsChecked() ? cbEVT_SHOW_DOCK_WINDOW : cbEVT_HIDE_DOCK_WINDOW);
-    evt.pWindow = m_WatchDlg;
-    Manager::Get()->ProcessEvent(evt);
-
-    //TODO: Any required watch processing before watch is shown
-//    if (event.IsChecked())
-//        DoWatches();
-}
-
-
-void PyDebugger::OnUpdateWatch(wxCommandEvent& event)
-{
-    if(m_DebuggerActive)
-    {
-        wxString wcommands=AssembleWatchCommands();
-        DispatchCommands(wcommands,DBGCMDTYPE_WATCHEXPRESSION,true);
-    }
-}
-
-
-
 // constructor
 PyDebugger::PyDebugger()
 {
@@ -949,7 +948,6 @@ PyDebugger::PyDebugger()
     }
     m_DebuggerActive=false;
     m_RunTargetSelected=false;
-    m_WatchDlg=NULL;
 
 }
 
@@ -977,31 +975,15 @@ void PyDebugger::OnAttachReal()
 	// (see: does not need) this plugin...
     this->ReadPluginConfig();
     this->UpdateConfig();
-//    m_HasDebugLog = Manager::Get()->GetConfigManager(_T("debugger"))->ReadBool(_T("debug_log"), false);
-//    MessageManager* msgMan = Manager::Get()->GetMessageManager();
     m_DebugLog = new TextCtrlLogger(true);
-//    m_DebugLogPageIndex = msgMan->AddLog(m_DebugLog, _("PyDebugger"));
-    m_WatchDlg = new DebuggerWatch(Manager::Get()->GetAppWindow(), this);
 
     Manager::Get()->RegisterEventSink(cbEVT_EDITOR_TOOLTIP, new cbEventFunctor<PyDebugger, CodeBlocksEvent>(this, &PyDebugger::OnValueTooltip));
 
     CodeBlocksLogEvent evtlog(cbEVT_ADD_LOG_WINDOW,m_DebugLog, _("PyDebugger"));
     Manager::Get()->ProcessEvent(evtlog);
-    CodeBlocksDockEvent evt(cbEVT_ADD_DOCK_WINDOW);
-    evt.name = _T("Python Watch");
-    evt.title = _T("Python Watch");
-    evt.pWindow = m_WatchDlg;
-    evt.dockSide = CodeBlocksDockEvent::dsFloating;
-    evt.desiredSize.Set(150, 250);
-    evt.floatingSize.Set(150, 250);
-    evt.minimumSize.Set(150, 150);
-    Manager::Get()->ProcessEvent(evt);
+
     DebuggerManager &dbg_manager = *Manager::Get()->GetDebuggerManager();
     dbg_manager.RegisterDebugger(this, _T("python"));
-    // set log image
-    // wxString prefix = ConfigManager::GetDataFolder() + _T("/images/");
-    //bmp = cbLoadBitmap(prefix + _T("contents_16x16.png"), wxBITMAP_TYPE_PNG);
-    //Manager::Get()->GetMessageManager()->SetLogImage(m_pDbgLog, bmp);
 
 }
 
@@ -1013,21 +995,14 @@ void PyDebugger::OnReleaseReal(bool appShutDown)
 	// NOTE: after this function, the inherited member variable
 	// m_IsAttached will be FALSE...
 
-	//TODO: Handle destruction of any running python processes? (Maybe not necessary...)
-	//TODO: Destroy any other objects that aren't cleaned up by the framework?
-
-    if (m_WatchDlg)
-    {
-        CodeBlocksDockEvent evt(cbEVT_REMOVE_DOCK_WINDOW);
-        evt.pWindow = m_WatchDlg;
-        Manager::Get()->ProcessEvent(evt);
-        m_WatchDlg->Destroy();
-    }
-    m_WatchDlg = 0L;
+	//TODO: Handle destruction of any running python debugger processes? (Maybe not necessary...)
 
     CodeBlocksLogEvent evt(cbEVT_REMOVE_LOG_WINDOW,m_DebugLog);
     Manager::Get()->ProcessEvent(evt);
     m_DebugLog = 0L;
+
+    DebuggerManager &dbg_manager = *Manager::Get()->GetDebuggerManager();
+    dbg_manager.UnregisterDebugger(this);
 
 }
 
@@ -1050,8 +1025,6 @@ void PyDebugger::OnValueTooltip(CodeBlocksEvent& event)
         return;
     if (!IsStopped())
         return;
-//    if (!Manager::Get()->GetConfigManager(_T("debugger"))->ReadBool(_T("eval_tooltip"), false))
-//        return;
 
     EditorBase* base = event.GetEditor();
     cbEditor* ed = base && base->IsBuiltinEditor() ? static_cast<cbEditor*>(base) : 0;
@@ -1125,8 +1098,8 @@ void PyDebugger::CreateMenu()
 //    LangMenu->Append(XRCID("idPyDebuggerMenuStep"),_T("Step &Into"),_T(""));
 //    LangMenu->Append(XRCID("idPyDebuggerMenuStop"),_T("&Stop"),_T(""));
     LangMenu->Append(ID_LangMenu_DebugSendCommand,_T("&Send Debugger Command"),_T(""));
-    LangMenu->Append(ID_LangMenu_ShowWatch,_T("Toggle &Watch"),_T(""),wxITEM_CHECK);
-    LangMenu->Append(ID_LangMenu_UpdateWatch,_T("&Update Watch"),_T(""));
+//    LangMenu->Append(ID_LangMenu_ShowWatch,_T("Toggle &Watch"),_T(""),wxITEM_CHECK);
+//    LangMenu->Append(ID_LangMenu_UpdateWatch,_T("&Update Watch"),_T(""));
 }
 
 

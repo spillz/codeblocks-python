@@ -45,6 +45,57 @@ typedef std::tr1::shared_ptr<cbBreakpoint> Pointer;
 typedef std::vector<Pointer> BPList;
 typedef std::vector<cbStackFrame> StackList;
 
+class PythonWatch:public cbWatch
+{
+
+    public:
+        typedef std::tr1::shared_ptr<PythonWatch> Pointer;
+        PythonWatch(wxString const &symbol) :
+            m_symbol(symbol),
+            m_has_been_expanded(false)
+        {
+        }
+
+        void Reset()
+        {
+            m_id = m_type = m_value = wxEmptyString;
+            m_has_been_expanded = false;
+
+            RemoveChildren();
+            Expand(false);
+        }
+
+        wxString const & GetID() const { return m_id; }
+        void SetID(wxString const &id) { m_id = id; }
+
+        bool HasBeenExpanded() const { return m_has_been_expanded; }
+        void SetHasBeenExpanded(bool expanded) { m_has_been_expanded = expanded; }
+        virtual void GetSymbol(wxString &symbol) const { symbol = m_symbol; }
+        virtual void GetValue(wxString &value) const { value = m_value; }
+        virtual bool SetValue(const wxString &value) { m_value = value; return true; }
+        virtual void GetFullWatchString(wxString &full_watch) const { full_watch = m_value; }
+        virtual void GetType(wxString &type) const { type = m_type; }
+        virtual void SetType(const wxString &type) { m_type = type; }
+
+        virtual wxString const & GetDebugString() const
+        {
+            m_debug_string = m_id + wxT("->") + m_symbol + wxT(" = ") + m_value;
+            return m_debug_string;
+        }
+	protected:
+        virtual void DoDestroy() {}
+    private:
+        wxString m_id;
+        wxString m_symbol;
+        wxString m_value;
+        wxString m_type;
+        mutable wxString m_debug_string;
+        bool m_has_been_expanded;
+};
+
+typedef std::vector<PythonWatch::Pointer> PythonWatchesContainer;
+
+
 struct StackInfo
 {
     int activeframe;
@@ -145,15 +196,14 @@ class PyDebugger : public cbDebuggerPlugin
         virtual bool SwitchToThread(int thread_number)  {return false;}
 
         // watches
-        virtual cbWatch* AddWatch(const wxString& symbol)  {return NULL;}
-        virtual void DeleteWatch(cbWatch *watch)  {}
-        virtual bool HasWatch(cbWatch *watch)  {return false;}
-        virtual void ShowWatchProperties(cbWatch *watch)  {}
-        virtual bool SetWatchValue(cbWatch *watch, const wxString &value)  {return false;}
-        virtual void ExpandWatch(cbWatch *watch)  {}
-        virtual void CollapseWatch(cbWatch *watch)  {}
-
-        virtual void OnWatchesContextMenu(wxMenu &menu, const cbWatch &watch, wxObject *property) {};
+        virtual cbWatch* AddWatch(const wxString& symbol);
+        virtual void DeleteWatch(cbWatch *watch);
+        virtual bool HasWatch(cbWatch *watch);
+        virtual void ShowWatchProperties(cbWatch *watch);
+        virtual bool SetWatchValue(cbWatch *watch, const wxString &value);
+        virtual void ExpandWatch(cbWatch *watch);
+        virtual void CollapseWatch(cbWatch *watch);
+        virtual void OnWatchesContextMenu(wxMenu &menu, const cbWatch &watch, wxObject *property);
 
         virtual void SendCommand(const wxString& cmd, bool debugLog)  {}
 
@@ -224,8 +274,6 @@ class PyDebugger : public cbDebuggerPlugin
         void OnPipedOutput(wxCommandEvent& event);
         void OnIdle(wxIdleEvent& event);
         void OnTimer(wxTimerEvent& event);
-        void OnViewWatch(wxCommandEvent& event);
-        void OnUpdateWatch(wxCommandEvent& event);
         void ReadPluginConfig();
         void WritePluginConfig();
         bool IsPythonFile(const wxString &file) const;
@@ -266,7 +314,8 @@ class PyDebugger : public cbDebuggerPlugin
 
         // breakpoint list
         BPList m_bplist;
-        StackInfo m_stackinfo;
+        StackInfo m_stackinfo; //call stack
+        PythonWatchesContainer m_watchlist;
 
         bool m_DebuggerActive;
         wxString m_DefaultInterpreter;
@@ -276,9 +325,6 @@ class PyDebugger : public cbDebuggerPlugin
 
         TextCtrlLogger *m_DebugLog; // pointer to the text log (initialized with OnAttach)
         int m_DebugLogPageIndex; //page index of the debug log
-
-        DebuggerWatch *m_WatchDlg;
-        wxString m_watchstr;
 
         wxString m_RunTarget;
         bool m_RunTargetSelected;

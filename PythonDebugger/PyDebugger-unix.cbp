@@ -11,7 +11,7 @@
 				<Option working_dir="$(#cb)/devel" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option parameters="--personality=debug" />
+				<Option parameters="--personality=debug --multiple-instance -ns -ni" />
 				<Option host_application="$(#cb)/devel/run.sh" />
 				<Compiler>
 					<Add option="-g" />
@@ -51,21 +51,24 @@
 		<Unit filename="ConfigDialog.h" />
 		<Unit filename="PyDebugger.cpp" />
 		<Unit filename="PyDebugger.h" />
-		<Unit filename="Resources/dialogs.fbp">
-			<Option target="default" />
-		</Unit>
+		<Unit filename="Resources/dialogs.fbp" />
 		<Unit filename="dialogs.cpp" />
 		<Unit filename="dialogs.h" />
-		<Unit filename="manifest.xml">
-			<Option target="default" />
-		</Unit>
-		<Unit filename="pdb2.py">
-			<Option target="default" />
-		</Unit>
+		<Unit filename="manifest.xml" />
+		<Unit filename="pdb2.py" />
 		<Extensions>
 			<code_completion />
 			<envvars />
 			<debugger />
+			<DoxyBlocks>
+				<comment_style block="0" line="0" />
+				<doxyfile_project />
+				<doxyfile_build />
+				<doxyfile_warnings />
+				<doxyfile_output />
+				<doxyfile_dot />
+				<general />
+			</DoxyBlocks>
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

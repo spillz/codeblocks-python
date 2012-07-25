@@ -30,15 +30,12 @@
 #define DBGCMDTYPE_BREAKPOINT 2
 #define DBGCMDTYPE_WATCHEXPRESSION 3
 #define DBGCMDTYPE_WATCHTOOLTIP 4
-#define DBGCMDTYPE_EVALUATE 5
-#define DBGCMDTYPE_USERCOMMAND 6
-#define DBGCMDTYPE_CALLSTACK 7
-#define DBGCMDTYPE_OTHER 8
+#define DBGCMDTYPE_WATCHGETCHILDREN 5
+#define DBGCMDTYPE_EVALUATE 6
+#define DBGCMDTYPE_USERCOMMAND 7
+#define DBGCMDTYPE_CALLSTACK 8
+#define DBGCMDTYPE_OTHER 9
 
-//class ConfigDialog;
-
-//class InterpreterCollection;
-#include <tr1/memory>
 
 typedef std::set<int> BPLtype;
 
@@ -361,7 +358,6 @@ class PyDebugger : public cbDebuggerPlugin
         // breakpoint list
         BPList m_bplist;
         StackInfo m_stackinfo; //call stack
-//        PythonWatchesContainer m_watchlist;
         PythonWatchesContainer m_watchlist;
 
         bool m_DebuggerActive;

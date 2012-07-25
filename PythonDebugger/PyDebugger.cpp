@@ -194,10 +194,10 @@ wxString PyDebugger::AssembleWatchCommands()
 wxString PyDebugger::AssembleAliasCommands()
 {
     wxString commands;
-    //Print instance variables (usage "pi classInst")
     //NB: \001 is the separator character used when parsing in OnTimer
-    commands+=_T("alias pm1 print '%1: \\001',;print type(%1)\n");
-    commands+=_T("alias pm2 for k in %1.__dict__.keys(): print '...',k,'\\001',type(k),'\\001',%1.__dict__[k],'\\002',\n");
+
+    //Print variables associated with a child
+    commands+=_T("alias pm for x in %1.__dict__: print '%s\\001%s\\001'%(x,type(%1.__dict__[x])),%1.__dict__[x],'\\001',\n");
     //Print variable name, type and value
     commands+=_T("alias ps print '%1\\001',;print str(type(%1))+'\\001',;print %1\n");
     //Print comment
@@ -266,11 +266,14 @@ void PyDebugger::OnTimer(wxTimerEvent& event)
             }
             wxString logout=reprompt.GetMatch(m_outdebugbuf.Mid(m_debugbufpos),0);
             wxString exprresult=reprompt.GetMatch(m_outdebugbuf.Mid(m_debugbufpos),1);
-            if(cmd.type==DBGCMDTYPE_WATCHEXPRESSION)
+            reprompt.GetMatch(&start,&len);
+            m_debugbufpos+=start+len;
+            if(reprompt.GetMatchCount()<=1)
+                continue;
+
+            switch(cmd.type)
             {
-                /*commands+=_T("alias ps print '%1 \\001',;print type(%1), '\\001', %1\n");*/
-                // exprresult;
-                if(reprompt.GetMatchCount()>1)
+                case DBGCMDTYPE_WATCHEXPRESSION:
                 {
                     exprresult.RemoveLast();
                     exprresult.Replace(_T("\t"),_T("\\t"),true);
@@ -296,12 +299,60 @@ void PyDebugger::OnTimer(wxTimerEvent& event)
                     }
                     DebuggerManager &dbg_manager = *Manager::Get()->GetDebuggerManager();
                     dbg_manager.GetWatchesDialog()->UpdateWatches();
+                    break;
                 }
-            }
-            if(cmd.type==DBGCMDTYPE_WATCHTOOLTIP)
-            {
-                if(reprompt.GetMatchCount()>1)
+                case DBGCMDTYPE_WATCHGETCHILDREN:
                 {
+                    if(reprompt.GetMatchCount()<=1)
+                        break;
+                    exprresult.RemoveLast();
+                    exprresult.Replace(_T("\t"),_T("\\t"),true);
+                    exprresult.Replace(_T("\n"),_T("\\n"),true);
+//                    wxString childtag=exprresult.BeforeFirst(_T('\001'));
+//                    if(childtag!=_T("children"))
+//                        break;
+//                    exprresult=exprresult.AfterFirst(_T('\001'));
+//                    wxString parentsymbol=exprresult.BeforeFirst(_T('\001'));
+                    wxString parentsymbol=cmd.cmdtext.AfterFirst(_T(' '));
+                    parentsymbol=parentsymbol.BeforeLast(_T('\n'));
+
+                    //Find the parent watch and remove it's children
+                    PythonWatch::Pointer parentwatch;
+                    PythonWatchesContainer::iterator it;
+                    for(it=m_watchlist.begin();it!=m_watchlist.end();it++)
+                    {
+                        wxString symbol;
+                        (*it)->GetSymbol(symbol);
+                        if(symbol==parentsymbol)
+                            parentwatch=*it;
+                            break;
+                    }
+                    if(it==m_watchlist.end())
+                        break;
+                    parentwatch->RemoveChildren();
+
+                    //Now add the newly updated children
+                    while(exprresult.Len()>0)
+                    {
+                        wxString symbol=exprresult.BeforeFirst(_T('\001'));
+                        exprresult=exprresult.AfterFirst(_T('\001'));
+                        wxString type=exprresult.BeforeFirst(_T('\001'));
+                        exprresult=exprresult.AfterFirst(_T('\001'));
+                        wxString value=exprresult.BeforeFirst(_T('\001'));
+                        exprresult=exprresult.AfterFirst(_T('\001'));
+                        PythonWatch::Pointer p(new PythonWatch(symbol));
+                        p->SetType(type);
+                        p->SetValue(value);
+                        cbWatch::AddChild(parentwatch,p);
+                    }
+                    DebuggerManager &dbg_manager = *Manager::Get()->GetDebuggerManager();
+                    dbg_manager.GetWatchesDialog()->UpdateWatches();
+                    break;
+                }
+                case DBGCMDTYPE_WATCHTOOLTIP:
+                {
+                    if(reprompt.GetMatchCount()<=1)
+                        break;
                     wxString output;
                     wxString lines=exprresult;
                     if(lines.EndsWith(_T("\n")))
@@ -327,122 +378,108 @@ void PyDebugger::OnTimer(wxTimerEvent& event)
                             output+=_T("\n...");
                         output+=_T("\n")+lines.AfterLast(_T('\n'));
                     }
-//                    exprresult.Replace(_T("\t"),_T("\\t"),true);
-//                    exprresult.Replace(_T("\n"),_T("\\n"),true);
+    //                    exprresult.Replace(_T("\t"),_T("\\t"),true);
+    //                    exprresult.Replace(_T("\n"),_T("\\n"),true);
                     SetWatchTooltip(output, def_end);
-                }
-            }
-
-            if(cmd.type==DBGCMDTYPE_FLOWCONTROL)
-            {
-                wxRegEx re;
-                re.Compile(_T("\\> ([^\\n]*)\\((\\d+)\\)([^\\n]*)\\n([^\\n]*)\\n\\Z"),wxRE_ADVANCED); // Group 1 is the file, Group 2 is the line location, Group 3 is the source of the current line
-                if(re.Matches(exprresult))
-                {
-                    m_curfile=re.GetMatch(exprresult,1);
-                    re.GetMatch(exprresult,2).ToULong(&m_curline);
-                    m_changeposition=true;
-                }
-                re.Compile(_T("Uncaught exception. Entering post mortem debugging\\nRunning 'cont' or 'step' will restart the program"),wxRE_ADVANCED);
-
-//                re.Compile(_T("Traceback \\(most recent call last\\):\\n  File .*\\n(\\w*Error\\:.+?)\n"),wxRE_ADVANCED); //Traceback notification
-                if(re.Matches(exprresult))
-                {
-                    wxString err=re.GetMatch(exprresult,1);
-//                    wxMessageBox(_T("Runtime Error During Debug:\n")+err+_T("\n at line ")+wxString().Format(_T("%u"),m_curline)+_T(" in ")+m_curfile);
-                    wxMessageBox(_T("Runtime Error During Debug:\nEntering post mortem debug mode...\nYou may inspect variables by updating the watch\n(Select continue/next to restart or Stop to cancel debug)"));
-                }
-                if(!debugoutputmode) // in standard debug mode, only log flow control information (clearer)
-                {
-                    m_DebugLog->Append(cmd.cmdtext);
-                    m_DebugLog->Append(logout);
-                }
-            }
-            if(cmd.type==DBGCMDTYPE_CALLSTACK)
-            {
-                wxRegEx re;
-                re.Compile(_T("[> ] \\<string\\>\\(1\\)\\<module\\>\\(\\)\\n"),wxRE_ADVANCED);
-                if(!re.Matches(exprresult))
                     break;
-                size_t start,len;
-                wxString matchstr;
-                re.GetMatch(&start,&len,0);
-                matchstr=exprresult.Mid(start+len);
-                re.Compile(_T("[> ] ([^\\n]*)\\((\\d+)\\)([^\\n]*)\\n\\-\\> ([^\\n]*)\\n"),wxRE_ADVANCED); // Group 1 is the file, Group 2 is the line location, Group 3 is the source of the current line
-                m_stackinfo.frames.clear();
-                int n=0;
-                while(true)
+                }
+                case DBGCMDTYPE_FLOWCONTROL:
                 {
-                    if(!re.Matches(matchstr))
-                        break;
-                    wxString file=re.GetMatch(matchstr,1);
-                    wxString line=re.GetMatch(matchstr,2);
-//                    unsigned long line;
-//                    re.GetMatch(exprresult,2).ToULong(&line);
-                    wxString Module=re.GetMatch(matchstr,3);
-                    wxString Code=re.GetMatch(matchstr,4);
-                    bool active=(re.GetMatch(matchstr,0).Left(1)==_T(">"));
-                    m_changeposition=true;
-                    cb::shared_ptr<cbStackFrame> f=cb::shared_ptr<cbStackFrame>(new cbStackFrame);
-                    f->SetFile(file,line);
-                    f->SetNumber(n);
-                    f->SetSymbol(Module);
-                    f->SetAddress(0);
-                    m_stackinfo.frames.push_back(f);
-                    if(active)
+                    wxRegEx re;
+                    re.Compile(_T("\\> ([^\\n]*)\\((\\d+)\\)([^\\n]*)\\n([^\\n]*)\\n\\Z"),wxRE_ADVANCED); // Group 1 is the file, Group 2 is the line location, Group 3 is the source of the current line
+                    if(re.Matches(exprresult))
                     {
-                        m_stackinfo.activeframe=n;
-                        m_curfile=file;
-                        line.ToULong(&m_curline);
+                        m_curfile=re.GetMatch(exprresult,1);
+                        re.GetMatch(exprresult,2).ToULong(&m_curline);
+                        m_changeposition=true;
                     }
+                    re.Compile(_T("Uncaught exception. Entering post mortem debugging\\nRunning 'cont' or 'step' will restart the program"),wxRE_ADVANCED);
+
+    //                re.Compile(_T("Traceback \\(most recent call last\\):\\n  File .*\\n(\\w*Error\\:.+?)\n"),wxRE_ADVANCED); //Traceback notification
+                    if(re.Matches(exprresult))
+                    {
+                        wxString err=re.GetMatch(exprresult,1);
+    //                    wxMessageBox(_T("Runtime Error During Debug:\n")+err+_T("\n at line ")+wxString().Format(_T("%u"),m_curline)+_T(" in ")+m_curfile);
+                        wxMessageBox(_T("Runtime Error During Debug:\nEntering post mortem debug mode...\nYou may inspect variables by updating the watch\n(Select continue/next to restart or Stop to cancel debug)"));
+                    }
+                    if(!debugoutputmode) // in standard debug mode, only log flow control information (clearer)
+                    {
+                        m_DebugLog->Append(cmd.cmdtext);
+                        m_DebugLog->Append(logout);
+                    }
+                    break;
+                }
+
+                case DBGCMDTYPE_CALLSTACK:
+                {
+                    wxRegEx re;
+                    re.Compile(_T("[> ] \\<string\\>\\(1\\)\\<module\\>\\(\\)\\n"),wxRE_ADVANCED);
+                    if(!re.Matches(exprresult))
+                        break;
+                    size_t start,len;
+                    wxString matchstr;
                     re.GetMatch(&start,&len,0);
-                    matchstr=matchstr.Mid(start+len);
-                    n++;
-                }
-                DebuggerManager &dbg_manager = *Manager::Get()->GetDebuggerManager();
-                dbg_manager.GetBacktraceDialog()->Reload();
-            }
-
-            if(debugoutputmode) //in debug output mode, dump everything to the debugger log
-            {
-                m_DebugLog->Append(cmd.cmdtext);
-                m_DebugLog->Append(logout);
-            } else
-            {
-                if(cmd.type==DBGCMDTYPE_USERCOMMAND)
-                {
-                    m_DebugLog->Append(cmd.cmdtext);
-                    m_DebugLog->Append(logout);
-                }
-            }
-            reprompt.GetMatch(&start,&len);
-            m_debugbufpos+=start+len;
-
-        }
-
-        if(m_DebugCommandCount==0)
-        { //TODO: clear debug and program output strings as well
-            if(m_changeposition)
-            {
-                if(m_curline<1)
-                {
-                    wxMessageBox(_T("Invalid line position reported by PDB"));
-                    return;
-                } else
-                {
-                    SyncEditor(m_curfile,m_curline);
+                    matchstr=exprresult.Mid(start+len);
+                    re.Compile(_T("[> ] ([^\\n]*)\\((\\d+)\\)([^\\n]*)\\n\\-\\> ([^\\n]*)\\n"),wxRE_ADVANCED); // Group 1 is the file, Group 2 is the line location, Group 3 is the source of the current line
+                    m_stackinfo.frames.clear();
+                    int n=0;
+                    while(true)
+                    {
+                        if(!re.Matches(matchstr))
+                            break;
+                        wxString file=re.GetMatch(matchstr,1);
+                        wxString line=re.GetMatch(matchstr,2);
+                        wxString Module=re.GetMatch(matchstr,3);
+                        wxString Code=re.GetMatch(matchstr,4);
+                        bool active=(re.GetMatch(matchstr,0).Left(1)==_T(">"));
+                        m_changeposition=true;
+                        cb::shared_ptr<cbStackFrame> f=cb::shared_ptr<cbStackFrame>(new cbStackFrame);
+                        f->SetFile(file,line);
+                        f->SetNumber(n);
+                        f->SetSymbol(Module);
+                        f->SetAddress(0);
+                        m_stackinfo.frames.push_back(f);
+                        if(active)
+                        {
+                            m_stackinfo.activeframe=n;
+                            m_curfile=file;
+                            line.ToULong(&m_curline);
+                        }
+                        re.GetMatch(&start,&len,0);
+                        matchstr=matchstr.Mid(start+len);
+                        n++;
+                    }
+                    DebuggerManager &dbg_manager = *Manager::Get()->GetDebuggerManager();
+                    dbg_manager.GetBacktraceDialog()->Reload();
+                    break;
                 }
             }
-            m_changeposition=false;
-            m_outbuf=_T("");
-            m_bufpos=0;
-            m_outdebugbuf=_T("");
-            m_debugbufpos=0;
-            m_outprogbuf=_T("");
-            m_progbufpos=0;
-            m_TimerPollDebugger.Stop();
+
         }
     }
+    if(m_DebugCommandCount==0)
+    { //TODO: clear debug and program output strings as well
+        if(m_changeposition)
+        {
+            if(m_curline<1)
+            {
+                wxMessageBox(_T("Invalid line position reported by PDB"));
+                return;
+            } else
+            {
+                SyncEditor(m_curfile,m_curline);
+            }
+        }
+        m_changeposition=false;
+        m_outbuf=_T("");
+        m_bufpos=0;
+        m_outdebugbuf=_T("");
+        m_debugbufpos=0;
+        m_outprogbuf=_T("");
+        m_progbufpos=0;
+        m_TimerPollDebugger.Stop();
+    }
+
 }
 
 
@@ -762,9 +799,10 @@ void PyDebugger::DeleteAllBreakpoints()
 }
 
 
-cb::shared_ptr<cbWatch>  PyDebugger::AddWatch(const wxString& symbol)
+cb::shared_ptr<cbWatch> PyDebugger::AddWatch(const wxString& symbol)
 {
     PythonWatch::Pointer pwatch(new PythonWatch(symbol));
+    cbWatch::AddChild(pwatch,PythonWatch::Pointer(new PythonWatch(_("#child"))));
     m_watchlist.push_back(pwatch);
 
     if(IsRunning())
@@ -813,10 +851,15 @@ bool PyDebugger::SetWatchValue(cb::shared_ptr<cbWatch> watch, const wxString &va
 
 void PyDebugger::ExpandWatch(cb::shared_ptr<cbWatch> watch)
 {
+    wxString symbol;
+    watch->GetSymbol(symbol);
+    DispatchCommands(_T("pm ")+symbol+_T("\n"),DBGCMDTYPE_WATCHGETCHILDREN);
 }
 
 void PyDebugger::CollapseWatch(cb::shared_ptr<cbWatch> watch)
 {
+    watch->RemoveChildren();
+    cbWatch::AddChild(watch,PythonWatch::Pointer(new PythonWatch(_("...members..."))));
 }
 
 void PyDebugger::OnWatchesContextMenu(wxMenu &menu, const cbWatch &watch, wxObject *property)

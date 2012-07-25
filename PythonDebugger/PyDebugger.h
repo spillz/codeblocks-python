@@ -20,6 +20,7 @@
 #include <sdk.h>
 #include <loggers.h>
 #include <logger.h>
+#include <debuggermanager.h>
 #include <cbplugin.h> // for "class cbPlugin/cbDebuggerPlugin"
 #include "ConfigDialog.h"
 #include "dialogs.h"
@@ -41,15 +42,55 @@
 
 typedef std::set<int> BPLtype;
 
-typedef std::tr1::shared_ptr<cbBreakpoint> Pointer;
-typedef std::vector<Pointer> BPList;
-typedef std::vector<cbStackFrame> StackList;
+typedef std::vector<cb::shared_ptr<cbStackFrame> > StackList;
 
-class PythonWatch:public cbWatch
+class PyDebuggerConfiguration:public cbDebuggerConfiguration
+{
+    public:
+        PyDebuggerConfiguration(const ConfigManagerWrapper &config):cbDebuggerConfiguration(config) {}
+        virtual ~PyDebuggerConfiguration() {}
+
+        virtual cbDebuggerConfiguration* Clone() const {return new PyDebuggerConfiguration(*this);}
+
+        virtual wxPanel* MakePanel(wxWindow *parent) {return new wxPanel();}
+        virtual bool SaveChanges(wxPanel *panel) {return true;}
+
+};
+
+class PyBreakpoint:public cbBreakpoint
+{
+    public:
+        PyBreakpoint(wxString file, int line)
+        {
+            m_file=file;
+            m_line=line;
+        }
+        virtual ~PyBreakpoint() {}
+        void SetEnabled(bool flag) {m_enabled = flag;}
+        wxString GetLocation() const {return m_file;}
+        int GetLine() const {return m_line;}
+        wxString GetLineString() const {return wxString::Format(wxT("%i"),m_line);}
+        wxString GetType() const {return m_type;}
+        wxString GetInfo() const {return m_info;}
+        bool IsEnabled() const {return m_enabled;}
+        bool IsVisibleInEditor()const  {return false;}
+        bool IsTemporary() const {return false;}
+    private:
+        bool m_enabled;
+        wxString m_file;
+        int m_line;
+        wxString m_type;
+        wxString m_info;
+};
+
+
+typedef cb::shared_ptr<PyBreakpoint> Pointer;
+typedef std::vector<Pointer> BPList;
+
+class PythonWatch :public cbWatch
 {
 
     public:
-        typedef std::tr1::shared_ptr<PythonWatch> Pointer;
         PythonWatch(wxString const &symbol) :
             m_symbol(symbol),
             m_has_been_expanded(false)
@@ -61,8 +102,8 @@ class PythonWatch:public cbWatch
             m_id = m_type = m_value = wxEmptyString;
             m_has_been_expanded = false;
 
-            RemoveChildren();
-            Expand(false);
+//            RemoveChildren();
+//            Expand(false);
         }
 
         wxString const & GetID() const { return m_id; }
@@ -120,7 +161,9 @@ class PyDebugger : public cbDebuggerPlugin
         virtual void OnReleaseReal(bool appShutDown);
 
         virtual void ShowToolMenu() {}
+        virtual void SetupToolsMenu(wxMenu &);
         virtual bool ToolMenuEnabled() {return true;}
+        virtual bool SupportsFeature(cbDebuggerFeature::Flags f) {return true;}
 
 //        /** @brief Start a new debugging process. */
 //        virtual bool Debug(bool breakOnEntry) = 0;
@@ -166,7 +209,7 @@ class PyDebugger : public cbDebuggerPlugin
 
         // stack frame calls;
         virtual int GetStackFrameCount() const;
-        virtual const cbStackFrame& GetStackFrame(int index) const;
+        virtual cb::shared_ptr<const cbStackFrame> GetStackFrame(int index) const;
         virtual void SwitchToFrame(int number);
         virtual int GetActiveStackFrame() const;
 
@@ -176,33 +219,33 @@ class PyDebugger : public cbDebuggerPlugin
           * @param line The line number to put the breakpoint in @c file.
           * @return True if succeeded, false if not.
           */
-        virtual cbBreakpoint* AddBreakpoint(const wxString& filename, int line);
+        virtual cb::shared_ptr<cbBreakpoint> AddBreakpoint(const wxString& filename, int line);
 
         /** @brief Request to add a breakpoint based on a data expression.
           * @param dataExpression The data expression to add the breakpoint.
           * @return True if succeeded, false if not.
           */
-        virtual cbBreakpoint* AddDataBreakpoint(const wxString& dataExpression) {return NULL;}
+        virtual cb::shared_ptr<cbBreakpoint> AddDataBreakpoint(const wxString& dataExpression) {return cb::shared_ptr<cbBreakpoint>();}
         virtual int GetBreakpointsCount() const  {return m_bplist.size();}
-        virtual cbBreakpoint* GetBreakpoint(int index);
-        virtual const cbBreakpoint* GetBreakpoint(int index) const;
-        virtual void UpdateBreakpoint(cbBreakpoint *breakpoint)  {}
-        virtual void DeleteBreakpoint(cbBreakpoint* breakpoint);
+        virtual cb::shared_ptr<cbBreakpoint> GetBreakpoint(int index);
+        virtual cb::shared_ptr<const cbBreakpoint> GetBreakpoint(int index) const;
+        virtual void UpdateBreakpoint(cb::shared_ptr<cbBreakpoint> breakpoint)  {}
+        virtual void DeleteBreakpoint(cb::shared_ptr<cbBreakpoint> breakpoint);
         virtual void DeleteAllBreakpoints();
         virtual void ShiftBreakpoint(int index, int lines_to_shift)  {}
         // threads
         virtual int GetThreadsCount() const  {return 0;}
-        virtual const cbThread& GetThread(int index) const  {}
+        virtual cb::shared_ptr<const cbThread> GetThread(int index) const  {}
         virtual bool SwitchToThread(int thread_number)  {return false;}
 
         // watches
-        virtual cbWatch* AddWatch(const wxString& symbol);
-        virtual void DeleteWatch(cbWatch *watch);
-        virtual bool HasWatch(cbWatch *watch);
-        virtual void ShowWatchProperties(cbWatch *watch);
-        virtual bool SetWatchValue(cbWatch *watch, const wxString &value);
-        virtual void ExpandWatch(cbWatch *watch);
-        virtual void CollapseWatch(cbWatch *watch);
+        virtual cb::shared_ptr<cbWatch> AddWatch(const wxString& symbol);
+        virtual void DeleteWatch(cb::shared_ptr<cbWatch> watch);
+        virtual bool HasWatch(cb::shared_ptr<cbWatch> watch);
+        virtual void ShowWatchProperties(cb::shared_ptr<cbWatch> watch);
+        virtual bool SetWatchValue(cb::shared_ptr<cbWatch> watch, const wxString &value);
+        virtual void ExpandWatch(cb::shared_ptr<cbWatch> watch);
+        virtual void CollapseWatch(cb::shared_ptr<cbWatch> watch);
         virtual void OnWatchesContextMenu(wxMenu &menu, const cbWatch &watch, wxObject *property);
 
         virtual void SendCommand(const wxString& cmd, bool debugLog)  {}
@@ -222,6 +265,8 @@ class PyDebugger : public cbDebuggerPlugin
 
 // Debugger Plugin Specific Virtuals
 
+        virtual bool IsBusy() const {return m_TimerPollDebugger.IsRunning();}
+        virtual void EnableBreakpoint(cb::shared_ptr<cbBreakpoint> breakpoint, bool enable) {}
         virtual bool Debug(bool breakOnEntry);
 		virtual void Continue();
 		virtual void Next();
@@ -237,12 +282,15 @@ class PyDebugger : public cbDebuggerPlugin
         int GetExitCode() const { return 0; }
 // Misc Plugin Virtuals
         virtual int Configure(); /** Invoke configuration dialog. */
+        virtual cbDebuggerConfiguration* LoadConfig(const ConfigManagerWrapper &config) {return new PyDebuggerConfiguration(config);}
         virtual int GetConfigurationPriority() const { return 50; }
         virtual int GetConfigurationGroup() const { return cgUnknown; }
         virtual cbConfigurationPanel* GetConfigurationPanel(wxWindow* parent); /** Return plugin's configuration panel.*/
         virtual cbConfigurationPanel* GetProjectConfigurationPanel(wxWindow* parent, cbProject* project){ return 0; } /** Return plugin's configuration panel for projects.*/
-        virtual void BuildMenu(wxMenuBar* menuBar); /** add plugin items to the main menu bar*/
+        virtual void BuildMenu(wxMenuBar* menuBar) {} /** add plugin items to the main menu bar*/
         virtual void BuildModuleMenu(const ModuleType type, wxMenu* menu, const FileTreeData* data = 0); /** add context menu items for the plugin*/
+
+
 
         void OnValueTooltip(CodeBlocksEvent& event);
         void SetWatchTooltip(const wxString &tip, int definition_length);
@@ -315,6 +363,7 @@ class PyDebugger : public cbDebuggerPlugin
         // breakpoint list
         BPList m_bplist;
         StackInfo m_stackinfo; //call stack
+//        PythonWatchesContainer m_watchlist;
         PythonWatchesContainer m_watchlist;
 
         bool m_DebuggerActive;

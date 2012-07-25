@@ -1,9 +1,9 @@
 #include "PyDebugger.h"
 #include <configurationpanel.h>
 #include <wx/regex.h>
-#include <backtracedlg.h>
+#include <cbdebugger_interfaces.h>
 #include <cbstyledtextctrl.h>
-#include <watchesdlg.h>
+//#include <watchesdlg.h>
 
 // Register the plugin with Code::Blocks.
 // We are using an anonymous namespace so we don't litter the global one.
@@ -163,7 +163,7 @@ wxString PyDebugger::AssembleBreakpointCommands()
     wxString commands;
     for(BPList::iterator itr=m_bplist.begin();itr!=m_bplist.end();itr++)
     {
-        wxString sfile=(*itr)->GetFilename();
+        wxString sfile=(*itr)->GetLocation();
         if(sfile.Contains(_T(" ")))
         {
             wxFileName f(sfile);
@@ -183,7 +183,7 @@ wxString PyDebugger::AssembleWatchCommands()
 
     for (unsigned int i=0;i<m_watchlist.size();++i)
     { //TODO: ITERATE INTO CHILD WATCHES
-        PythonWatch *w=m_watchlist[i].get();
+        PythonWatch::Pointer w=m_watchlist[i];
         wxString s;
         w->GetSymbol(s);
         commands+=_T("ps ")+s+_T("\n");
@@ -284,10 +284,10 @@ void PyDebugger::OnTimer(wxTimerEvent& event)
                         PythonWatch *p;
                         wxString s;
                         m_watchlist[i].get()->GetSymbol(s);
-                        if (s==symbol)
-                            p=m_watchlist[i].get();
-                        else
-                            p=dynamic_cast<PythonWatch*>(m_watchlist[i]->FindChild(symbol));
+//                        if (s==symbol)
+//                            p=m_watchlist[i].get();
+//                        else
+//                            p=dynamic_cast<PythonWatch*>(m_watchlist[i]->FindChild(symbol));
                         if(p)
                         {
                             p->SetType(type);
@@ -383,11 +383,11 @@ void PyDebugger::OnTimer(wxTimerEvent& event)
                     wxString Code=re.GetMatch(matchstr,4);
                     bool active=(re.GetMatch(matchstr,0).Left(1)==_T(">"));
                     m_changeposition=true;
-                    cbStackFrame f;
-                    f.SetFile(file,line);
-                    f.SetNumber(n);
-                    f.SetSymbol(Module);
-                    f.SetAddress(0);
+                    cb::shared_ptr<cbStackFrame> f=cb::shared_ptr<cbStackFrame>(new cbStackFrame);
+                    f->SetFile(file,line);
+                    f->SetNumber(n);
+                    f->SetSymbol(Module);
+                    f->SetAddress(0);
                     m_stackinfo.frames.push_back(f);
                     if(active)
                     {
@@ -516,7 +516,8 @@ bool PyDebugger::Debug(bool breakOnEntry)
     wxString olddir=wxGetCwd();
     wxSetWorkingDirectory(wxFileName(m_RunTarget).GetPath());
     target.Replace(_T("\\"),_T("/"),true);
-    wxString commandln=wxFileName(m_DefaultInterpreter).GetShortPath()+m_DefaultDebugCmdLine+target;
+    wxString f=wxFileName(m_DefaultInterpreter).GetShortPath();
+    wxString commandln=f + m_DefaultDebugCmdLine+target;
 //    cbMessageBox(commandln);
     #ifdef EXPERIMENTAL_PYTHON_DEBUG
 //    LogMessage(wxString::Format(_("Launching '%s': %s (in %s)"), consolename.c_str(), commandstr.c_str(), workingdir.c_str()));
@@ -674,27 +675,27 @@ void PyDebugger::SetNextStatement(const wxString& filename, int line)
 }
 
 
-cbBreakpoint* PyDebugger::GetBreakpoint(int index)
+cb::shared_ptr<cbBreakpoint>  PyDebugger::GetBreakpoint(int index)
 {
-    return m_bplist[index].get();
+    return m_bplist[index];
 }
 
-const cbBreakpoint* PyDebugger::GetBreakpoint(int index) const
+cb::shared_ptr<const cbBreakpoint>  PyDebugger::GetBreakpoint(int index) const
 {
-    return m_bplist[index].get();
+    return m_bplist[index];
 }
 
 
-cbBreakpoint* PyDebugger::AddBreakpoint(const wxString& file, int line)
+cb::shared_ptr<cbBreakpoint>  PyDebugger::AddBreakpoint(const wxString& file, int line)
 {
     if(!IsPythonFile(file))
-        return NULL;
+        return cb::shared_ptr<cbBreakpoint>();
     for (BPList::iterator itr=m_bplist.begin(); itr!=m_bplist.end(); ++itr)
     {
-        if((*itr)->GetFilename()==file && (*itr)->GetLine()==line)
-            return NULL;
+        if((*itr)->GetLocation()==file && (*itr)->GetLine()==line)
+            return cb::shared_ptr<cbBreakpoint>();
     }
-    Pointer p(new cbBreakpoint(file,line));
+    Pointer p(new PyBreakpoint(file,line));
     m_bplist.push_back(p);
     if(m_DebuggerActive) // if the debugger is running already we need to send a message to the interpreter to add the new breakpoint
     {
@@ -707,19 +708,19 @@ cbBreakpoint* PyDebugger::AddBreakpoint(const wxString& file, int line)
         wxString cmd=_T("break ")+sfile+_T(":")+wxString::Format(_T("%i"),line)+_T("\n");
         DispatchCommands(cmd,DBGCMDTYPE_BREAKPOINT);
     }
-    return p.get();
+    return p;
 }
 
-void PyDebugger::DeleteBreakpoint(cbBreakpoint *bp)
+void PyDebugger::DeleteBreakpoint(cb::shared_ptr<cbBreakpoint> bp)
 {
-    if(!IsPythonFile(bp->GetFilename()))
+    if(!IsPythonFile(bp->GetLocation()))
         return;
-    wxString sfile=bp->GetFilename();
+    wxString sfile=bp->GetLocation();
     int line = bp->GetLine();
 
     for (size_t i=0;i<m_bplist.size();++i)
     {
-        if(m_bplist[i].get()!=bp)
+        if(m_bplist[i]!=bp)
             continue;
 //        if(m_bplist[i]->GetFilename()==bp->GetFilename() && m_bplist[i]->GetLine()==bp->GetLine())
         m_bplist.erase(m_bplist.begin()+i);
@@ -743,8 +744,8 @@ void PyDebugger::DeleteAllBreakpoints()
 
     for (size_t i=0;i<m_bplist.size();++i)
     {
-        cbBreakpoint *bp=m_bplist[i].get();
-        wxString sfile=bp->GetFilename();
+        cb::shared_ptr<cbBreakpoint> bp=m_bplist[i];
+        wxString sfile=bp->GetLocation();
         int line = bp->GetLine();
         m_bplist.erase(m_bplist.begin()+i);
         if(m_DebuggerActive)
@@ -761,25 +762,26 @@ void PyDebugger::DeleteAllBreakpoints()
 }
 
 
-cbWatch* PyDebugger::AddWatch(const wxString& symbol)
+cb::shared_ptr<cbWatch>  PyDebugger::AddWatch(const wxString& symbol)
 {
     PythonWatch::Pointer pwatch(new PythonWatch(symbol));
     m_watchlist.push_back(pwatch);
 
     if(IsRunning())
         DispatchCommands(_T("ps ")+symbol+_T("\n"),DBGCMDTYPE_WATCHEXPRESSION);
-    return pwatch.get();
+    return pwatch;
 }
 
-void PyDebugger::DeleteWatch(cbWatch *watch)
+void PyDebugger::DeleteWatch(cb::shared_ptr<cbWatch> watch)
 {
     //this will delete the root node of watch
     //TODO: Why do we need to delete root node?
-    cbWatch *root_watch = GetRootWatch(watch);
+
+//    cb::shared_ptr<cbWatch> root_watch = GetRootWatch(watch);
     unsigned int i;
     for (i=0;i<m_watchlist.size();++i)
     {
-        if (m_watchlist[i].get()==root_watch)
+        if (m_watchlist[i]==watch)
             break;
     }
     if(i==m_watchlist.size())
@@ -788,32 +790,32 @@ void PyDebugger::DeleteWatch(cbWatch *watch)
     m_watchlist.erase(m_watchlist.begin()+i);
 }
 
-bool PyDebugger::HasWatch(cbWatch *watch)
+bool PyDebugger::HasWatch(cb::shared_ptr<cbWatch> watch)
 {
-    cbWatch *root_watch = GetRootWatch(watch);
+    //cb::shared_ptr<cbWatch> root_watch = GetRootWatch(watch);
     unsigned int i;
     for (i=0;i<m_watchlist.size();++i)
     {
-        if (m_watchlist[i].get()==root_watch)
+        if (m_watchlist[i]==watch)
             break;
     }
     return i<m_watchlist.size();
 }
 
-void PyDebugger::ShowWatchProperties(cbWatch *watch)
+void PyDebugger::ShowWatchProperties(cb::shared_ptr<cbWatch> watch)
 {
 }
 
-bool PyDebugger::SetWatchValue(cbWatch *watch, const wxString &value)
+bool PyDebugger::SetWatchValue(cb::shared_ptr<cbWatch> watch, const wxString &value)
 {
     return false;
 }
 
-void PyDebugger::ExpandWatch(cbWatch *watch)
+void PyDebugger::ExpandWatch(cb::shared_ptr<cbWatch> watch)
 {
 }
 
-void PyDebugger::CollapseWatch(cbWatch *watch)
+void PyDebugger::CollapseWatch(cb::shared_ptr<cbWatch> watch)
 {
 }
 
@@ -828,7 +830,7 @@ int PyDebugger::GetStackFrameCount() const
     return m_stackinfo.frames.size();
 }
 
-const cbStackFrame& PyDebugger::GetStackFrame(int index) const
+cb::shared_ptr<const cbStackFrame> PyDebugger::GetStackFrame(int index) const
 {
     return m_stackinfo.frames[index];
 }
@@ -937,7 +939,7 @@ void PyDebugger::OnRun(wxCommandEvent& event)
 
 
 // constructor
-PyDebugger::PyDebugger()
+PyDebugger::PyDebugger() : cbDebuggerPlugin(_T("PyDebugger"),_T("py_debugger"))
 {
     // Make sure our resources are available.
     // In the generated boilerplate code we have no resources but when
@@ -983,7 +985,7 @@ void PyDebugger::OnAttachReal()
     Manager::Get()->ProcessEvent(evtlog);
 
     DebuggerManager &dbg_manager = *Manager::Get()->GetDebuggerManager();
-    dbg_manager.RegisterDebugger(this, _T("python"));
+    dbg_manager.RegisterDebugger(this);
 
 }
 
@@ -1108,7 +1110,7 @@ void PyDebugger::UpdateMenu()
 }
 
 
-void PyDebugger::BuildMenu(wxMenuBar* menuBar)
+void PyDebugger::SetupToolsMenu(wxMenu& menuBar)
 {
     //TODO: This should all be deleted once native implementations are in place
 	//The application is offering its menubar for your plugin,
@@ -1117,9 +1119,10 @@ void PyDebugger::BuildMenu(wxMenuBar* menuBar)
 	//NOTE: Be careful in here... The application's menubar is at your disposal.
 	LangMenu=new wxMenu;
 	CreateMenu();
-	int pos = menuBar->FindMenu(_("P&lugins"));
+	//int pos = menuBar.FindMenu(_("P&lugins"));
+	int pos=-1;
 	if(pos!=wxNOT_FOUND)
-        menuBar->Insert(pos, LangMenu, _("P&yDebug"));
+        menuBar.AppendSubMenu(LangMenu, _("P&ython Debugger"));
     else
     {
         delete LangMenu;

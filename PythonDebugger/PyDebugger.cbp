@@ -11,8 +11,9 @@
 				<Option working_dir="$(#cb)\devel" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option parameters="--personality=debug" />
+				<Option parameters="--debug-log --no-dde --no-check-associations --multiple-instance --no-splash-screen --verbose" />
 				<Option host_application="$(#cb)\devel\codeblocks.exe" />
+				<Option run_host_application_in_terminal="0" />
 				<Compiler>
 					<Add option="-Wall" />
 					<Add option="-g" />
@@ -33,6 +34,7 @@
 					<Add directory="$(#cb.include)\wxscintilla\include" />
 					<Add directory="$(#wx.include)" />
 					<Add directory="$(#wx.lib)\gcc_dll\mswu" />
+					<Add directory="..\..\..\sdk\wxscintilla\include" />
 				</Compiler>
 				<Linker>
 					<Add library="codeblocks" />
@@ -77,6 +79,15 @@
 			<code_completion />
 			<envvars />
 			<debugger />
+			<DoxyBlocks>
+				<comment_style block="0" line="0" />
+				<doxyfile_project />
+				<doxyfile_build />
+				<doxyfile_warnings />
+				<doxyfile_output />
+				<doxyfile_dot />
+				<general />
+			</DoxyBlocks>
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

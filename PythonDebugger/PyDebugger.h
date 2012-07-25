@@ -89,7 +89,6 @@ typedef std::vector<Pointer> BPList;
 
 class PythonWatch :public cbWatch
 {
-
     public:
         PythonWatch(wxString const &symbol) :
             m_symbol(symbol),
@@ -101,9 +100,8 @@ class PythonWatch :public cbWatch
         {
             m_id = m_type = m_value = wxEmptyString;
             m_has_been_expanded = false;
-
-//            RemoveChildren();
-//            Expand(false);
+            RemoveChildren();
+            Expand(false);
         }
 
         wxString const & GetID() const { return m_id; }

@@ -281,13 +281,13 @@ void PyDebugger::OnTimer(wxTimerEvent& event)
                     wxString value=exprresult.AfterFirst(_T('\001'));
                     for(int i=0;i<m_watchlist.size();++i)
                     {
-                        PythonWatch *p;
+                        PythonWatch::Pointer p;
                         wxString s;
-                        m_watchlist[i].get()->GetSymbol(s);
-//                        if (s==symbol)
-//                            p=m_watchlist[i].get();
-//                        else
-//                            p=dynamic_cast<PythonWatch*>(m_watchlist[i]->FindChild(symbol));
+                        m_watchlist[i]->GetSymbol(s);
+                        if (s==symbol)
+                            p=m_watchlist[i];
+                        else
+                            p=m_watchlist[i]->FindChild(symbol);
                         if(p)
                         {
                             p->SetType(type);

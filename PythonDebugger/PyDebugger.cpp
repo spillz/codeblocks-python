@@ -284,7 +284,7 @@ void PyDebugger::OnTimer(wxTimerEvent& event)
                     wxString value=exprresult.AfterFirst(_T('\001'));
                     for(int i=0;i<m_watchlist.size();++i)
                     {
-                        PythonWatch::Pointer p;
+                        cbWatch::Pointer p;
                         wxString s;
                         m_watchlist[i]->GetSymbol(s);
                         if (s==symbol)
@@ -324,8 +324,10 @@ void PyDebugger::OnTimer(wxTimerEvent& event)
                         wxString symbol;
                         (*it)->GetSymbol(symbol);
                         if(symbol==parentsymbol)
+                        {
                             parentwatch=*it;
                             break;
+                        }
                     }
                     if(it==m_watchlist.end())
                         break;
@@ -802,8 +804,8 @@ void PyDebugger::DeleteAllBreakpoints()
 cb::shared_ptr<cbWatch> PyDebugger::AddWatch(const wxString& symbol)
 {
     PythonWatch::Pointer pwatch(new PythonWatch(symbol));
-    cbWatch::AddChild(pwatch,PythonWatch::Pointer(new PythonWatch(_("#child"))));
     m_watchlist.push_back(pwatch);
+    cbWatch::AddChild(pwatch,PythonWatch::Pointer(new PythonWatch(_("#child"))));
 
     if(IsRunning())
         DispatchCommands(_T("ps ")+symbol+_T("\n"),DBGCMDTYPE_WATCHEXPRESSION);

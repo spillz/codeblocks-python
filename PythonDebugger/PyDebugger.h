@@ -92,6 +92,8 @@ class PythonWatch :public cbWatch
             m_has_been_expanded(false)
         {
         }
+        typedef cb::shared_ptr<PythonWatch> Pointer;
+        virtual ~PythonWatch() {}
 
         void Reset()
         {

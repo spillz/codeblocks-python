@@ -17,11 +17,12 @@
 	#include <wx/wx.h>
 #endif
 
-#include <sdk.h>
+#include <cbplugin.h> // for "class cbPlugin/cbDebuggerPlugin"
 #include <loggers.h>
 #include <logger.h>
+#include <sdk.h>
+
 #include <debuggermanager.h>
-#include <cbplugin.h> // for "class cbPlugin/cbDebuggerPlugin"
 #include "ConfigDialog.h"
 #include "dialogs.h"
 

@@ -197,7 +197,7 @@ wxString PyDebugger::AssembleAliasCommands()
     //NB: \001 is the separator character used when parsing in OnTimer
 
     //Print variables associated with a child
-    commands+=_T("alias pm for x in %1.__dict__: print '%s\\001%s\\001'%(x,type(%1.__dict__[x])),%1.__dict__[x],'\\001',\n");
+    commands+=_T("alias pm for x in sorted(%1.__dict__): print '%s\\001%s\\001'%(x,type(%1.__dict__[x])),%1.__dict__[x],'\\001',\n");
     //Print variable name, type and value
     commands+=_T("alias ps print '%1\\001',;print str(type(%1))+'\\001',;print %1\n");
     //Print comment
@@ -220,42 +220,31 @@ void PyDebugger::ClearActiveMarkFromAllEditors()
     }
 }
 
-
 void PyDebugger::OnTimer(wxTimerEvent& event)
 {
     bool debugoutputmode=false;
     if (m_pp && m_pp->IsInputAvailable())
     {
-        char buf0[10001];;
-        for(int i=0;i<10001;i++)
-            buf0[i]=0;
-        m_istream->Read(buf0,10000);
-        wxString m_latest=wxString::FromAscii(buf0);
-        m_outbuf+=m_latest;
-
-        //Disentangle debug output from program output - debug output is wrapped in <&CB_PDB  CB_PDB&>
+        while(m_pp->IsInputAvailable())
+        {
+            if(!m_istream->Eof())
+                m_outbuf+=m_istream->GetC();
+            else
+                break;
+        }
         //TODO: Program could hang if debug output is incorrectly parsed
         m_outdebugbuf=m_outbuf;
-//        wxRegEx re_debugparse;
-//        re_debugparse.Compile(_T("(.*)\\<\\&CB_PDB(.*)CB_PDB\\&\\>"),wxRE_ADVANCED);
-//        while(re_debugparse.Matches(m_outbuf.Mid(m_bufpos)))
-//        {
-//            if(re_debugparse.GetMatchCount()<=2)
-//                return;
-//            wxString debugbuf_add;
-//            debugbuf_add=re_debugparse.GetMatch(m_outbuf.Mid(m_bufpos),2);
-//            m_outdebugbuf+=debugbuf_add;
-//            wxString progbuf_add;
-//            progbuf_add=re_debugparse.GetMatch(m_outbuf.Mid(m_bufpos),1);
-//            m_outprogbuf+=progbuf_add;
-//        }
 
-        // Count the number of commands that have executed so far
-        wxRegEx reprompt;
-        reprompt.Compile(_T("(.*?)\\(Pdb\\)\\s+"),wxRE_ADVANCED); //the presence of a command prompt signals a command has finished executing
-        //m_debugbufpos=0; //Should not need to start at 0 each time.
-        while(reprompt.Matches(m_outdebugbuf.Mid(m_debugbufpos)))
+        // Loop over the output, looking for parseable output separated by "(Pdb)" prompts
+
+        while(true)
         {
+            wxString s=m_outdebugbuf.Mid(m_debugbufpos);
+            int pos=s.Find(_T("(Pdb)")); //position in the string of the Pdb prompt returning from the last call
+            if(pos==wxNOT_FOUND)
+                break;
+            wxString logout=s.Mid(0,pos+5);
+            wxString exprresult=s.Mid(0,pos);
             size_t start,len;
             m_DebugCommandCount--;
             PythonCmdDispatchData cmd;
@@ -264,13 +253,9 @@ void PyDebugger::OnTimer(wxTimerEvent& event)
                 cmd=m_DispatchedCommands.front();
                 m_DispatchedCommands.pop_front();
             }
-            wxString logout=reprompt.GetMatch(m_outdebugbuf.Mid(m_debugbufpos),0);
-            wxString exprresult=reprompt.GetMatch(m_outdebugbuf.Mid(m_debugbufpos),1);
-            reprompt.GetMatch(&start,&len);
-            m_debugbufpos+=start+len;
-            if(reprompt.GetMatchCount()<=1)
+            m_debugbufpos+=pos+5;
+            if(pos==0)
                 continue;
-
             switch(cmd.type)
             {
                 case DBGCMDTYPE_WATCHEXPRESSION:
@@ -303,16 +288,9 @@ void PyDebugger::OnTimer(wxTimerEvent& event)
                 }
                 case DBGCMDTYPE_WATCHGETCHILDREN:
                 {
-                    if(reprompt.GetMatchCount()<=1)
-                        break;
                     exprresult.RemoveLast();
                     exprresult.Replace(_T("\t"),_T("\\t"),true);
                     exprresult.Replace(_T("\n"),_T("\\n"),true);
-//                    wxString childtag=exprresult.BeforeFirst(_T('\001'));
-//                    if(childtag!=_T("children"))
-//                        break;
-//                    exprresult=exprresult.AfterFirst(_T('\001'));
-//                    wxString parentsymbol=exprresult.BeforeFirst(_T('\001'));
                     wxString parentsymbol=cmd.cmdtext.AfterFirst(_T(' '));
                     parentsymbol=parentsymbol.BeforeLast(_T('\n'));
 
@@ -353,8 +331,6 @@ void PyDebugger::OnTimer(wxTimerEvent& event)
                 }
                 case DBGCMDTYPE_WATCHTOOLTIP:
                 {
-                    if(reprompt.GetMatchCount()<=1)
-                        break;
                     wxString output;
                     wxString lines=exprresult;
                     if(lines.EndsWith(_T("\n")))

@@ -829,15 +829,21 @@ bool PyDebugger::SetWatchValue(cb::shared_ptr<cbWatch> watch, const wxString &va
 
 void PyDebugger::ExpandWatch(cb::shared_ptr<cbWatch> watch)
 {
-    wxString symbol;
-    watch->GetSymbol(symbol);
-    DispatchCommands(_T("pm ")+symbol+_T("\n"),DBGCMDTYPE_WATCHGETCHILDREN);
+    if(IsRunning())
+    {
+        wxString symbol;
+        watch->GetSymbol(symbol);
+        DispatchCommands(_T("pm ")+symbol+_T("\n"),DBGCMDTYPE_WATCHGETCHILDREN);
+    }
 }
 
 void PyDebugger::CollapseWatch(cb::shared_ptr<cbWatch> watch)
 {
-    watch->RemoveChildren();
-    cbWatch::AddChild(watch,PythonWatch::Pointer(new PythonWatch(_("...members..."))));
+    if(IsRunning())
+    {
+        watch->RemoveChildren();
+        cbWatch::AddChild(watch,PythonWatch::Pointer(new PythonWatch(_("...members..."))));
+    }
 }
 
 void PyDebugger::OnWatchesContextMenu(wxMenu &menu, const cbWatch &watch, wxObject *property)

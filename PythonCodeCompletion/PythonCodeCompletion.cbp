@@ -26,7 +26,7 @@
 					<Add option="-g" />
 					<Add option="`pkg-config --cflags codeblocks`" />
 					<Add option="`wx-config --cflags`" />
-					<Add directory="XMLRPC/src" />
+					<Add directory="XMLRPC/include" />
 				</Compiler>
 				<Linker>
 					<Add option="`pkg-config --libs codeblocks`" />

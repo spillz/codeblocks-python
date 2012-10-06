@@ -2,6 +2,7 @@ import code
 import sys
 import os.path
 import time
+import types
 import stdlib_parser
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 from pysmell import idehelper
@@ -46,22 +47,22 @@ class AsyncServer:
         return self.stdlib!=None
     def complete_phrase(self,phrase):
         print 'complete phrase',phrase
+        context=[s.strip() for s in phrase.split('.')]
+        phrase=context.pop()
+        psymbols=self.stdlib
+        for s in context:
+            if s not in psymbols:
+                print 'x',[]
+                return []
+            psymbols=psymbols[s][-1]
+        if type(psymbols)!=types.DictType:
+            return []
         completions=[]
         try:
-            for m in self.stdlib:
-                if m+'.'==phrase:
-                    res=sorted([s for s in self.stdlib[m]])
-                    print 'x',res
-                    return res
-                if phrase.startswith(m+'.'):
-                    res= sorted([s for s in self.stdlib[m] if s.startswith(phrase)])
-                    print 'x',res
-                    return res
-    #            if m==phrase:
-    #                return [phrase]
-                if m.startswith(phrase):
-                    completions.append(m)
-            print 'x',completions
+            for s in psymbols:
+                if s.startswith(phrase):
+                    completions.append(s)
+            print 'COMPS',completions
             return sorted(completions)
         except:
             import traceback,sys

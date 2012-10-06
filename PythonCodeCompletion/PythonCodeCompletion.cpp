@@ -87,7 +87,7 @@ void PythonCodeCompletion::OnAttach()
     wxString command = _T("python ")+script+_T(" 8001");
     Manager::Get()->GetLogManager()->Log(_T("Launching python on ")+script);
     Manager::Get()->GetLogManager()->Log(_T("with command ")+command);
-    py_server = XmlRpcMgr::Get().LaunchInterpreter(command,8000);
+    py_server = XmlRpcMgr::Get().LaunchInterpreter(command,8001);
     if(py_server->IsDead())
     {
         wxMessageBox(_("Error Starting Python Code Completion Server"));
@@ -196,8 +196,8 @@ int PythonCodeCompletion::CodeComplete()
             cbStyledTextCtrl* control = ed->GetControl();
             //int start = ed->GetControl()->WordStartPosition(pos, true);
             int wordStartPos = control->WordStartPosition(pos, true);
-            while(control->GetCharAt(wordStartPos-1)==_T('.'))
-                wordStartPos = control->WordStartPosition(wordStartPos-2, true);
+//            while(control->GetCharAt(wordStartPos-1)==_T('.'))
+//                wordStartPos = control->WordStartPosition(wordStartPos-2, true);
             int start=wordStartPos;
             bool caseSens=true;
             ed->GetControl()->AutoCompSetFillUps(wxEmptyString);

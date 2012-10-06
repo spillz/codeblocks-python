@@ -40,10 +40,13 @@ def get_package_mods(mods,mod_list,prefix='',path=None,level=0):
 chtypes=[types.ClassType, types.ObjectType, types.ModuleType] #types.InstanceType
 obtypes=[types.ClassType, types.ObjectType] #types.InstanceType
 
-def parse_objs(objs,obj_list,follow=True,prefix=''):
+def parse_objs(symbols,obj_list,follow=True,prefix=''):
+    if(type(symbols)!=types.DictType):
+        print '***NOT DICT',prefix,type(symbols)
     for o in obj_list:
         if o[0].startswith('_'):
             continue
+        chsyms=None
         args=None
         try:
             doc=str(o[1].__doc__)
@@ -53,18 +56,19 @@ def parse_objs(objs,obj_list,follow=True,prefix=''):
             ch=inspect.getmembers(o[1])
             if follow:
                 print '###follow',prefix+o[0],type(o[1])
-                parse_objs(objs,ch,False,prefix+o[0]+'.')
+                chsyms={}
+                parse_objs(chsyms,ch,False,prefix+o[0]+'.')
         if type(o[1]) in [types.BuiltinFunctionType, types.BuiltinMethodType, types.FunctionType,
                         types.LambdaType, types.UnboundMethodType, types.MethodType]:
             try:
                 args=tuple(inspect.getargspec(o[1]))[:-1]
             except:
                 pass
-        objs[prefix+o[0]]=[str(type(o[1])),args,doc]
+        symbols[o[0]]=(str(type(o[1])),args,doc,chsyms)
 
 def parse_mods(mods):
+    symbols={}  ##Symbol is formatted key:value key=symbol, value=tuple(type,args,docstring,children)
     for m in sorted(mods):
-        objs={}
         try:
             print m
             a=m.find('.')
@@ -74,13 +78,18 @@ def parse_mods(mods):
                 mod=__import__(m)
         except:
             continue
-        parse_objs(objs,inspect.getmembers(mod),True,m+'.')
-        mods[m]=objs
-#        print '***********'
-#        for o in sorted(objs):
-#            print o,objs[o][:2]
-#        print '***********'
-#        print '***********'
+        msyms=m.split('.')
+        psymbols=symbols
+        for s in msyms:
+            if s not in psymbols:
+                psymbols[s]=[str(types.ModuleType),None,mod.__doc__,{}]
+            elif type(psymbols[s][-1])!=types.DictType:
+                print 'WARNING FOUND',msyms,type(psymbols[s][-1])
+                psymbols[s]=[str(types.ModuleType),None,mod.__doc__,{}]
+            psymbols=psymbols[s][-1]
+        parse_objs(psymbols,inspect.getmembers(mod),True,m+'.')
+    return symbols
+
 
 def create(dest='STDLIB'):
     '''
@@ -100,14 +109,16 @@ def create(dest='STDLIB'):
     for m in sorted(mods):
         print m
 
-    parse_mods(mods)
+    syms=parse_mods(mods)
+    for s in syms:
+        print s
 
     t=time.time()
     f=open(dest,'wb')
-    cPickle.dump(mods,f)
+    cPickle.dump(syms,f)
     f.close()
     print 'write took',time.time()-t
-    return mods
+    return syms
 
 def load(src='STDLIB'):
     '''
@@ -120,6 +131,9 @@ def load(src='STDLIB'):
             mods=cPickle.load(f)
             f.close()
             print 'read took',time.time()-t
+            print 'main scope'
+            for s in sorted(mods):
+                print s
             return mods
         else:
             return None
@@ -127,12 +141,7 @@ def load(src='STDLIB'):
         return None
 
 if __name__=='__main__':
-
-    create()
-#    mods={}
-#    mods['sys']={}
-#    parse_mods(mods)
-#    print 'OS symbols'
-#    for s in sorted(mods['sys']):
-#        print s#,mods['os.path'][s][-1]
-
+    sysm=create()
+#    syms=load()
+#    for s in sorted(syms['os'][-1]):
+#        print s,syms['os'][-1][s][:2]

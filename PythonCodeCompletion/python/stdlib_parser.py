@@ -37,8 +37,8 @@ def get_package_mods(mods,mod_list,prefix='',path=None,level=0):
         mlist=[n[1] for n in chmods if not n[1].startswith('_') and not n[1].startswith('test') and not n[1].startswith('try')]
         get_package_mods(mods,mlist,fullname+'.',chpath,level+1)
 
-chtypes=[types.ClassType, types.ObjectType, types.ModuleType] #types.InstanceType
-obtypes=[types.ClassType, types.ObjectType] #types.InstanceType
+chtypes=[types.ClassType, types.ObjectType, types.ModuleType, types.TypeType] #types.InstanceType
+obtypes=[types.ClassType, types.ObjectType, types.TypeType] #types.InstanceType
 
 def parse_objs(symbols,obj_list,follow=True,prefix=''):
     if(type(symbols)!=types.DictType):

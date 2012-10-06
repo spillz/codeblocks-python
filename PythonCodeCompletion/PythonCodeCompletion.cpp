@@ -239,12 +239,12 @@ void PythonCodeCompletion::OnCompletePhrase(XmlRpcResponseEvent &event)
         XmlRpc::XmlRpcValue val=event.GetResponse();
 //        Manager::Get()->GetLogManager()->Log(_("Val = ")+wxString(std::string(val.toXml()).c_str(),wxConvUTF8));
         m_comp_results.Empty();
-        if(val.getType()==val.TypeArray)
+        if(val.getType()==val.TypeArray && val.size()>0)
         {
             for(int i=0;i<val.size();++i)
                 m_comp_results.Add(wxString(std::string(val[i]).c_str(),wxConvUTF8));
+            CodeComplete();
         }
-        CodeComplete();
     }
     else
         Manager::Get()->GetLogManager()->Log(_("Comp failed"));

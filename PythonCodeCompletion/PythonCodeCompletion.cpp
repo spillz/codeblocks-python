@@ -79,10 +79,8 @@ void PythonCodeCompletion::OnAttach()
 
     #ifdef __WXMSW__
     wxString script = mgr->GetDataFolder(false)+_T("\\python\\python_completion_server.py");
-    wxString stdlib = mgr->GetDataFolder(false)+_T("\\python\\STDLIB");
     #else
     wxString script = mgr->GetDataFolder(false)+_T("/python/python_completion_server.py");
-    wxString stdlib = mgr->GetDataFolder(false)+_T("/python/STDLIB");
     #endif
     wxString command = _T("python ")+script+_T(" 8001");
     Manager::Get()->GetLogManager()->Log(_T("Launching python on ")+script);
@@ -92,9 +90,25 @@ void PythonCodeCompletion::OnAttach()
     {
         wxMessageBox(_("Error Starting Python Code Completion Server"));
     }
+    ::wxSleep(2);
+    #ifdef __WXMSW__
+    wxString stdlib = mgr->GetDataFolder(false)+_T("\\python\\STDLIB");
+    #else
+    wxString stdlib = mgr->GetDataFolder(false)+_T("/python/STDLIB");
+    #endif
+    Manager::Get()->GetLogManager()->Log(_("Loading stdlib"));
     py_server->ExecAsync(_("load_stdlib"),XmlRpc::XmlRpcValue(stdlib.utf8_str()),this,ID_STDLIB_LOAD);
     m_libs_loaded=false;
 }
+
+//void PythonCodeCompletion::OnLoadTimer()
+//{
+//    if(!m_libs_loaded)
+//    {
+//    }
+//}
+
+
 
 void PythonCodeCompletion::OnRelease(bool appShutDown)
 {
@@ -125,9 +139,9 @@ void PythonCodeCompletion::OnCompletePhrase(XmlRpcResponseEvent &event)
 {
     if(event.GetState()==XMLRPC_STATE_RESPONSE)
     {
-        Manager::Get()->GetLogManager()->Log(_("Completion return success"));
-        XmlRpc::XmlRpcValue val=event.GetResponse();
-        Manager::Get()->GetLogManager()->Log(_("Val = ")+wxString(std::string(val.toXml()).c_str(),wxConvUTF8));
+//        Manager::Get()->GetLogManager()->Log(_("Completion return success"));
+//        XmlRpc::XmlRpcValue val=event.GetResponse();
+//        Manager::Get()->GetLogManager()->Log(_("Val = ")+wxString(std::string(val.toXml()).c_str(),wxConvUTF8));
         m_comp_results.Empty();
         if(val.getType()==val.TypeArray)
         {
@@ -307,7 +321,10 @@ void PythonCodeCompletion::EditorEventHook(cbEditor* editor, wxScintillaEvent& e
     }
 
     if(editor->GetControl()->GetLexer() != wxSCI_LEX_PYTHON)
+    {
+        event.Skip();
         return;
+    }
 
     cbStyledTextCtrl* control = editor->GetControl();
 
@@ -405,7 +422,6 @@ void PythonCodeCompletion::EditorEventHook(cbEditor* editor, wxScintillaEvent& e
             py_server->ExecAsync(_T("complete_phrase"),XmlRpc::XmlRpcValue(phrase.mb_str(wxConvUTF8)),this,ID_COMPLETE_PHRASE);
         }
     }
-
 
     // allow others to handle this event
     event.Skip();

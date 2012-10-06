@@ -18,6 +18,7 @@
 
 #include <wx/arrstr.h>
 #include <wx/string.h>
+#include <wx/imaglist.h>
 
 
 int ID_EDITOR_HOOKS = wxNewId();
@@ -90,6 +91,100 @@ void PythonCodeCompletion::OnAttach()
     {
         wxMessageBox(_("Error Starting Python Code Completion Server"));
     }
+
+
+    wxString prefix = ConfigManager::GetDataFolder() + _T("/images/codecompletion/");
+    // bitmaps must be added by order of PARSER_IMG_* consts
+    m_pImageList = new wxImageList(16, 16);
+    wxBitmap bmp;
+    bmp = cbLoadBitmap(prefix + _T("class_folder.png"), wxBITMAP_TYPE_PNG);
+    m_pImageList->Add(bmp); // PARSER_IMG_CLASS_FOLDER types.ModuleType
+    bmp = cbLoadBitmap(prefix + _T("class.png"), wxBITMAP_TYPE_PNG);
+    m_pImageList->Add(bmp); // PARSER_IMG_CLASS types.ClassType
+    bmp = cbLoadBitmap(prefix + _T("class_public.png"), wxBITMAP_TYPE_PNG);
+    m_pImageList->Add(bmp); // PARSER_IMG_CLASS_PUBLIC types.ObjectType
+    bmp = cbLoadBitmap(prefix + _T("typedef.png"), wxBITMAP_TYPE_PNG);
+    m_pImageList->Add(bmp); // PARSER_IMG_TYPEDEF types.TypeType
+    bmp = cbLoadBitmap(prefix + _T("var_public.png"), wxBITMAP_TYPE_PNG);
+    m_pImageList->Add(bmp); // PARSER_IMG_VAR_PUBLIC types.InstanceType
+    bmp = cbLoadBitmap(prefix + _T("method_public.png"), wxBITMAP_TYPE_PNG);
+    m_pImageList->Add(bmp); // PARSER_IMG_FUNC_PUBLIC types.FunctionType types.BuiltinFunctionType
+    bmp = cbLoadBitmap(prefix + _T("method_protected.png"), wxBITMAP_TYPE_PNG);
+    m_pImageList->Add(bmp); // PARSER_IMG_FUNC_PRIVATE types.MethodType types.BuiltinMethodType
+    bmp = cbLoadBitmap(prefix + _T("method_protected.png"), wxBITMAP_TYPE_PNG);
+    m_pImageList->Add(bmp); // PARSER_IMG_FUNC_PRIVATE types.MethodType
+    bmp = cbLoadBitmap(prefix + _T("method_private.png"), wxBITMAP_TYPE_PNG);
+    m_pImageList->Add(bmp); // PARSER_IMG_FUNC_PRIVATE
+
+//    bmp = cbLoadBitmap(prefix + _T("ctor_private.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_CTOR_PRIVATE
+//    bmp = cbLoadBitmap(prefix + _T("ctor_protected.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_CTOR_PROTECTED
+//    bmp = cbLoadBitmap(prefix + _T("ctor_public.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_CTOR_PUBLIC
+//    bmp = cbLoadBitmap(prefix + _T("dtor_private.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_DTOR_PRIVATE
+//    bmp = cbLoadBitmap(prefix + _T("dtor_protected.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_DTOR_PROTECTED
+//    bmp = cbLoadBitmap(prefix + _T("dtor_public.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_DTOR_PUBLIC
+//    bmp = cbLoadBitmap(prefix + _T("method_private.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_FUNC_PRIVATE
+//    bmp = cbLoadBitmap(prefix + _T("var_private.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_VAR_PRIVATE
+//    bmp = cbLoadBitmap(prefix + _T("var_protected.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_VAR_PROTECTED
+//    bmp = cbLoadBitmap(prefix + _T("preproc.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_PREPROCESSOR
+//    bmp = cbLoadBitmap(prefix + _T("enum.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_ENUM
+//    bmp = cbLoadBitmap(prefix + _T("enum_private.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_ENUM_PRIVATE
+//    bmp = cbLoadBitmap(prefix + _T("enum_protected.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_ENUM_PROTECTED
+//    bmp = cbLoadBitmap(prefix + _T("enum_public.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_ENUM_PUBLIC
+//    bmp = cbLoadBitmap(prefix + _T("enumerator.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_ENUMERATOR
+//    bmp = cbLoadBitmap(prefix + _T("namespace.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_NAMESPACE
+//    bmp = cbLoadBitmap(prefix + _T("typedef_private.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_TYPEDEF_PRIVATE
+//    bmp = cbLoadBitmap(prefix + _T("typedef_protected.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_TYPEDEF_PROTECTED
+//    bmp = cbLoadBitmap(prefix + _T("typedef_public.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_TYPEDEF_PUBLIC
+//    bmp = cbLoadBitmap(prefix + _T("symbols_folder.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_SYMBOLS_FOLDER
+//    bmp = cbLoadBitmap(prefix + _T("vars_folder.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_VARS_FOLDER
+//    bmp = cbLoadBitmap(prefix + _T("funcs_folder.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_FUNCS_FOLDER
+//    bmp = cbLoadBitmap(prefix + _T("enums_folder.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_ENUMS_FOLDER
+//    bmp = cbLoadBitmap(prefix + _T("preproc_folder.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_PREPROC_FOLDER
+//    bmp = cbLoadBitmap(prefix + _T("others_folder.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_OTHERS_FOLDER
+//    bmp = cbLoadBitmap(prefix + _T("typedefs_folder.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_TYPEDEF_FOLDER
+//    bmp = cbLoadBitmap(prefix + _T("macro.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_MACRO
+//    bmp = cbLoadBitmap(prefix + _T("macro_private.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_MACRO_PRIVATE
+//    bmp = cbLoadBitmap(prefix + _T("macro_protected.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_MACRO_PROTECTED
+//    bmp = cbLoadBitmap(prefix + _T("macro_public.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_MACRO_PUBLIC
+//    bmp = cbLoadBitmap(prefix + _T("macro_folder.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_MACRO_FOLDER
+//    bmp = cbLoadBitmap(prefix + _T("class_private.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_CLASS_PRIVATE
+//    bmp = cbLoadBitmap(prefix + _T("class_protected.png"), wxBITMAP_TYPE_PNG);
+//    m_pImageList->Add(bmp); // PARSER_IMG_CLASS_PROTECTED
+//    bmp = wxImage(cpp_keyword_xpm);
+//    m_pImageList->Add(bmp);
+
     ::wxSleep(2);
     #ifdef __WXMSW__
     wxString stdlib = mgr->GetDataFolder(false)+_T("\\python\\STDLIB");
@@ -120,6 +215,7 @@ void PythonCodeCompletion::OnRelease(bool appShutDown)
     EditorHooks::UnregisterHook(m_EditorHookId, true);
     if(!py_server->IsDead()) //TODO: Really should wait until serverr is no longer busy and request it to terminate via XMLRPC
         py_server->KillProcess(true);
+    delete m_pImageList;
 }
 
 void PythonCodeCompletion::OnStdLibLoaded(XmlRpcResponseEvent &event)
@@ -140,7 +236,7 @@ void PythonCodeCompletion::OnCompletePhrase(XmlRpcResponseEvent &event)
     if(event.GetState()==XMLRPC_STATE_RESPONSE)
     {
 //        Manager::Get()->GetLogManager()->Log(_("Completion return success"));
-//        XmlRpc::XmlRpcValue val=event.GetResponse();
+        XmlRpc::XmlRpcValue val=event.GetResponse();
 //        Manager::Get()->GetLogManager()->Log(_("Val = ")+wxString(std::string(val.toXml()).c_str(),wxConvUTF8));
         m_comp_results.Empty();
         if(val.getType()==val.TypeArray)
@@ -206,8 +302,11 @@ int PythonCodeCompletion::CodeComplete()
         int count=0;
         if(count<maxmatches)
         {
-            int pos   = ed->GetControl()->GetCurrentPos();
             cbStyledTextCtrl* control = ed->GetControl();
+            for (int i = 0; i < m_pImageList->GetImageCount(); i++)
+                control->RegisterImage(i+1,m_pImageList->GetBitmap(i));
+
+            int pos   = control->GetCurrentPos();
             //int start = ed->GetControl()->WordStartPosition(pos, true);
             int wordStartPos = control->WordStartPosition(pos, true);
 //            while(control->GetCharAt(wordStartPos-1)==_T('.'))
@@ -238,7 +337,7 @@ int PythonCodeCompletion::CodeComplete()
     }
     else if (!ed->GetControl()->CallTipActive())
     {
-            wxString msg = _("The Parser is still parsing files.");
+            wxString msg = _("The parser is still parsing files.");
             ed->GetControl()->CallTipShow(ed->GetControl()->GetCurrentPos(), msg);
     }
 

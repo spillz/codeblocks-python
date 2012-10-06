@@ -132,6 +132,7 @@ class PythonCodeCompletion : public cbCodeCompletionPlugin
 
     private:
         XmlRpcInstance *py_server; //Code Completion Server (a python process running an XMLRPC server)
+        wxImageList* m_pImageList;
         bool m_libs_loaded;
         int m_EditorHookId;
         wxArrayString m_comp_results;

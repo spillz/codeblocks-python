@@ -9,6 +9,26 @@ from pysmell import idehelper
 from pysmell import tags
 from re import split
 
+type_map = {
+str(types.ModuleType) : 1,
+str(types.ClassType) : 2,
+str(types.ObjectType) : 3,
+str(types.TypeType) : 4,
+str(types.InstanceType) : 5,
+str(types.FunctionType) : 6,
+str(types.MethodType) : 7,
+str(types.UnboundMethodType) : 8,
+str(types.BuiltinFunctionType) : 6,
+str(types.BuiltinMethodType) : 7,
+str(types.LambdaType) : 9,
+str(types.GeneratorType) : 10 }
+
+def type_suffix(symbols,s):
+    type_str=symbols[s][0]
+    if type_str in type_map:
+        return '?'+str(type_map[type_str])
+    return ''
+
 def _uniquify(l):
     found = set()
     for item in l:
@@ -62,12 +82,13 @@ class AsyncServer:
             for s in psymbols:
                 if s.startswith(phrase):
                     completions.append(s)
+            completions=sorted(completions)
             print 'COMPS',completions
-            return sorted(completions)
+            completions=[s+type_suffix(psymbols,s) for s in completions]
+            return completions
         except:
             import traceback,sys
             traceback.print_exception(*sys.exc_info())
-            print 'wtf'
     def tool_tip(self,function):
         return False
     def tag_gen(self, projectDir):

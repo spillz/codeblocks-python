@@ -65,6 +65,8 @@ class AsyncServer:
         print 'creating',path
         self.stdlib=stdlib_parser.create(path)
         return self.stdlib!=None
+    def complete_context(self,path,source,position):
+        print 'complete context',path,position
     def complete_phrase(self,phrase):
         print 'complete phrase',phrase
         context=[s.strip() for s in phrase.split('.')]

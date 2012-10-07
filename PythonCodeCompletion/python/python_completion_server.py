@@ -5,8 +5,8 @@ import time
 import types
 import stdlib_parser
 from SimpleXMLRPCServer import SimpleXMLRPCServer
-from pysmell import idehelper
-from pysmell import tags
+#from pysmell import idehelper
+#from pysmell import tags
 from re import split
 
 type_map = {

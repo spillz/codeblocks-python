@@ -24,6 +24,7 @@
 int ID_EDITOR_HOOKS = wxNewId();
 int ID_STDLIB_LOAD = wxNewId();
 int ID_COMPLETE_PHRASE = wxNewId();
+int ID_CALLTIP = wxNewId();
 // Register the plugin with Code::Blocks.
 // We are using an anonymous namespace so we don't litter the global one.
 namespace
@@ -37,6 +38,7 @@ BEGIN_EVENT_TABLE(PythonCodeCompletion, cbCodeCompletionPlugin)
     // add any events you want to handle here
     EVT_XMLRPC_RESPONSE(ID_STDLIB_LOAD,PythonCodeCompletion::OnStdLibLoaded)
     EVT_XMLRPC_RESPONSE(ID_COMPLETE_PHRASE,PythonCodeCompletion::OnCompletePhrase)
+    EVT_XMLRPC_RESPONSE(ID_CALLTIP,PythonCodeCompletion::OnCalltip)
 END_EVENT_TABLE()
 
 // constructor
@@ -231,6 +233,27 @@ void PythonCodeCompletion::OnStdLibLoaded(XmlRpcResponseEvent &event)
     }
 }
 
+void PythonCodeCompletion::OnCalltip(XmlRpcResponseEvent &event)
+{
+    Manager::Get()->GetLogManager()->Log(_T("CC: calltip server response handler"));
+    if(event.GetState()==XMLRPC_STATE_RESPONSE)
+    {
+        XmlRpc::XmlRpcValue val=event.GetResponse();
+        if(val.getType()==val.TypeString)
+        {
+            m_ActiveCalltipDef=wxString(std::string(val).c_str(),wxConvUTF8);
+            Manager::Get()->GetLogManager()->Log(_("CC: Call tip result ")+m_ActiveCalltipDef);
+            ShowCallTip();
+        }
+        else
+        {
+            Manager::Get()->GetLogManager()->Log(_("CC: Call tip result is not a string"));
+        }
+    }
+    else
+        Manager::Get()->GetLogManager()->Log(_("CC: Call tip failed"));
+}
+
 void PythonCodeCompletion::OnCompletePhrase(XmlRpcResponseEvent &event)
 {
     if(event.GetState()==XMLRPC_STATE_RESPONSE)
@@ -294,8 +317,6 @@ int PythonCodeCompletion::CodeComplete()
     if (!ed)
         return -3;
 
-    FileType ft = FileTypeOf(ed->GetShortName());
-
     if(true)
     {
         int maxmatches=100;
@@ -355,11 +376,8 @@ void PythonCodeCompletion::ShowCallTip()
     cbEditor* ed = Manager::Get()->GetEditorManager()->GetBuiltinActiveEditor();
     if (!ed)
         return;
+    Manager::Get()->GetLogManager()->Log(_T("CC: showing calltip"));
 
-    wxString filename = ed->GetShortName();
-////    if (   ParserCommon::FileType(filename) == ParserCommon::ftOther
-////        && Manager::Get()->GetPluginManager()->IsFileExtRegistered(filename) )
-////        return;
 
     // calculate the size of the calltips window
     int pos = ed->GetControl()->GetCurrentPos();
@@ -381,29 +399,8 @@ void PythonCodeCompletion::ShowCallTip()
 
     int start = 0, end = 0, count = 0, typedCommas = 0;
 
-//    wxArrayString items;
-//    m_NativeParser.GetCallTips(maxCalltipLineSizeInChars, items, typedCommas);
-//    std::set< wxString, std::less<wxString> > unique_tips; // check against this before inserting a new tip in the list
-    wxString definition;
-//    for (unsigned int i = 0; i < items.GetCount(); ++i)
-//    {
-//        // allow only unique, non-empty items with equal or more commas than what the user has already typed
-//        if (unique_tips.find(items[i]) == unique_tips.end() && // unique
-//            !items[i].IsEmpty() && // non-empty
-//            typedCommas <= m_NativeParser.CountCommas(items[i], 0)) // commas satisfied
-//        {
-//            unique_tips.insert(items[i]);
-//            if (count != 0)
-//                definition << _T('\n'); // add new-line, except for the first line
-//            definition << items[i];
-//            if (start == 0)
-//                m_NativeParser.GetCallTipHighlight(items[i], &start, &end, typedCommas);
-//            ++count;
-//        }
-//    }
-//
-//    if (definition.empty())
-//        return;
+//    int pos=m_ActiveCalltipPos;
+    wxString definition=m_ActiveCalltipDef;
 
     ed->GetControl()->CallTipShow(pos, definition);
     if (start != 0 && end > start)
@@ -443,8 +440,8 @@ void PythonCodeCompletion::EditorEventHook(cbEditor* editor, wxScintillaEvent& e
         // a character was just added in the editor
 //        m_TimerCodeCompletion.Stop();
         Manager::Get()->GetLogManager()->Log(_("Python completion check begin"));
-        const wxChar ch = event.GetKey();
-        const int pos = control->GetCurrentPos();
+        wxChar ch = event.GetKey();
+        int pos = control->GetCurrentPos();
         int wordStartPos = control->WordStartPosition(pos, true);
         while(control->GetCharAt(wordStartPos-1)==_T('.'))
             wordStartPos = control->WordStartPosition(wordStartPos-2, true);
@@ -459,46 +456,16 @@ void PythonCodeCompletion::EditorEventHook(cbEditor* editor, wxScintillaEvent& e
         wxString t=autoCC ? _("true") : _("false");
         Manager::Get()->GetLogManager()->Log(_("autoCC is ")+t);
 
-////        // update calltip highlight while we type
-////        if (control->CallTipActive())
-////        {
-////            TRACE(_T("wxEVT_SCI_CHARADDED -> ShowCallTip"));
-////            ShowCallTip();
-////        }
-////
-////        // start calltip
-////        if (ch == _T('(') || ch == _T(','))
-////        {
-////            int style = control->GetStyleAt(control->GetCurrentPos() - 1);
-////            if (!(control->IsString(style) || control->IsCharacter(style) || control->IsComment(style)))
-////            {
-////                if (control->CallTipActive())
-////                    ++m_ActiveCalltipsNest;
-////                TRACE(_T("wxEVT_SCI_CHARADDED -> ShowCallTip"));
-////                ShowCallTip();
-////            }
-////        }
-////
-////        // support multi-line call tips
-////        else if (ch == _T('\n') && m_ActiveCalltipsNest > 0)
-////            ShowCallTip();
-////
-////        // end calltip
-////        else if (ch == _T(')') || ch == _T(';'))
-////        {
-////            int style = control->GetStyleAt(control->GetCurrentPos() - 1);
-////            if (!(control->IsString(style) || control->IsCharacter(style) || control->IsComment(style)))
-////            {
-////                // cancel any active calltip
-////                control->CallTipCancel();
-////                if (m_ActiveCalltipsNest > 0)
-////                {
-////                    --m_ActiveCalltipsNest;
-////                    TRACE(_T("wxEVT_SCI_CHARADDED -> ShowCallTip"));
-////                    ShowCallTip();
-////                }
-////            }
-////        }
+        // update calltip highlight while we type
+        if (control->CallTipActive())
+            ShowCallTip();
+
+        //HOW TO DO CALLTIPS
+        //FROM CURRENT SCOPE REVERSE FIND FROM CURRENT POS FOR '(', IGNORING COMMENTS, STRINGS, CHAR STYLE
+        //LOOK FOR MATCHING BRACE, IF FOUND IS THE POSITION AHEAD OF THE CURRENT BRACE? NO, SKIP.
+        //RETRIEVE THE SYMBOL TO THE LEFT OF THE '(' E.G. 'os.path.exists' <- ACTIVE SYMBOL
+        //COUNT THE NUMBER OF COMMAS BETWEEN CURRENT POS AND '('    <- ACTIVE ARG
+        //RETRIEVE THE CALLTIP AND DOC STRING FROM THE PYTHON SERVER
 
         // code completion
         if (   (autoCC && !control->AutoCompActive()) // not already active autocompletion
@@ -506,7 +473,6 @@ void PythonCodeCompletion::EditorEventHook(cbEditor* editor, wxScintillaEvent& e
         {
             Manager::Get()->GetLogManager()->Log(_("Checking lexical state"));
             int style = control->GetStyleAt(pos);
-//            TRACE(_T("Style at %d is %d (char '%c')"), pos, style, ch);
             if (   style != wxSCI_P_DEFAULT
                 && style != wxSCI_P_CLASSNAME
                 && style != wxSCI_P_DEFNAME
@@ -519,9 +485,91 @@ void PythonCodeCompletion::EditorEventHook(cbEditor* editor, wxScintillaEvent& e
             wxString phrase=control->GetTextRange(wordStartPos,pos);
             Manager::Get()->GetLogManager()->Log(_T("CC: ")+phrase);
             py_server->ExecAsync(_T("complete_phrase"),XmlRpc::XmlRpcValue(phrase.mb_str(wxConvUTF8)),this,ID_COMPLETE_PHRASE);
+            event.Skip();
+            return;
         }
-    }
 
+        // calltip
+        Manager::Get()->GetLogManager()->Log(_T("CC: Checking for calltip"));
+        pos=control->GetCurrentPos()-1;
+        int startpos=pos;
+        int minpos=control->GetCurrentPos()-1000;
+        if (minpos<0)
+            minpos=0;
+        while(pos>=minpos)
+        {
+            wxChar ch = control->GetCharAt(pos);
+            int style = control->GetStyleAt(pos);
+            if (control->IsString(style) || control->IsCharacter(style) || control->IsComment(style))
+            {
+                pos--;
+                continue;
+            }
+            if(ch==_T(')'))
+                pos=control->BraceMatch(pos);
+            else if(ch==_T('('))
+                break;
+            pos--;
+        }
+        if(pos<minpos || control->BraceMatch(pos)<=control->GetCurrentPos() && control->BraceMatch(pos)!=-1)
+        {
+            Manager::Get()->GetLogManager()->Log(_T("CC: Not in function scope"));
+            event.Skip();
+            return;
+        }
+
+        m_ActiveCalltipPos=pos;
+
+        Manager::Get()->GetLogManager()->Log(_T("CC: Finding the calltip symbol"));
+        //now find the symbol, if any, associated with the parens
+        int end_pos=pos;
+        pos--;
+        ch = control->GetCharAt(pos);
+        while(pos>=0)
+        {
+            while (ch == _T(' ') || ch == _T('\t'))
+            {
+                pos--;
+                ch = control->GetCharAt(pos);
+                wxString s=control->GetTextRange(pos,end_pos);
+                Manager::Get()->GetLogManager()->Log(_T("#")+s);
+            }
+            int npos=control->WordStartPosition(pos+1,true);
+            if(npos==pos+1)
+            {
+                event.Skip();
+                return;
+            }
+            pos=npos;
+            npos--;
+            wxString s1=control->GetTextRange(pos,end_pos);
+            Manager::Get()->GetLogManager()->Log(_T("#")+s1);
+            ch = control->GetCharAt(npos);
+            while (ch == _T(' ') || ch == _T('\t'))
+            {
+                npos--;
+                ch = control->GetCharAt(npos);
+                wxString s=control->GetTextRange(npos,end_pos);
+                Manager::Get()->GetLogManager()->Log(_T("#")+s);
+            }
+            if (ch!=_T('.'))
+                break;
+            pos=npos-1;
+            if(pos<0)
+            {
+                event.Skip();
+                return;
+            }
+        }
+        int start_pos=pos;
+        wxString symbol=control->GetTextRange(start_pos,end_pos);
+        symbol.Replace(_T(" "),wxEmptyString);
+        symbol.Replace(_T("\t"),wxEmptyString);
+        m_ActiveSymbol=symbol;
+        Manager::Get()->GetLogManager()->Log(_T("CC: Found calltip symbol ")+symbol);
+        py_server->ExecAsync(_T("complete_tip"),XmlRpc::XmlRpcValue(symbol.mb_str(wxConvUTF8)),this,ID_CALLTIP);
+        Manager::Get()->GetLogManager()->Log(_T("CC: Started server request"));
+    }
     // allow others to handle this event
     event.Skip();
 }

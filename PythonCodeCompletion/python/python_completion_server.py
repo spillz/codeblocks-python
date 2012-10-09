@@ -55,6 +55,7 @@ class AsyncServer:
         self.server.register_function(self.load_stdlib,'load_stdlib')
         self.server.register_function(self.create_stdlib,'create_stdlib')
         self.server.register_function(self.complete_phrase,'complete_phrase')
+        self.server.register_function(self.complete_tip,'complete_tip')
         while not self._quit:
             self.server.handle_request()
     def load_stdlib(self,path):
@@ -67,6 +68,42 @@ class AsyncServer:
         return self.stdlib!=None
     def complete_context(self,path,source,position):
         print 'complete context',path,position
+    def complete_tip(self,symbol):
+        print 'complete tip',symbol
+        context=[s.strip() for s in symbol.split('.')]
+        symbol=context.pop()
+        psymbols=self.stdlib
+        for s in context:
+            if s not in psymbols:
+                print 'symbol not found'
+                return ''
+            psymbols=psymbols[s][-1]
+        if symbol not in psymbols:
+            print 'symbol not found'
+            return ''
+        symbol_data=psymbols[symbol]
+        result=''
+        if symbol_data[1] is not None:
+            result=symbol+'('+str(symbol_data[1])+')'
+        else:
+            if symbol_data[2] is None or not symbol_data[2].startswith(symbol+'('):
+                result=symbol+'(...)'
+        doc=str(symbol_data[2])
+        if doc is not None:
+            lines=doc.split('\n')
+            shortened=False
+            if len(lines)>6:
+                shortened=True
+                doc='\n'.join(lines[:6])
+            if len(doc)>250:
+                shortened=True
+                doc=doc[:250]
+            doc=doc.strip(' \t\n')
+            if shortened:
+                doc+='...'
+            result+='\n'+doc
+        print 'result',result
+        return result
     def complete_phrase(self,phrase):
         print 'complete phrase',phrase
         context=[s.strip() for s in phrase.split('.')]

@@ -128,6 +128,7 @@ class PythonCodeCompletion : public cbCodeCompletionPlugin
         virtual void OnRelease(bool appShutDown);
 
         void OnStdLibLoaded(XmlRpcResponseEvent &event);
+        void OnCalltip(XmlRpcResponseEvent &event);
         void OnCompletePhrase(XmlRpcResponseEvent &event);
 
     private:
@@ -135,6 +136,10 @@ class PythonCodeCompletion : public cbCodeCompletionPlugin
         wxImageList* m_pImageList;
         bool m_libs_loaded;
         int m_EditorHookId;
+        wxString m_ActiveSymbol;
+        int m_ActiveCalltipPos;
+        wxString m_ActiveCalltip;
+        wxString m_ActiveCalltipDef;
         wxArrayString m_comp_results;
         DECLARE_EVENT_TABLE();
 };

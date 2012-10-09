@@ -61,7 +61,12 @@ def parse_objs(symbols,obj_list,follow=True,prefix=''):
         if type(o[1]) in [types.BuiltinFunctionType, types.BuiltinMethodType, types.FunctionType,
                         types.LambdaType, types.UnboundMethodType, types.MethodType]:
             try:
-                args=tuple(inspect.getargspec(o[1]))[:-1]
+                a=inspect.getargspec(o[1])
+                args=', '.join(a.args)
+                if a.varargs is not None:
+                    args+= ', *'+a.varargs
+                if a.keywords is not None:
+                    args+= ', **'+a.keywords
             except:
                 pass
         symbols[o[0]]=(str(type(o[1])),args,doc,chsyms)

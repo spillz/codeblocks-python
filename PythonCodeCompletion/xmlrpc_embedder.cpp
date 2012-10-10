@@ -6,6 +6,7 @@ WX_DEFINE_OBJARRAY(XmlRpcInstanceCollection);
 WX_DEFINE_LIST(XmlRpcJobQueue);
 
 using namespace std;
+using namespace XmlRpc;
 
 int ID_XMLRPC_PROC=wxNewId();
 
@@ -105,6 +106,138 @@ void *XmlRpcJob::Entry()
 }
 
 
+const char REQUEST_BEGIN[] =
+  "<?xml version=\"1.0\"?>\r\n"
+  "<methodCall><methodName>";
+const char REQUEST_END_METHODNAME[] = "</methodName>\r\n";
+const char PARAMS_TAG[] = "<params>";
+const char PARAMS_ETAG[] = "</params>";
+const char PARAM_TAG[] = "<param>";
+const char PARAM_ETAG[] =  "</param>";
+const char REQUEST_END[] = "</methodCall>\r\n";
+const char METHODRESPONSE_TAG[] = "<methodResponse>";
+const char FAULT_TAG[] = "<fault>";
+
+class XmlRpcPipeClient
+{
+public:
+    XmlRpcPipeClient(wxProcess *proc)
+    {
+        m_proc=proc;
+        m_istream=proc->GetInputStream();
+        m_ostream=proc->GetOutputStream();
+        m_estream=proc->GetErrorStream();
+    }
+    bool execute(const char* method, XmlRpc::XmlRpcValue const& params, XmlRpc::XmlRpcValue& result)
+    {
+        std::cout<<"PyCC Execute start";
+        std::string msg;
+        if(!generateRequest(method,params,msg))
+        {
+            std::cout<<"bad request value"<<std::endl;
+            return false;
+        }
+        size_t r_size=msg.size();
+        m_ostream->Write(&r_size,sizeof(size_t));
+        m_ostream->Write(msg.c_str(),msg.size());
+        std::cout<<"wrote "<<msg<<std::endl;
+        std::cout<<"wrote "<<r_size<<std::endl;
+        char ch=m_istream->GetC();
+        std::cout<<"read ch "<<ch<<std::endl;
+        for(int i=0;i<sizeof(size_t);i++)
+            ((char*)(&r_size))[i]=m_istream->GetC();
+        std::cout<<"response size is "<<r_size<<std::endl;
+        char *buf = new char[r_size+1];
+        for(int i=0;i<r_size;i++)
+            buf[i]=m_istream->GetC();
+////        m_istream->Read(buf,r_size);
+        buf[r_size]=0;
+        int offset=0;
+        std::cout<<"response was "<<std::string(buf)<<std::endl;
+        if(parseResponse(std::string(buf), result))
+        {
+            return true;
+        }
+        std::cout<<"bad xml response"<<std::endl;
+        return false;
+    }
+    // Convert the response xml into a result value
+    bool parseResponse(std::string _response, XmlRpcValue& result)
+    {
+      // Parse response xml into result
+      int offset = 0;
+      bool _isFault=false;
+      if ( ! XmlRpcUtil::findTag(METHODRESPONSE_TAG,_response,&offset)) {
+        XmlRpcUtil::error("Error in XmlRpcClient::parseResponse: Invalid response - no methodResponse. Response:\n%s", _response.c_str());
+        return false;
+      }
+
+      // Expect either <params><param>... or <fault>...
+      if ((XmlRpcUtil::nextTagIs(PARAMS_TAG,_response,&offset) &&
+           XmlRpcUtil::nextTagIs(PARAM_TAG,_response,&offset)) ||
+          XmlRpcUtil::nextTagIs(FAULT_TAG,_response,&offset) && (_isFault = true))
+      {
+        if ( ! result.fromXml(_response, &offset)) {
+          XmlRpcUtil::error("Error in XmlRpcClient::parseResponse: Invalid response value. Response:\n%s", _response.c_str());
+          _response = "";
+          return false;
+        }
+      } else {
+        XmlRpcUtil::error("Error in XmlRpcClient::parseResponse: Invalid response - no param or fault tag. Response:\n%s", _response.c_str());
+        _response = "";
+        return false;
+      }
+
+      _response = "";
+      return result.valid();
+    }
+    // Encode the request to call the specified method with the specified parameters into xml
+    bool generateRequest(const char* methodName, XmlRpcValue const& params, std::string &request)
+    {
+      std::string body = REQUEST_BEGIN;
+      body += methodName;
+      body += REQUEST_END_METHODNAME;
+
+      // If params is an array, each element is a separate parameter
+      if (params.valid()) {
+        body += PARAMS_TAG;
+        if (params.getType() == XmlRpcValue::TypeArray)
+        {
+          for (int i=0; i<params.size(); ++i) {
+            body += PARAM_TAG;
+            body += params[i].toXml();
+            body += PARAM_ETAG;
+          }
+        }
+        else
+        {
+          body += PARAM_TAG;
+          body += params.toXml();
+          body += PARAM_ETAG;
+        }
+
+        body += PARAMS_ETAG;
+      }
+      body += REQUEST_END;
+
+      std::string header;
+      XmlRpcUtil::log(4, "XmlRpcClient::generateRequest: header is %d bytes, content-length is %d.",
+                      header.length(), body.length());
+
+      request = body;
+      return true;
+    }
+
+
+
+private:
+    wxProcess *m_proc;
+    wxInputStream *m_istream;
+    wxOutputStream *m_ostream;
+    wxInputStream *m_estream;
+};
+
+
 //////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////
 // class XmlRpcInstance
@@ -143,43 +276,45 @@ XmlRpcInstance::~XmlRpcInstance()
     // check if any running jobs, kill them
     // delete the client
     wxMutexLocker ml(exec_mutex); //TODO: This may result in huge delays?
-    delete m_client;
+    if(m_client)
+        delete m_client;
+    if(m_pipeclient)
+        delete m_pipeclient;
     m_client=NULL;
-
+    m_pipeclient=NULL;
 }
 
 XmlRpcInstance::XmlRpcInstance(const wxString &processcmd, const wxString &hostaddress, int port, wxWindow *parent)
 {
-  m_parent=parent;
-  m_port=port;
-  m_proc=NULL;
-  m_proc_dead=true;
-  m_hostaddress=hostaddress;
-  m_paused=false;
-  m_proc_killlevel=0;
-  m_jobrunning=false;
-  // Launch process
-  LaunchProcess(processcmd); //TODO: The command for the interpreter process should come from the manager (and be stored in a config file)
-  // Setup XMLRPC client and use introspection API to look up the supported methods
-  m_client = new XmlRpc::XmlRpcClient(hostaddress.char_str(), port);
-//  XmlRpc::XmlRpcValue noArgs, result;
-//  if (m_client->execute("system.listMethods", noArgs, result))
-//  {
-////    wxMessageBox(wxString::Format(_T("Called 'listMethods'\n\n")));
-////    std::string s(result[0]);
-////    wxMessageBox(wxString::Format(_T("\nMethods: %s\n "), s.c_str()));
-//  }
-//  else
-////    wxMessageBox(wxString::Format(_T("Error calling 'listMethods'\n\n")));
+    m_parent=parent;
+    m_port=port;
+    m_proc=NULL;
+    m_client=NULL;
+    m_pipeclient=NULL;
+    m_proc_dead=true;
+    m_hostaddress=hostaddress;
+    m_paused=false;
+    m_proc_killlevel=0;
+    m_jobrunning=false;
+    // Launch process
+    LaunchProcess(processcmd); //TODO: The command for the interpreter process should come from the manager (and be stored in a config file)
+    // Setup XMLRPC client and use introspection API to look up the supported methods
+    if(port==-1)
+        m_pipeclient = new XmlRpcPipeClient(m_proc);
+    else
+        m_client = new XmlRpc::XmlRpcClient(hostaddress.char_str(), port);
 }
 
 long XmlRpcInstance::LaunchProcess(const wxString &processcmd)
 {
+    std::cout<<"PyCC LAUNCING PROCESS"<<std::endl;
     if(!m_proc_dead)
         return -1;
     if(m_proc) //this should never happen
         m_proc->Detach(); //self cleanup
     m_proc=new wxProcess(this,ID_XMLRPC_PROC);
+    if(m_port==-1)
+        m_proc->Redirect();
 //    m_proc->Redirect(); //TODO: this only needs to be done on windows and buffers must be flushed periodically if there is any I/O to/from the process
 #ifdef __WXMSW__
     //by default wxExecute shows the terminal window on MSW (redirecting would hide it, but that breaks the process if buffers are not flushed periodically)
@@ -189,6 +324,7 @@ long XmlRpcInstance::LaunchProcess(const wxString &processcmd)
 #endif /*__WXMSW__*/
     if(m_proc_id>0)
     {
+        std::cout<<"PyCC LAUNCING PROCESS SUCCEEDED"<<std::endl;
         m_proc_dead=false;
         m_proc_killlevel=0;
     }
@@ -213,16 +349,19 @@ bool XmlRpcInstance::Exec(const wxString &method, const XmlRpc::XmlRpcValue &ina
     wxMutexLocker ml(exec_mutex);
     if(m_client)
         return m_client->execute(method.utf8_str(), inarg, result);
+    else if(m_pipeclient)
+        return m_pipeclient->execute(method.utf8_str(), inarg, result);
     return false;
 }
 
 bool XmlRpcInstance::ExecAsync(const wxString &method, const XmlRpc::XmlRpcValue &inarg, wxEvtHandler *hndlr, int id)
 {
-    AddJob(new ExecAsyncJob(this,method,inarg,hndlr,id));
+    return AddJob(new ExecAsyncJob(this,method,inarg,hndlr,id));
 }
 
 void XmlRpcInstance::OnEndProcess(wxProcessEvent &event)
 {
+    std::cout<<"CC PROCESS DIED!!"<<std::endl;
     //TODO: m_exitcode=event.GetExitCode();
     m_proc_dead=true;
     delete m_proc;

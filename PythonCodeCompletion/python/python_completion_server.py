@@ -4,6 +4,8 @@ import os.path
 import time
 import types
 import stdlib_parser
+import struct
+import xmlrpclib
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 #from pysmell import idehelper
 #from pysmell import tags
@@ -36,6 +38,41 @@ def _uniquify(l):
             yield item
         found.add(item)
 
+isz=struct.calcsize('@I')
+
+class XmlRpcPipeServer:
+    def __init__(self):
+        self.fn_dict={}
+        self.inpipe=sys.stdin
+        self.outpipe=sys.stdout
+        sys.stdout=open(os.devnull,'wb')
+    def register_function(self,fn,name):
+        self.fn_dict[name]=fn
+    def register_introspection_functions(self):
+        pass
+    def handle_request(self):
+        ##TODO: Need more error handling!
+        size_buf = self.inpipe.read(isz)
+        size = struct.unpack('@I',size_buf)[0]
+        call_xml = self.inpipe.read(size)
+        self.outpipe.write(struct.pack('c','M'))
+        name=''
+        try:
+            args,name = xmlrpclib.loads(call_xml)
+            result = self.__call__(name, *args)
+            if not isinstance(result,tuple):
+                result=(result,)
+            res_xml = bytes(xmlrpclib.dumps(result, methodresponse=True))
+        except:
+            import traceback
+            res_xml='Error running call'+name+call_xml+'\n'
+            res_xml+='\n'.join(traceback.format_exception(*sys.exc_info()))
+        size = len(res_xml)
+        self.outpipe.write(struct.pack('@I',size))
+        self.outpipe.write(res_xml)
+    def __call__(self,name,*args):
+        return self.fn_dict[name](*args)
+
 
 class AsyncServer:
     def __init__(self,port):
@@ -45,7 +82,10 @@ class AsyncServer:
         self.port=port
         self.std_lib=None
     def run(self):
-        self.server = SimpleXMLRPCServer(("localhost", self.port))
+        if self.port==-1:
+            self.server = XmlRpcPipeServer()
+        else:
+            self.server = SimpleXMLRPCServer(("localhost", self.port))
         self.server.logRequests=0
         self.server.register_introspection_functions()
         #self.server.socket.settimeout(self.timeout) ##timeouts cause probs
@@ -59,17 +99,18 @@ class AsyncServer:
         while not self._quit:
             self.server.handle_request()
     def load_stdlib(self,path):
-        print 'loading lib',path
+#        print 'loading lib',path
         self.stdlib=stdlib_parser.load(path)
         return self.stdlib!=None
     def create_stdlib(self,path):
-        print 'creating',path
+#        print 'creating',path
         self.stdlib=stdlib_parser.create(path)
         return self.stdlib!=None
     def complete_context(self,path,source,position):
-        print 'complete context',path,position
+#        print 'complete context',path,position
+        pass
     def complete_tip(self,symbol):
-        print 'complete tip',symbol
+#        print 'complete tip',symbol
         context=[s.strip() for s in symbol.split('.')]
         symbol=context.pop()
         psymbols=self.stdlib
@@ -105,7 +146,7 @@ class AsyncServer:
         print 'result',result
         return result
     def complete_phrase(self,phrase):
-        print 'complete phrase',phrase
+#        print 'complete phrase',phrase
         context=[s.strip() for s in phrase.split('.')]
         phrase=context.pop()
         psymbols=self.stdlib
@@ -164,18 +205,18 @@ class AsyncServer:
 
 def cmd_err():
     print 'Correct usage: python_completion_server.py <port>'
-    print '<port> must be a positive integer'
+    print '<port> must be a positive integer or -1 to use stdin/stdout'
     exit()
 
 if __name__=='__main__':
     if len(sys.argv)!=2:
-        port=8000
+        port=-1
     else:
         try:
             port = int(sys.argv[1])
         except:
             cmd_err()
-        if port<=0:
+        if port<-1:
             cmd_err()
 
     server=AsyncServer(port)

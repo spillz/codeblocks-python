@@ -1,7 +1,20 @@
 # client-side test program for interp.py
 
 import xmlrpclib
+import os
+import subprocess
+import sys
+import struct
+xml=xmlrpclib.dumps(('os',),'complete_phrase')
+print xml
+p=subprocess.Popen(['python','python_completion_server.py'],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
+p.communicate(struct.pack('@I',len(xml)))
+p.communicate(xml)
+print sys.stdin.read()
 
+
+import sys
+sys.exit()
 
 s = xmlrpclib.ServerProxy('http://localhost:8000')
 # Print list of available methods

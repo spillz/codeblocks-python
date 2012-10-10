@@ -42,6 +42,8 @@ protected:
 
 WX_DECLARE_LIST(XmlRpcJob, XmlRpcJobQueue);
 
+class XmlRpcPipeClient;
+
 /////////////////////////////////////////////////////////////////////////////////////
 // XmlRpcInstance: The interface to an instance of a runninng XMLRPC server
 // each instantance launches an external server process then
@@ -56,7 +58,7 @@ class XmlRpcInstance: public wxEvtHandler
     friend class XmlRpcJob;
 public:
     // Standard constructor -- generally should use the Manager instance to create these
-    XmlRpcInstance(const wxString &processcmd, const wxString &hostaddress, int port, wxWindow *parent=NULL);
+    XmlRpcInstance(const wxString &processcmd, const wxString &hostaddress, int port=-1, wxWindow *parent=NULL);
 
     // Copy constructor
     XmlRpcInstance(const XmlRpcInstance &copy);
@@ -114,6 +116,7 @@ private:
     int m_port; // port number for server
     bool m_jobrunning;
     XmlRpc::XmlRpcClient *m_client;
+    XmlRpcPipeClient *m_pipeclient;
     DECLARE_CLASS(XmlRpcInstance)
     DECLARE_EVENT_TABLE()
 };

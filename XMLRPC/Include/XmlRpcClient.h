@@ -108,9 +108,9 @@ namespace XmlRpc {
 
     // True if the server closed the connection
     bool _eof;
-
-    // True if a fault response was returned by the server
-    bool _isFault;
+
+    // True if a fault response was returned by the server
+    bool _isFault;
 
     // Number of bytes expected in the response body (parsed from response header)
     int _contentLength;

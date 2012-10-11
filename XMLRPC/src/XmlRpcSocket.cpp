@@ -5,7 +5,7 @@
 #ifndef MAKEDEPEND
 
 #if defined(_WINDOWS)
-# include <stdio.h>
+# include <stdio.h>
 # include <winsock2.h>
 //# pragma lib(WS2_32.lib)
 
@@ -53,15 +53,15 @@ static void initWinSock()
 #endif // _WINDOWS
 
 
-// These errors are not considered fatal for an IO operation; the operation will be re-tried.
-static inline bool
-nonFatalError()
-{
-  int err = XmlRpcSocket::getError();
-  return (err == EINPROGRESS || err == EAGAIN || err == EWOULDBLOCK || err == EINTR);
-}
-
-
+// These errors are not considered fatal for an IO operation; the operation will be re-tried.
+static inline bool
+nonFatalError()
+{
+  int err = XmlRpcSocket::getError();
+  return (err == EINPROGRESS || err == EAGAIN || err == EWOULDBLOCK || err == EINTR);
+}
+
+
 
 int
 XmlRpcSocket::socket()
@@ -183,7 +183,7 @@ XmlRpcSocket::nbRead(int fd, std::string& s, bool *eof)
     int n = read(fd, readBuf, READ_SIZE-1);
 #endif
     XmlRpcUtil::log(5, "XmlRpcSocket::nbRead: read/recv returned %d.", n);
-
+
     if (n > 0) {
       readBuf[n] = 0;
       s.append(readBuf, n);

@@ -438,14 +438,20 @@ void XmlRpcInstance::OnJobNotify(wxCommandEvent &event)
 //    if(event.jobstate==PYSTATE_ABORTEDJOB||event.jobstate==PYSTATE_FINISHEDJOB)
 //    {
     XmlRpcJob *job=m_queue.GetFirst()->GetData();
+#ifdef __WXMSW__
+    if(job->IsAlive())
+        job->Wait();
+#else
     job->Wait();
+#endif
+    m_jobrunning=false;
+//    wxMessageBox(_T("Removing job from queue"));
+    m_queue.DeleteObject(job);
     if(job->killonexit)
     {
         delete job;
         job=NULL;
     }
-    m_jobrunning=false;
-    m_queue.DeleteNode(m_queue.GetFirst());
 //    }
 //    if(event.parent)
 //        ::wxPostEvent(event.parent,event);

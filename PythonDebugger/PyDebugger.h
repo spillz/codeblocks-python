@@ -211,6 +211,8 @@ class PyDebugger : public cbDebuggerPlugin
         virtual void SwitchToFrame(int number);
         virtual int GetActiveStackFrame() const;
 
+        virtual cbDebuggerConfiguration* LoadConfig(const ConfigManagerWrapper &config) {return NULL;};
+
         // breakpoints calls
         /** @brief Request to add a breakpoint.
           * @param file The file to add the breakpoint based on a file/line pair.

@@ -58,6 +58,16 @@ PythonCodeCompletion::~PythonCodeCompletion()
 {
 }
 
+wxString PythonCodeCompletion::GetExtraFile(const wxString &short_name, ConfigManager *mgr)
+{
+    wxString fullname=mgr->GetDataFolder(false)+short_name;
+    if(wxFileName::FileExists(fullname))
+        return fullname;
+    fullname=mgr->GetDataFolder(true)+short_name;
+        return fullname;
+    return wxEmptyString;
+}
+
 void PythonCodeCompletion::OnAttach()
 {
     // do whatever initialization you need for your plugin
@@ -67,6 +77,8 @@ void PythonCodeCompletion::OnAttach()
     // is FALSE, it means that the application did *not* "load"
     // (see: does not need) this plugin...
     // hook to editors
+    py_server=NULL;
+    m_pImageList=NULL;
     EditorHooks::HookFunctorBase* myhook = new EditorHooks::HookFunctor<PythonCodeCompletion>(this, &PythonCodeCompletion::EditorEventHook);
     m_EditorHookId = EditorHooks::RegisterHook(myhook);
 
@@ -82,18 +94,26 @@ void PythonCodeCompletion::OnAttach()
 
     int port = -1; // Port == -1 uses pipe to do RPC over redirected stdin/stdout of the process, otherwise uses a socket
 
-    #ifdef __WXMSW__
-    wxString script = mgr->GetDataFolder(false)+_T("\\python\\python_completion_server.py");
-    #else
-    wxString script = mgr->GetDataFolder(false)+_T("/python/python_completion_server.py");
-    #endif
+#ifdef __WXMSW__
+    wxString script = GetExtraFile(_T("/python/python_completion_server.py"),mgr);
+    wxString stdlib = GetExtraFile(_T("/python/STDLIB"),mgr);
+#else
+    wxString script = GetExtraFile(_T("/python/python_completion_server.py"),mgr);
+    wxString stdlib = GetExtraFile(_T("/python/STDLIB"),mgr);
+#endif
+    if(script==wxEmptyString || stdlib == wxEmptyString)
+    {
+        Manager::Get()->GetLogManager()->Log(_T("PyCC: Missing python scripts. Try reinstalling the plugin."));
+        return;
+    }
     wxString command = wxString::Format(_T("python -u %s %i"),script.c_str(),port);
     Manager::Get()->GetLogManager()->Log(_T("PYCC: Launching python on ")+script);
     Manager::Get()->GetLogManager()->Log(_T("PYCC: with command ")+command);
     py_server = XmlRpcMgr::Get().LaunchInterpreter(command,port);
     if(py_server->IsDead())
     {
-        wxMessageBox(_("Error Starting Python Code Completion Server"));
+        Manager::Get()->GetLogManager()->Log(_("Error Starting Python Code Completion Server"));
+        return;
     }
 
 
@@ -191,11 +211,6 @@ void PythonCodeCompletion::OnAttach()
 
     if(port!=-1)
         ::wxSleep(2); //need a delay to allow the xmlrpc server time to start
-    #ifdef __WXMSW__
-    wxString stdlib = mgr->GetDataFolder(false)+_T("\\python\\STDLIB");
-    #else
-    wxString stdlib = mgr->GetDataFolder(false)+_T("/python/STDLIB");
-    #endif
     Manager::Get()->GetLogManager()->Log(_("Loading stdlib"));
 
 //Load the symbol lib synchronously
@@ -227,9 +242,10 @@ void PythonCodeCompletion::OnRelease(bool appShutDown)
     // NOTE: after this function, the inherited member variable
     // m_IsAttached will be FALSE...
     EditorHooks::UnregisterHook(m_EditorHookId, true);
-    if(!py_server->IsDead()) //TODO: Really should wait until serverr is no longer busy and request it to terminate via XMLRPC
+    if(py_server && !py_server->IsDead()) //TODO: Really should wait until serverr is no longer busy and request it to terminate via XMLRPC
         py_server->KillProcess(true);
-    delete m_pImageList;
+    if(m_pImageList)
+        delete m_pImageList;
 }
 
 void PythonCodeCompletion::OnStdLibLoaded(XmlRpcResponseEvent &event)
@@ -237,11 +253,11 @@ void PythonCodeCompletion::OnStdLibLoaded(XmlRpcResponseEvent &event)
     if(event.GetState()==XMLRPC_STATE_RESPONSE)
     {
         m_libs_loaded=true;
-        Manager::Get()->GetLogManager()->Log(_("Python CC Initialized"));
+        Manager::Get()->GetLogManager()->Log(_("PyCC: Completion Library is Initialized"));
     }
     if(event.GetState()==XMLRPC_STATE_REQUEST_FAILED)
     {
-        Manager::Get()->GetLogManager()->Log(_("Python CC failed to initialize"));
+        Manager::Get()->GetLogManager()->Log(_("PyCC: Completion Library Failed to initialize"));
     }
 }
 

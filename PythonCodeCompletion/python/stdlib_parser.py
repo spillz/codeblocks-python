@@ -146,7 +146,7 @@ def load(src='STDLIB'):
         return None
 
 if __name__=='__main__':
-    sysm=create()
+    symbols=create()
 #    syms=load()
 #    for s in sorted(syms['os'][-1]):
 #        print s,syms['os'][-1][s][:2]

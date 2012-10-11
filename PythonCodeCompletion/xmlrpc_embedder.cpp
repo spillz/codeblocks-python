@@ -307,7 +307,7 @@ XmlRpcInstance::XmlRpcInstance(const wxString &processcmd, const wxString &hosta
 
 long XmlRpcInstance::LaunchProcess(const wxString &processcmd)
 {
-    std::cout<<"PyCC LAUNCING PROCESS"<<std::endl;
+    std::cout<<"PyCC: LAUNCHING PROCESS"<<std::endl;
     if(!m_proc_dead)
         return -1;
     if(m_proc) //this should never happen
@@ -318,13 +318,16 @@ long XmlRpcInstance::LaunchProcess(const wxString &processcmd)
 //    m_proc->Redirect(); //TODO: this only needs to be done on windows and buffers must be flushed periodically if there is any I/O to/from the process
 #ifdef __WXMSW__
     //by default wxExecute shows the terminal window on MSW (redirecting would hide it, but that breaks the process if buffers are not flushed periodically)
-    m_proc_id=wxExecuteHidden(processcmd,wxEXEC_ASYNC|wxEXEC_MAKE_GROUP_LEADER,m_proc);
+    if(m_port==-1)
+        m_proc_id=wxExecute(processcmd,wxEXEC_ASYNC|wxEXEC_MAKE_GROUP_LEADER,m_proc);
+    else
+        m_proc_id=wxExecuteHidden(processcmd,wxEXEC_ASYNC|wxEXEC_MAKE_GROUP_LEADER,m_proc);
 #else
     m_proc_id=wxExecute(processcmd,wxEXEC_ASYNC|wxEXEC_MAKE_GROUP_LEADER,m_proc);
 #endif /*__WXMSW__*/
     if(m_proc_id>0)
     {
-        std::cout<<"PyCC LAUNCING PROCESS SUCCEEDED"<<std::endl;
+        std::cout<<"PyCC: LAUNCHING PROCESS SUCCEEDED"<<std::endl;
         m_proc_dead=false;
         m_proc_killlevel=0;
     }
@@ -361,7 +364,7 @@ bool XmlRpcInstance::ExecAsync(const wxString &method, const XmlRpc::XmlRpcValue
 
 void XmlRpcInstance::OnEndProcess(wxProcessEvent &event)
 {
-    std::cout<<"CC PROCESS DIED!!"<<std::endl;
+    std::cout<<"PYCC: PROCESS DIED!!"<<std::endl;
     //TODO: m_exitcode=event.GetExitCode();
     m_proc_dead=true;
     delete m_proc;

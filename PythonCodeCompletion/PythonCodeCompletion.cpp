@@ -80,17 +80,17 @@ void PythonCodeCompletion::OnAttach()
 //    static wxString GetExecutableFolder(){ return app_path; }
 //    static wxString GetTempFolder(){ return GetFolder(sdTemp); }
 
-    int port = -1; // Port == -1 uses pipe to redirected stdin/stdout otherwise uses a socket
+    int port = -1; // Port == -1 uses pipe to do RPC over redirected stdin/stdout of the process, otherwise uses a socket
 
     #ifdef __WXMSW__
     wxString script = mgr->GetDataFolder(false)+_T("\\python\\python_completion_server.py");
     #else
     wxString script = mgr->GetDataFolder(false)+_T("/python/python_completion_server.py");
     #endif
-    wxString command = _T("python -u ")+script+_T(" -1");
+    wxString command = wxString::Format(_T("python -u %s %i"),script.c_str(),port);
     Manager::Get()->GetLogManager()->Log(_T("PYCC: Launching python on ")+script);
     Manager::Get()->GetLogManager()->Log(_T("PYCC: with command ")+command);
-    py_server = XmlRpcMgr::Get().LaunchInterpreter(command,-1);
+    py_server = XmlRpcMgr::Get().LaunchInterpreter(command,port);
     if(py_server->IsDead())
     {
         wxMessageBox(_("Error Starting Python Code Completion Server"));
@@ -198,14 +198,14 @@ void PythonCodeCompletion::OnAttach()
     #endif
     Manager::Get()->GetLogManager()->Log(_("Loading stdlib"));
 
-//Load the symbol lib synchonously
+//Load the symbol lib synchronously
 //    XmlRpc::XmlRpcValue(result);
 //    if(py_server->Exec(_("load_stdlib"),XmlRpc::XmlRpcValue(stdlib.utf8_str()),result))
 //        m_libs_loaded=true;
 //    else
 //        m_libs_loaded=false;
 
-//Load the symbol lib asynchonously
+//Load the symbol lib asynchronously
     py_server->ExecAsync(_("load_stdlib"),XmlRpc::XmlRpcValue(stdlib.utf8_str()),this,ID_STDLIB_LOAD);
     m_libs_loaded=false;
 }

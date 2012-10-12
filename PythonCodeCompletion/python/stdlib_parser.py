@@ -52,7 +52,12 @@ def parse_objs(symbols,obj_list,follow=True,prefix=''):
             doc=str(o[1].__doc__)
         except:
             doc=''
-        if type(o[1]) in obtypes:
+        try:
+            o[1].__bases__
+            has_bases=True
+        except:
+            has_bases=False
+        if type(o[1]) in obtypes or has_bases:
             ch=inspect.getmembers(o[1])
             if follow:
                 print '###follow',prefix+o[0],type(o[1])

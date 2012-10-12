@@ -13,6 +13,7 @@
 				<Option compiler="gcc" />
 				<Option createDefFile="1" />
 				<Compiler>
+					<Add option="-fPIC" />
 					<Add directory="XMLRPC/include" />
 				</Compiler>
 			</Target>
@@ -26,6 +27,7 @@
 					<Add option="-g" />
 					<Add option="`pkg-config --cflags codeblocks`" />
 					<Add option="`wx-config --cflags`" />
+					<Add option="-fPIC" />
 					<Add directory="XMLRPC/include" />
 				</Compiler>
 				<Linker>

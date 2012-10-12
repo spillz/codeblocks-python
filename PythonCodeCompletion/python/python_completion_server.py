@@ -38,7 +38,7 @@ def _uniquify(l):
             yield item
         found.add(item)
 
-isz=struct.calcsize('@I')
+isz=struct.calcsize('@L')
 
 class XmlRpcPipeServer:
     def __init__(self):
@@ -53,7 +53,7 @@ class XmlRpcPipeServer:
     def handle_request(self):
         ##TODO: Need more error handling!
         size_buf = self.inpipe.read(isz)
-        size = struct.unpack('@I',size_buf)[0]
+        size = struct.unpack('@L',size_buf)[0]
         call_xml = self.inpipe.read(size)
         self.outpipe.write(struct.pack('c','M'))
         name=''
@@ -68,7 +68,7 @@ class XmlRpcPipeServer:
             res_xml='Error running call'+name+call_xml+'\n'
             res_xml+='\n'.join(traceback.format_exception(*sys.exc_info()))
         size = len(res_xml)
-        self.outpipe.write(struct.pack('@I',size))
+        self.outpipe.write(struct.pack('@L',size))
         self.outpipe.write(res_xml)
     def __call__(self,name,*args):
         return self.fn_dict[name](*args)

@@ -137,14 +137,14 @@ public:
             std::cout<<"bad request value"<<std::endl;
             return false;
         }
-        size_t r_size=msg.size();
-        m_ostream->Write(&r_size,sizeof(size_t));
+        unsigned long r_size=msg.size();
+        m_ostream->Write(&r_size,sizeof(unsigned long));
         m_ostream->Write(msg.c_str(),msg.size());
         std::cout<<"wrote "<<msg<<std::endl;
         std::cout<<"wrote "<<r_size<<std::endl;
         char ch=m_istream->GetC();
         std::cout<<"read ch "<<ch<<std::endl;
-        for(int i=0;i<sizeof(size_t);i++)
+        for(int i=0;i<sizeof(unsigned long);i++)
             ((char*)(&r_size))[i]=m_istream->GetC();
         std::cout<<"response size is "<<r_size<<std::endl;
         char *buf = new char[r_size+1];

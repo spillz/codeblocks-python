@@ -64,6 +64,7 @@ wxString PythonCodeCompletion::GetExtraFile(const wxString &short_name, ConfigMa
     if(wxFileName::FileExists(fullname))
         return fullname;
     fullname=mgr->GetDataFolder(true)+short_name;
+    if(wxFileName::FileExists(fullname))
         return fullname;
     return wxEmptyString;
 }
@@ -96,12 +97,12 @@ void PythonCodeCompletion::OnAttach()
 
 #ifdef __WXMSW__
     wxString script = GetExtraFile(_T("/python/python_completion_server.py"),mgr);
-    wxString stdlib = GetExtraFile(_T("/python/STDLIB"),mgr);
+//    wxString stdlib = GetExtraFile(_T("/python/STDLIB"),mgr);
 #else
     wxString script = GetExtraFile(_T("/python/python_completion_server.py"),mgr);
-    wxString stdlib = GetExtraFile(_T("/python/STDLIB"),mgr);
+//    wxString stdlib = GetExtraFile(_T("/python/STDLIB"),mgr);
 #endif
-    if(script==wxEmptyString || stdlib == wxEmptyString)
+    if(script==wxEmptyString /*|| stdlib == wxEmptyString*/)
     {
         Manager::Get()->GetLogManager()->Log(_T("PyCC: Missing python scripts. Try reinstalling the plugin."));
         return;
@@ -211,8 +212,9 @@ void PythonCodeCompletion::OnAttach()
 
     if(port!=-1)
         ::wxSleep(2); //need a delay to allow the xmlrpc server time to start
-    Manager::Get()->GetLogManager()->Log(_("Loading stdlib"));
+//    Manager::Get()->GetLogManager()->Log(_("Loading stdlib"));
 
+    m_libs_loaded=true;
 //Load the symbol lib synchronously
 //    XmlRpc::XmlRpcValue(result);
 //    if(py_server->Exec(_("load_stdlib"),XmlRpc::XmlRpcValue(stdlib.utf8_str()),result))
@@ -221,17 +223,9 @@ void PythonCodeCompletion::OnAttach()
 //        m_libs_loaded=false;
 
 //Load the symbol lib asynchronously
-    py_server->ExecAsync(_("load_stdlib"),XmlRpc::XmlRpcValue(stdlib.utf8_str()),this,ID_STDLIB_LOAD);
-    m_libs_loaded=false;
+//    py_server->ExecAsync(_("load_stdlib"),XmlRpc::XmlRpcValue(stdlib.utf8_str()),this,ID_STDLIB_LOAD);
+//    m_libs_loaded=false;
 }
-
-//void PythonCodeCompletion::OnLoadTimer()
-//{
-//    if(!m_libs_loaded)
-//    {
-//    }
-//}
-
 
 
 void PythonCodeCompletion::OnRelease(bool appShutDown)
@@ -285,12 +279,15 @@ void PythonCodeCompletion::OnCompletePhrase(XmlRpcResponseEvent &event)
 {
     if(event.GetState()==XMLRPC_STATE_RESPONSE)
     {
+        Manager::Get()->GetLogManager()->Log(_("PYCC: Completion response"));
         XmlRpc::XmlRpcValue val=event.GetResponse();
         m_comp_results.Empty();
         if(val.getType()==val.TypeArray && val.size()>0)
         {
+            Manager::Get()->GetLogManager()->Log(_("PYCC: Getting comp results"));
             for(int i=0;i<val.size();++i)
                 m_comp_results.Add(wxString(std::string(val[i]).c_str(),wxConvUTF8));
+            Manager::Get()->GetLogManager()->Log(wxString::Format(_("PYCC: Beginning comp with %i items"),val.size()));
             CodeComplete();
         }
     }
@@ -392,8 +389,8 @@ int PythonCodeCompletion::CodeComplete()
 
 void PythonCodeCompletion::ShowCallTip()
 {
-    if (!IsAttached())
-        return;
+    if (!IsAttached() || !m_libs_loaded)
+        return -1;
 
     if (!Manager::Get()->GetEditorManager())
         return;
@@ -508,8 +505,13 @@ void PythonCodeCompletion::EditorEventHook(cbEditor* editor, wxScintillaEvent& e
                 return;
             }
             wxString phrase=control->GetTextRange(wordStartPos,pos);
-            Manager::Get()->GetLogManager()->Log(_T("PYCC: Looking for ")+phrase);
-            py_server->ExecAsync(_T("complete_phrase"),XmlRpc::XmlRpcValue(phrase.mb_str(wxConvUTF8)),this,ID_COMPLETE_PHRASE);
+            XmlRpc::XmlRpcValue value;
+            value.setSize(3);
+            value[0] = editor->GetFilename().mb_str(wxConvUTF8);
+            value[1] = control->GetText().mb_str(wxConvUTF8);
+            value[2] = pos;
+            Manager::Get()->GetLogManager()->Log(_T("PYCC: Looking for ")+phrase+_T(" in ")+editor->GetFilename());
+            py_server->ExecAsync(_T("complete_phrase"),value,this,ID_COMPLETE_PHRASE);
             event.Skip();
             return;
         }
@@ -592,7 +594,12 @@ void PythonCodeCompletion::EditorEventHook(cbEditor* editor, wxScintillaEvent& e
         symbol.Replace(_T("\t"),wxEmptyString);
         m_ActiveSymbol=symbol;
         Manager::Get()->GetLogManager()->Log(_T("PYCC: Found calltip symbol ")+symbol);
-        py_server->ExecAsync(_T("complete_tip"),XmlRpc::XmlRpcValue(symbol.mb_str(wxConvUTF8)),this,ID_CALLTIP);
+        XmlRpc::XmlRpcValue value;
+        value.setSize(3);
+        value[0] = editor->GetFilename().mb_str(wxConvUTF8);
+        value[1] = control->GetText().mb_str(wxConvUTF8);
+        value[2] = end_pos;
+        py_server->ExecAsync(_T("complete_tip"),value,this,ID_CALLTIP);
         Manager::Get()->GetLogManager()->Log(_T("PYCC: Started server request"));
     }
     // allow others to handle this event

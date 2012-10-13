@@ -12,6 +12,4 @@
         <Value license="GPL" />
     </Plugin>
     <Extra file="python/python_completion_server.py" />
-    <Extra file="python/stdlib_parser.py" />
-    <Extra file="python/STDLIB" />
 </CodeBlocks_plugin_manifest_file>

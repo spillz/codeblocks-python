@@ -1,6 +1,6 @@
 # client-side test program for interp.py
 
-import xmlrpclib
+import xmlrpclib as x
 import os
 import subprocess
 import sys
@@ -11,7 +11,6 @@ import struct
 #p.communicate(struct.pack('@I',len(xml)))
 #p.communicate(xml)
 #print sys.stdin.read()
-
 
 #import sys
 #sys.exit()
@@ -30,6 +29,7 @@ class A:
     def b(x):
         pass
 def f(x):
+    'f(x)\\nreturns a function'
     return x**2
 x=1
 y=f(x)
@@ -41,5 +41,5 @@ f(
 f=os.getcwd()+'/test_client.py'
 
 print f
-print s.complete_context(f,code,len(code)-2)
+print s.complete_phrase(f,code,len(code)-2)
 print s.complete_tip(f,code,len(code)-2)

@@ -154,19 +154,29 @@ class PyCompletionServer:
         doc = codeassist.get_doc(self.project, source, position)
         if doc is not None:
             lines=doc.split('\n')
+            del lines[0] ##rope inserts its own header in the doc string
+            doc=doc.strip(' \t\n')
+            fnfull = calltip[:calltip.find('(')]
+            fn = calltip[fnfull.find('.'):]
+            if not (fnfull and lines[0].startswith(fnfull)):
+                if not (fn and lines[0].startswith(fn)):
+                    lines.insert(0,calltip)
+            if lines[0].strip()[-1]!=':':
+                lines[0]=lines[0]+':'
             shortened=False
             if len(lines)>6:
                 shortened=True
-                doc='\n'.join(lines[:6])
+                doc='\n'.join(lines[:8])
+            else:
+                doc='\n'.join(lines)
             if len(doc)>250:
                 shortened=True
                 doc=doc[:250]
-            doc=doc.strip(' \t\n')
             if shortened:
                 doc+='...'
-            calltip+='\n'+doc
+            calltip=doc
         if calltip==None:
-            calltip=='<unknown function>'
+            calltip='<unknown function>'
         return calltip
     def end(self):
         self._quit=True

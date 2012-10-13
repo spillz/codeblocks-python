@@ -38,7 +38,7 @@
 				</Linker>
 				<ExtraCommands>
 					<Add after="zip -j9 PythonCodeCompletion.zip manifest.xml" />
-					<Add after="zip -r9 PythonCodeCompletion.cbplugin PythonCodeCompletion.so PythonCodeCompletion.zip python/python_completion_server.py python/stdlib_parser.py python/STDLIB" />
+					<Add after="zip -r9 PythonCodeCompletion.cbplugin PythonCodeCompletion.so PythonCodeCompletion.zip python/python_completion_server.py" />
 					<Mode after="always" />
 				</ExtraCommands>
 			</Target>

@@ -390,7 +390,7 @@ int PythonCodeCompletion::CodeComplete()
 void PythonCodeCompletion::ShowCallTip()
 {
     if (!IsAttached() || !m_libs_loaded)
-        return -1;
+        return;
 
     if (!Manager::Get()->GetEditorManager())
         return;

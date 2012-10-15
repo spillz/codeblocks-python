@@ -133,6 +133,9 @@ class PyCompletionServer:
         return True
     def complete_phrase(self,path,source,position):
 #        print 'complete context',path,position
+#        if '\r' in source:
+#            print 'replacing CRs'
+#            source=source.replace('\r\n',' \n').replace('\r','\n')
         if path!=None:
             if not self.notify_active_path(path):
                 return []
@@ -143,6 +146,7 @@ class PyCompletionServer:
         return completions
     def complete_tip(self,path,source,position):
 #        print 'complete tip',symbol
+#        source=source.replace('\r\n',' \n').replace('\r','\n')
         if path!=None:
             if not self.notify_active_path(path):
                 return []

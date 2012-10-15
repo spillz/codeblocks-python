@@ -93,7 +93,7 @@ void PythonCodeCompletion::OnAttach()
 //    static wxString GetExecutableFolder(){ return app_path; }
 //    static wxString GetTempFolder(){ return GetFolder(sdTemp); }
 
-    int port = -1; // Port == -1 uses pipe to do RPC over redirected stdin/stdout of the process, otherwise uses a socket
+    int port = 8006; // Port == -1 uses pipe to do RPC over redirected stdin/stdout of the process, otherwise uses a socket
 
 #ifdef __WXMSW__
     wxString script = GetExtraFile(_T("/python/python_completion_server.py"),mgr);
@@ -507,10 +507,10 @@ void PythonCodeCompletion::EditorEventHook(cbEditor* editor, wxScintillaEvent& e
             wxString phrase=control->GetTextRange(wordStartPos,pos);
             XmlRpc::XmlRpcValue value;
             value.setSize(3);
-            value[0] = editor->GetFilename().mb_str(wxConvUTF8);
-            value[1] = control->GetText().mb_str(wxConvUTF8);
+            value[0] = editor->GetFilename().utf8_str(); //mb_str(wxConvUTF8);
+            value[1] = control->GetText().utf8_str(); //mb_str(wxConvUTF8);
             value[2] = pos;
-            Manager::Get()->GetLogManager()->Log(_T("PYCC: Looking for ")+phrase+_T(" in ")+editor->GetFilename());
+            Manager::Get()->GetLogManager()->Log(_T("PYCC: Looking for ")+phrase+_T(" in ")+editor->GetFilename()+wxString::Format(_T(" %i"),pos));
             py_server->ExecAsync(_T("complete_phrase"),value,this,ID_COMPLETE_PHRASE);
             event.Skip();
             return;
@@ -596,8 +596,8 @@ void PythonCodeCompletion::EditorEventHook(cbEditor* editor, wxScintillaEvent& e
         Manager::Get()->GetLogManager()->Log(_T("PYCC: Found calltip symbol ")+symbol);
         XmlRpc::XmlRpcValue value;
         value.setSize(3);
-        value[0] = editor->GetFilename().mb_str(wxConvUTF8);
-        value[1] = control->GetText().mb_str(wxConvUTF8);
+        value[0] = editor->GetFilename().utf8_str(); //mb_str(wxConvUTF8);
+        value[1] = control->GetText().utf8_str(); //mb_str(wxConvUTF8);
         value[2] = end_pos;
         py_server->ExecAsync(_T("complete_tip"),value,this,ID_CALLTIP);
         Manager::Get()->GetLogManager()->Log(_T("PYCC: Started server request"));

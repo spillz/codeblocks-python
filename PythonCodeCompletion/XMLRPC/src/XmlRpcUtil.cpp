@@ -30,12 +30,12 @@ int XmlRpcLogHandler::_verbosity = 0;
 static class DefaultLogHandler : public XmlRpcLogHandler {
 public:
 
-  void log(int level, const char* msg) { 
+  void log(int level, const char* msg) {
 #ifdef USE_WINDOWS_DEBUG
     if (level <= _verbosity) { OutputDebugString(msg); OutputDebugString("\n"); }
 #else
-    if (level <= _verbosity) std::cout << msg << std::endl; 
-#endif  
+    if (level <= _verbosity) std::cout << msg << std::endl;
+#endif
   }
 
 } defaultLogHandler;
@@ -52,8 +52,8 @@ public:
 #ifdef USE_WINDOWS_DEBUG
     OutputDebugString(msg); OutputDebugString("\n");
 #else
-    std::cerr << msg << std::endl; 
-#endif  
+    std::cerr << msg << std::endl;
+#endif
   }
 } defaultErrorHandler;
 
@@ -66,7 +66,7 @@ XmlRpcErrorHandler* XmlRpcErrorHandler::_errorHandler = &defaultErrorHandler;
 int XmlRpc::getVerbosity() { return XmlRpcLogHandler::getVerbosity(); }
 void XmlRpc::setVerbosity(int level) { XmlRpcLogHandler::setVerbosity(level); }
 
- 
+
 
 void XmlRpcUtil::log(int level, const char* fmt, ...)
 {
@@ -94,7 +94,7 @@ void XmlRpcUtil::error(const char* fmt, ...)
 
 
 // Returns contents between <tag> and </tag>, updates offset to char after </tag>
-std::string 
+std::string
 XmlRpcUtil::parseTag(const char* tag, std::string const& xml, int* offset)
 {
   if (*offset >= int(xml.length())) return std::string();
@@ -112,7 +112,7 @@ XmlRpcUtil::parseTag(const char* tag, std::string const& xml, int* offset)
 
 
 // Returns true if the tag is found and updates offset to the char after the tag
-bool 
+bool
 XmlRpcUtil::findTag(const char* tag, std::string const& xml, int* offset)
 {
   if (*offset >= int(xml.length())) return false;
@@ -127,7 +127,7 @@ XmlRpcUtil::findTag(const char* tag, std::string const& xml, int* offset)
 
 // Returns true if the tag is found at the specified offset (modulo any whitespace)
 // and updates offset to the char after the tag
-bool 
+bool
 XmlRpcUtil::nextTagIs(const char* tag, std::string const& xml, int* offset)
 {
   if (*offset >= int(xml.length())) return false;
@@ -148,7 +148,7 @@ XmlRpcUtil::nextTagIs(const char* tag, std::string const& xml, int* offset)
 
 // Returns the next tag and updates offset to the char after the tag, or empty string
 // if the next non-whitespace character is not '<'
-std::string 
+std::string
 XmlRpcUtil::getNextTag(std::string const& xml, int* offset)
 {
   if (*offset >= int(xml.length())) return std::string();
@@ -176,14 +176,14 @@ XmlRpcUtil::getNextTag(std::string const& xml, int* offset)
 
 // xml encodings (xml-encoded entities are preceded with '&')
 static const char  AMP = '&';
-static const char  rawEntity[] = { '<',   '>',   '&',    '\'',    '\"',    0 };
-static const char* xmlEntity[] = { "lt;", "gt;", "amp;", "apos;", "quot;", 0 };
-static const int   xmlEntLen[] = { 3,     3,     4,      5,       5 };
+static const char  rawEntity[] = { '<',   '>',   '&',    '\'',    '\"',    '\r',    0 };
+static const char* xmlEntity[] = { "lt;", "gt;", "amp;", "apos;", "quot;", "#xD;", 0 };
+static const int   xmlEntLen[] = { 3,     3,     4,      5,       5,       4 };
 
 
 // Replace xml-encoded entities with the raw text equivalents.
 
-std::string 
+std::string
 XmlRpcUtil::xmlDecode(const std::string& encoded)
 {
   std::string::size_type iAmp = encoded.find(AMP);
@@ -213,14 +213,14 @@ XmlRpcUtil::xmlDecode(const std::string& encoded)
       decoded += encoded[iAmp++];
     }
   }
-    
+
   return decoded;
 }
 
 
 // Replace raw text with xml-encoded entities.
 
-std::string 
+std::string
 XmlRpcUtil::xmlEncode(const std::string& raw)
 {
   std::string::size_type iRep = raw.find_first_of(rawEntity);

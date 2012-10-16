@@ -25,6 +25,7 @@ int ID_EDITOR_HOOKS = wxNewId();
 int ID_STDLIB_LOAD = wxNewId();
 int ID_COMPLETE_PHRASE = wxNewId();
 int ID_CALLTIP = wxNewId();
+int ID_GOTO_DECLARATION = wxNewId();
 // Register the plugin with Code::Blocks.
 // We are using an anonymous namespace so we don't litter the global one.
 namespace
@@ -39,6 +40,8 @@ BEGIN_EVENT_TABLE(PythonCodeCompletion, cbCodeCompletionPlugin)
     EVT_XMLRPC_RESPONSE(ID_STDLIB_LOAD,PythonCodeCompletion::OnStdLibLoaded)
     EVT_XMLRPC_RESPONSE(ID_COMPLETE_PHRASE,PythonCodeCompletion::OnCompletePhrase)
     EVT_XMLRPC_RESPONSE(ID_CALLTIP,PythonCodeCompletion::OnCalltip)
+    EVT_XMLRPC_RESPONSE(ID_GOTO_DECLARATION,PythonCodeCompletion::OnGotoDeclaration)
+    EVT_MENU(ID_GOTO_DECLARATION, PythonCodeCompletion::OnClickedGotoDeclaration)
 END_EVENT_TABLE()
 
 // constructor
@@ -93,15 +96,9 @@ void PythonCodeCompletion::OnAttach()
 //    static wxString GetExecutableFolder(){ return app_path; }
 //    static wxString GetTempFolder(){ return GetFolder(sdTemp); }
 
-    int port = 8006; // Port == -1 uses pipe to do RPC over redirected stdin/stdout of the process, otherwise uses a socket
+    int port = -1; // Port == -1 uses pipe to do RPC over redirected stdin/stdout of the process, otherwise uses a socket
 
-#ifdef __WXMSW__
     wxString script = GetExtraFile(_T("/python/python_completion_server.py"),mgr);
-//    wxString stdlib = GetExtraFile(_T("/python/STDLIB"),mgr);
-#else
-    wxString script = GetExtraFile(_T("/python/python_completion_server.py"),mgr);
-//    wxString stdlib = GetExtraFile(_T("/python/STDLIB"),mgr);
-#endif
     if(script==wxEmptyString /*|| stdlib == wxEmptyString*/)
     {
         Manager::Get()->GetLogManager()->Log(_T("PyCC: Missing python scripts. Try reinstalling the plugin."));
@@ -326,7 +323,38 @@ void PythonCodeCompletion::BuildModuleMenu(const ModuleType type, wxMenu* menu, 
     //Check the parameter \"type\" and see which module it is
     //and append any items you need in the menu...
     //TIP: for consistency, add a separator as the first item...
-    NotImplemented(_T("PythonCodeCompletion::BuildModuleMenu()"));
+    // if not attached, exit
+    if (!menu || !IsAttached() || !m_libs_loaded)
+        return;
+
+    if (type == mtEditorManager)
+    {
+        cbEditor* ed = Manager::Get()->GetEditorManager()->GetBuiltinActiveEditor();
+        if (!ed)
+            return;
+
+        cbStyledTextCtrl *control = ed->GetControl();
+
+        if(control->GetLexer() != wxSCI_LEX_PYTHON)
+            return;
+
+        int pos   = control->GetCurrentPos();
+        int wordStartPos = control->WordStartPosition(pos, false);
+        int wordEndPos = control->WordEndPosition(pos, false);
+        wxString word = control->GetTextRange(wordStartPos, wordEndPos);
+        if (word.Find(' ')>=0)
+            return;
+
+        if(wordStartPos<wordEndPos)
+        {
+            wxString msg;
+            size_t pos = 0;
+            msg.Printf(_("Python: Find declaration of: '%s'"), word.wx_str());
+            menu->Insert(pos, ID_GOTO_DECLARATION, msg);
+            ++pos;
+
+        }
+    }
 }
 
 int PythonCodeCompletion::CodeComplete()
@@ -605,3 +633,55 @@ void PythonCodeCompletion::EditorEventHook(cbEditor* editor, wxScintillaEvent& e
     // allow others to handle this event
     event.Skip();
 }
+
+void PythonCodeCompletion::OnClickedGotoDeclaration(wxCommandEvent& event)
+{
+    cbEditor* ed = Manager::Get()->GetEditorManager()->GetBuiltinActiveEditor();
+    if(!ed)
+        return;
+
+    cbStyledTextCtrl *control = ed->GetControl();
+
+    if(control->GetLexer() != wxSCI_LEX_PYTHON)
+        return;
+
+    int pos   = control->GetCurrentPos();
+    XmlRpc::XmlRpcValue value;
+    value.setSize(3);
+    value[0] = ed->GetFilename().utf8_str();
+    value[1] = control->GetText().utf8_str();
+    value[2] = pos;
+    py_server->ExecAsync(_T("get_definition_location"),value,this,ID_GOTO_DECLARATION);
+}
+
+void PythonCodeCompletion::OnGotoDeclaration(XmlRpcResponseEvent &event)
+{
+    if(event.GetState()==XMLRPC_STATE_RESPONSE)
+    {
+        Manager::Get()->GetLogManager()->Log(_("PYCC: Completion response"));
+        XmlRpc::XmlRpcValue val=event.GetResponse(); //Should return an array of path, lineno
+        m_comp_results.Empty();
+        Manager::Get()->GetLogManager()->Log(wxString::Format(_("PYCC: XML response \n%s"),val.toXml().c_str()));
+        if(val.getType()==val.TypeArray && val.size()>0)
+        {
+            wxString path = wxString(std::string(val[0]).c_str(),wxConvUTF8);
+            int line = val[1];
+            Manager::Get()->GetLogManager()->Log(wxString::Format(_("PYCC: Declaration is at %s:%i"),path.c_str(),line));
+            wxFileName f(path);
+            if(f.FileExists())
+            {
+                cbEditor* ed = Manager::Get()->GetEditorManager()->Open(f.GetFullPath());
+                if (ed)
+                {
+                    ed->Show(true);
+                    ed->GotoLine(line - 1, false);
+                }
+                return;
+            }
+            Manager::Get()->GetLogManager()->Log(_("PYCC: file could not be opened"));
+        }
+    }
+    Manager::Get()->GetLogManager()->Log(_("PYCC: Bad response for goto declaration"));
+
+}
+

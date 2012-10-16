@@ -1,7 +1,4 @@
-
-def f(x):
-    return x**2
- # client-side test program for python_completion_server.py
+# client-side test program for interp.py
 
 import xmlrpclib
 import os
@@ -37,21 +34,13 @@ def f(x):
 x=1
 y=f(x)
 a=A()
-f()
+f(
 '''
 
 
 f=os.getcwd()+'/test_client.py'
 
 print f
-print s.complete_phrase(f,code,len(code)-3)
-print s.complete_tip(f,code,len(code)-3)
-code = code + '\na.'
-print s.complete_phrase(f,code,len(code))
-code = 'code = 1\nco'
-print len(code)
-print s.complete_phrase(f,code,len(code))
-code = 'code = 1\r\nco'
-print len(code)
-#code = code.replace('\r\n',' \n')
-print s.complete_phrase(f,code,len(code))
+print s.complete_phrase(f,code,len(code)-2)
+print s.complete_tip(f,code,len(code)-2)
+print s.get_definition_location(f,code,len(code)-2)

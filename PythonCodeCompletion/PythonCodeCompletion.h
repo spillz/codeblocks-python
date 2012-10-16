@@ -130,6 +130,8 @@ class PythonCodeCompletion : public cbCodeCompletionPlugin
         void OnStdLibLoaded(XmlRpcResponseEvent &event);
         void OnCalltip(XmlRpcResponseEvent &event);
         void OnCompletePhrase(XmlRpcResponseEvent &event);
+        void OnClickedGotoDeclaration(wxCommandEvent& event);
+        void OnGotoDeclaration(XmlRpcResponseEvent &event);
 
     private:
         wxString GetExtraFile(const wxString &short_name, ConfigManager *mgr);

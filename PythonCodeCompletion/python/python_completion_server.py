@@ -62,7 +62,7 @@ def _uniquify(l):
             yield item
         found.add(item)
 
-isz=struct.calcsize('@L')
+isz=struct.calcsize('I')
 
 class XmlRpcPipeServer:
     def __init__(self):
@@ -77,7 +77,7 @@ class XmlRpcPipeServer:
     def handle_request(self):
         ##TODO: Need more error handling!
         size_buf = self.inpipe.read(isz)
-        size = struct.unpack('@L',size_buf)[0]
+        size = struct.unpack('I',size_buf)[0]
         call_xml = self.inpipe.read(size)
         self.outpipe.write(struct.pack('c','M'))
         name=''
@@ -92,7 +92,7 @@ class XmlRpcPipeServer:
             res_xml='Error running call'+name+call_xml+'\n'
             res_xml+='\n'.join(traceback.format_exception(*sys.exc_info()))
         size = len(res_xml)
-        self.outpipe.write(struct.pack('@L',size))
+        self.outpipe.write(struct.pack('I',size))
         self.outpipe.write(res_xml)
     def __call__(self,name,*args):
         return self.fn_dict[name](*args)
@@ -117,6 +117,7 @@ class PyCompletionServer:
         self.server.register_function(self.end,'end')
         self.server.register_function(self.complete_phrase,'complete_phrase')
         self.server.register_function(self.complete_tip,'complete_tip')
+        self.server.register_function(self.get_definition_location,'get_definition_location')
         while not self._quit:
             self.server.handle_request()
     def notify_active_path(self,path):
@@ -182,6 +183,16 @@ class PyCompletionServer:
         if calltip==None:
             calltip='<unknown function>'
         return calltip
+    def get_definition_location(self,path,source,position):
+        if path!=None:
+            if not self.notify_active_path(path):
+                return []
+        resource,lineno = codeassist.get_definition_location(self.project,source,position)
+        if lineno == None:
+            return '',-1
+        if resource == None:
+            return path,lineno
+        return resource.path,lineno
     def end(self):
         self._quit=True
         return True

@@ -139,22 +139,22 @@ public:
             std::cout<<"bad request value"<<std::endl;
             return false;
         }
-        uint32_t r_size=msg.size();
+        uint32_t r_size=msg.size(); //TODO: Is it safer to use uint64_t (would need to use long long on the python side)
         m_ostream->Write(&r_size,sizeof(uint32_t));
-        m_ostream->Write(msg.c_str(),msg.size());
+        for(uint32_t i=0;i<msg.size();++i)
+            m_ostream->PutC(msg[i]);
+//        m_ostream->Write(msg.c_str(),msg.size()); //On windows, this will frequently result in an incomplete write becasue the buffer gets full so better to use the blocking PutC instead
         std::cout<<"wrote "<<msg<<std::endl;
-        std::cout<<"wrote "<<r_size<<std::endl;
+        std::cout<<"with size "<<r_size<<std::endl;
         char ch=m_istream->GetC();
         std::cout<<"read ch "<<ch<<std::endl;
-        for(int i=0;i<sizeof(uint32_t);i++)
+        for(uint32_t i=0;i<sizeof(uint32_t);i++)
             ((char*)(&r_size))[i]=m_istream->GetC();
         std::cout<<"response size is "<<r_size<<std::endl;
         char *buf = new char[r_size+1];
-        for(int i=0;i<r_size;i++)
+        for(uint32_t i=0;i<r_size;i++)
             buf[i]=m_istream->GetC();
-////        m_istream->Read(buf,r_size);
         buf[r_size]=0;
-        int offset=0;
         std::cout<<"response was "<<std::string(buf)<<std::endl;
         if(parseResponse(std::string(buf), result))
         {
@@ -321,7 +321,7 @@ long XmlRpcInstance::LaunchProcess(const wxString &processcmd)
 #ifdef __WXMSW__
     //by default wxExecute shows the terminal window on MSW (redirecting would hide it, but that breaks the process if buffers are not flushed periodically)
     if(m_port==-1)
-        m_proc_id=wxExecute(processcmd,wxEXEC_ASYNC|wxEXEC_MAKE_GROUP_LEADER,m_proc);
+        m_proc_id=wxExecute(processcmd,wxEXEC_ASYNC/*|wxEXEC_MAKE_GROUP_LEADER*/,m_proc);
     else
         m_proc_id=wxExecuteHidden(processcmd,wxEXEC_ASYNC|wxEXEC_MAKE_GROUP_LEADER,m_proc);
 #else

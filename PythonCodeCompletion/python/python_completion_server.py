@@ -1,18 +1,15 @@
-import code
 import sys
 import os.path
-import time
-import types
 import struct
 import xmlrpclib
 from SimpleXMLRPCServer import SimpleXMLRPCServer
-#from pysmell import idehelper
-#from pysmell import tags
-from re import split
 from rope.contrib import codeassist
 import rope.base.project
 
 '''
+Rope type/scope combinations
+                                            type
+                scope
      |                    | instance | class | function | module | None
      |              local |    +     |   +   |    +     |   +    |
      |             global |    +     |   +   |    +     |   +    |
@@ -23,23 +20,8 @@ import rope.base.project
      |  parameter_keyword |          |       |          |        |  +
 '''
 
-'''
-type_map = {
-str(types.ModuleType) : 1,
-str(types.ClassType) : 2,
-str(types.ObjectType) : 3,
-str(types.TypeType) : 4,
-str(types.InstanceType) : 5,
-str(types.FunctionType) : 6,
-str(types.MethodType) : 7,
-str(types.UnboundMethodType) : 8,
-str(types.BuiltinFunctionType) : 6,
-str(types.BuiltinMethodType) : 7,
-str(types.LambdaType) : 9,
-str(types.GeneratorType) : 10 }
-'''
-
 def type_suffix(o):
+    #TODO: Add type/scope combinations here adding more bitmaps to the list in the plugin
     t = o.type
     s = o.scope
     if t=='instance':
@@ -57,15 +39,23 @@ def type_suffix(o):
 isz=struct.calcsize('I')
 
 class XmlRpcPipeServer:
+    '''
+    A simple XMLRPC server implementation that uses the stdin, stdout
+    pipes to communicate with the owner of the process. Implements
+    most of the features of SimpleXMLRPCServer
+    '''
     def __init__(self):
         self.fn_dict={}
         self.inpipe=sys.stdin
         self.outpipe=sys.stdout
         sys.stdout=open(os.devnull,'wb')
+
     def register_function(self,fn,name):
         self.fn_dict[name]=fn
+
     def register_introspection_functions(self):
         pass
+
     def handle_request(self):
         ##TODO: Need more error handling!
         size_buf = self.inpipe.read(isz)
@@ -81,16 +71,20 @@ class XmlRpcPipeServer:
             res_xml = bytes(xmlrpclib.dumps(result, methodresponse=True))
         except:
             import traceback
-            res_xml='Error running call'+name+call_xml+'\n'
+            res_xml='Error running call'+name+'\n'+call_xml+'\n'
             res_xml+='\n'.join(traceback.format_exception(*sys.exc_info()))
         size = len(res_xml)
         self.outpipe.write(struct.pack('I',size))
         self.outpipe.write(res_xml)
+
     def __call__(self,name,*args):
         return self.fn_dict[name](*args)
 
 
-class PyCompletionServer:
+class PythonCompletionServer:
+    '''
+    An XMLRPC server that serves up a rope interface
+    '''
     def __init__(self,port):
         # Create XMLRPC server
         self.timeout=0.2
@@ -98,6 +92,7 @@ class PyCompletionServer:
         self.port=port
         self.project=None
         self.active_path=None
+
     def run(self):
         if self.port==-1:
             self.server = XmlRpcPipeServer()
@@ -112,6 +107,7 @@ class PyCompletionServer:
         self.server.register_function(self.get_definition_location,'get_definition_location')
         while not self._quit:
             self.server.handle_request()
+
     def notify_active_path(self,path):
         if self.active_path==os.path.split(path)[0]:
             return True
@@ -124,11 +120,9 @@ class PyCompletionServer:
         except:
             return False
         return True
+
     def complete_phrase(self,path,source,position):
 #        print 'complete context',path,position
-#        if '\r' in source:
-#            print 'replacing CRs'
-#            source=source.replace('\r\n',' \n').replace('\r','\n')
         if path!=None:
             if not self.notify_active_path(path):
                 return []
@@ -137,9 +131,9 @@ class PyCompletionServer:
         results = codeassist.code_assist(self.project, source, position)
         completions=sorted([s.name+type_suffix(s) for s in results])
         return completions
+
     def complete_tip(self,path,source,position):
 #        print 'complete tip',symbol
-#        source=source.replace('\r\n',' \n').replace('\r','\n')
         if path!=None:
             if not self.notify_active_path(path):
                 return []
@@ -175,6 +169,7 @@ class PyCompletionServer:
         if calltip==None:
             calltip='<unknown function>'
         return calltip
+
     def get_definition_location(self,path,source,position):
         if path!=None:
             if not self.notify_active_path(path):
@@ -185,6 +180,7 @@ class PyCompletionServer:
         if resource == None:
             return [path,lineno]
         return [resource.path,lineno]
+
     def end(self):
         self._quit=True
         return True
@@ -205,5 +201,5 @@ if __name__=='__main__':
         if port<-1:
             cmd_err()
 
-    server=PyCompletionServer(port)
+    server=PythonCompletionServer(port)
     server.run()

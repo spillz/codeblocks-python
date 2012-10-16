@@ -9,7 +9,6 @@ from SimpleXMLRPCServer import SimpleXMLRPCServer
 #from pysmell import idehelper
 #from pysmell import tags
 from re import split
-
 from rope.contrib import codeassist
 import rope.base.project
 
@@ -54,13 +53,6 @@ def type_suffix(o):
     elif s=='keyword':
         return ''
     return ''
-
-def _uniquify(l):
-    found = set()
-    for item in l:
-        if item not in found:
-            yield item
-        found.add(item)
 
 isz=struct.calcsize('I')
 
@@ -200,7 +192,7 @@ class PyCompletionServer:
 def cmd_err():
     print 'Correct usage: python_completion_server.py <port>'
     print '<port> must be a positive integer or -1 to use stdin/stdout'
-    exit()
+    sys.exit()
 
 if __name__=='__main__':
     if len(sys.argv)!=2:

@@ -141,22 +141,39 @@ public:
         }
         uint32_t r_size=msg.size(); //TODO: Is it safer to use uint64_t (would need to use long long on the python side)
         m_ostream->Write(&r_size,sizeof(uint32_t));
+        if(m_ostream->GetLastError()!=wxSTREAM_NO_ERROR)
+            return false;
         for(uint32_t i=0;i<msg.size();++i)
+        {
             m_ostream->PutC(msg[i]);
+            if(m_ostream->GetLastError()!=wxSTREAM_NO_ERROR)
+                return false;
+        }
 //        m_ostream->Write(msg.c_str(),msg.size()); //On windows, this will frequently result in an incomplete write becasue the buffer gets full so better to use the blocking PutC instead
         std::cout<<"wrote "<<msg<<std::endl;
         std::cout<<"with size "<<r_size<<std::endl;
         char ch=m_istream->GetC();
+        if(m_istream->GetLastError()!=wxSTREAM_NO_ERROR)
+            return false;
         std::cout<<"read ch "<<ch<<std::endl;
         for(uint32_t i=0;i<sizeof(uint32_t);i++)
+        {
             ((char*)(&r_size))[i]=m_istream->GetC();
+            if(m_istream->GetLastError()!=wxSTREAM_NO_ERROR)
+                return false;
+        }
         std::cout<<"response size is "<<r_size<<std::endl;
-        char *buf = new char[r_size+1];
+        std::string buf;
+        buf.resize(r_size+1);
         for(uint32_t i=0;i<r_size;i++)
+        {
             buf[i]=m_istream->GetC();
+            if(m_istream->GetLastError()!=wxSTREAM_NO_ERROR)
+                return false;
+        }
         buf[r_size]=0;
-        std::cout<<"response was "<<std::string(buf)<<std::endl;
-        if(parseResponse(std::string(buf), result))
+        std::cout<<"response was "<<buf<<std::endl;
+        if(parseResponse(buf, result))
         {
             return true;
         }

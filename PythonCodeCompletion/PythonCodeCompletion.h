@@ -134,7 +134,7 @@ class PythonCodeCompletion : public cbCodeCompletionPlugin
         void OnGotoDeclaration(XmlRpcResponseEvent &event);
 
     private:
-        wxString GetExtraFile(const wxString &short_name, ConfigManager *mgr);
+        wxString GetExtraFile(const wxString &short_name);
         XmlRpcInstance *py_server; //Code Completion Server (a python process running an XMLRPC server)
         wxImageList* m_pImageList;
         bool m_libs_loaded;

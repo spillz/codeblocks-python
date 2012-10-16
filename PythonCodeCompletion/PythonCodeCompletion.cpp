@@ -61,12 +61,12 @@ PythonCodeCompletion::~PythonCodeCompletion()
 {
 }
 
-wxString PythonCodeCompletion::GetExtraFile(const wxString &short_name, ConfigManager *mgr)
+wxString PythonCodeCompletion::GetExtraFile(const wxString &short_name)
 {
-    wxString fullname=mgr->GetDataFolder(false)+short_name;
+    wxString fullname=ConfigManager::GetFolder(sdDataUser)+short_name;
     if(wxFileName::FileExists(fullname))
         return fullname;
-    fullname=mgr->GetDataFolder(true)+short_name;
+    fullname=ConfigManager::GetFolder(sdDataGlobal)+short_name;
     if(wxFileName::FileExists(fullname))
         return fullname;
     return wxEmptyString;
@@ -98,7 +98,7 @@ void PythonCodeCompletion::OnAttach()
 
     int port = -1; // Port == -1 uses pipe to do RPC over redirected stdin/stdout of the process, otherwise uses a socket
 
-    wxString script = GetExtraFile(_T("/python/python_completion_server.py"),mgr);
+    wxString script = GetExtraFile(_T("/python/python_completion_server.py"));
     if(script==wxEmptyString /*|| stdlib == wxEmptyString*/)
     {
         Manager::Get()->GetLogManager()->Log(_T("PyCC: Missing python scripts. Try reinstalling the plugin."));

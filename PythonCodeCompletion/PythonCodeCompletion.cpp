@@ -107,7 +107,7 @@ void PythonCodeCompletion::OnAttach()
     wxString command = wxString::Format(_T("python -u %s %i"),script.c_str(),port);
     Manager::Get()->GetLogManager()->Log(_T("PYCC: Launching python on ")+script);
     Manager::Get()->GetLogManager()->Log(_T("PYCC: with command ")+command);
-    py_server = XmlRpcMgr::Get().LaunchInterpreter(command,port);
+    py_server = XmlRpcMgr::Get().LaunchProcess(command,port);
     if(py_server->IsDead())
     {
         Manager::Get()->GetLogManager()->Log(_("Error Starting Python Code Completion Server"));

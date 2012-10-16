@@ -129,7 +129,7 @@ WX_DECLARE_OBJARRAY(XmlRpcInstance, XmlRpcInstanceCollection);
 class XmlRpcMgr
 {
 public:
-    XmlRpcInstance *LaunchInterpreter(const wxString &cmd,int port=8000);
+    XmlRpcInstance *LaunchProcess(const wxString &cmd,int port=-1,const wxString &address=_("localhost"));
     static XmlRpcMgr &Get();
     ~XmlRpcMgr();
 protected:

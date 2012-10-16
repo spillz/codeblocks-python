@@ -480,9 +480,9 @@ XmlRpcMgr::~XmlRpcMgr()
     m_Interpreters.Empty();
 }
 
-XmlRpcInstance *XmlRpcMgr::LaunchInterpreter(const wxString &cmd,int port)
+XmlRpcInstance *XmlRpcMgr::LaunchProcess(const wxString &cmd,int port,const wxString &address)
 {
-    XmlRpcInstance *p=new XmlRpcInstance(cmd,_("localhost"),port);
+    XmlRpcInstance *p=new XmlRpcInstance(cmd,address,port);
     if(p)
         m_Interpreters.Add(p);
     return p;

@@ -186,13 +186,13 @@ class PyCompletionServer:
     def get_definition_location(self,path,source,position):
         if path!=None:
             if not self.notify_active_path(path):
-                return []
+                return ['',-1]
         resource,lineno = codeassist.get_definition_location(self.project,source,position)
         if lineno == None:
-            return '',-1
+            return ['',-1]
         if resource == None:
-            return path,lineno
-        return resource.path,lineno
+            return [path,lineno]
+        return [resource.path,lineno]
     def end(self):
         self._quit=True
         return True

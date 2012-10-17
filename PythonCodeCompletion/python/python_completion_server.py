@@ -1,10 +1,12 @@
 import sys
-import os.path
+import os
 import struct
 import xmlrpclib
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 from rope.contrib import codeassist
 import rope.base.project
+
+user_rope_dir = os.path.join(os.getenv('HOME'),'.rope')
 
 '''
 Rope type/scope combinations
@@ -116,7 +118,10 @@ class PythonCompletionServer:
         fdir,fname = os.path.split(path)
         self.active_path=fdir
         try:
-            self.project = rope.base.project.Project(fdir)
+            if os.path.exists(os.path.join(fdir,'.ropeproject')):
+                self.project = rope.base.project.Project(fdir)
+            else:
+                self.project = rope.base.project.Project(fdir, ropefolder=os.path.relpath(user_rope_dir,fdir))
         except:
             return False
         return True

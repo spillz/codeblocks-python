@@ -86,6 +86,11 @@ void PythonCodeCompletion::OnAttach()
     EditorHooks::HookFunctorBase* myhook = new EditorHooks::HookFunctor<PythonCodeCompletion>(this, &PythonCodeCompletion::EditorEventHook);
     m_EditorHookId = EditorHooks::RegisterHook(myhook);
 
+    // register event sinks
+    Manager* pm = Manager::Get();
+    pm->RegisterEventSink(cbEVT_COMPLETE_CODE, new cbEventFunctor<PythonCodeCompletion, CodeBlocksEvent>(this, &PythonCodeCompletion::CompleteCodeEvt));
+    pm->RegisterEventSink(cbEVT_SHOW_CALL_TIP, new cbEventFunctor<PythonCodeCompletion, CodeBlocksEvent>(this, &PythonCodeCompletion::ShowCallTipEvt));
+
     ConfigManager *mgr=Manager::Get()->GetConfigManager(_T("PythonCC"));
 
 //    static wxString GetHomeFolder() { return home_folder; }
@@ -457,6 +462,60 @@ void PythonCodeCompletion::ShowCallTip()
         ed->GetControl()->CallTipSetHighlight(start, end);
 }
 
+void PythonCodeCompletion::RequestCompletion(cbStyledTextCtrl *control, int pos, const wxString &filename)
+{
+    XmlRpc::XmlRpcValue value;
+    value.setSize(3);
+    value[0] = filename.utf8_str(); //mb_str(wxConvUTF8);
+    value[1] = control->GetText().utf8_str(); //mb_str(wxConvUTF8);
+    value[2] = pos;
+    py_server->ExecAsync(_T("complete_phrase"),value,this,ID_COMPLETE_PHRASE);
+}
+
+void PythonCodeCompletion::RequestCallTip(cbStyledTextCtrl *control, int pos, const wxString &filename)
+{
+    XmlRpc::XmlRpcValue value;
+    value.setSize(3);
+    value[0] = filename.utf8_str(); //mb_str(wxConvUTF8);
+    value[1] = control->GetText().utf8_str(); //mb_str(wxConvUTF8);
+    value[2] = pos;
+    py_server->ExecAsync(_T("complete_tip"),value,this,ID_CALLTIP);
+    Manager::Get()->GetLogManager()->Log(_T("PYCC: Started server request"));
+}
+
+void PythonCodeCompletion::RequestDocString(cbStyledTextCtrl *control, int pos, const wxString &filename)
+{
+
+}
+
+void PythonCodeCompletion::CompleteCodeEvt(CodeBlocksEvent& event)
+{
+    event.Skip();
+    cbEditor *ed = Manager::Get()->GetEditorManager()->GetBuiltinActiveEditor();
+    if(!ed)
+        return;
+    cbStyledTextCtrl *control = ed->GetControl();
+    if(control->GetLexer()!=wxSCI_LEX_PYTHON)
+        return;
+    int pos = control->GetCurrentPos();
+    wxString filename = ed->GetFilename();
+    RequestCompletion(control, pos, filename);
+}
+
+void PythonCodeCompletion::ShowCallTipEvt(CodeBlocksEvent& event)
+{
+    event.Skip();
+    cbEditor *ed = Manager::Get()->GetEditorManager()->GetBuiltinActiveEditor();
+    if(!ed)
+        return;
+    cbStyledTextCtrl *control = ed->GetControl();
+    if(control->GetLexer()!=wxSCI_LEX_PYTHON)
+        return;
+    int pos = control->GetCurrentPos();
+    wxString filename = ed->GetFilename();
+    RequestCallTip(control, pos, filename);
+}
+
 void PythonCodeCompletion::EditorEventHook(cbEditor* editor, wxScintillaEvent& event)
 {
     if (!IsAttached())
@@ -503,8 +562,6 @@ void PythonCodeCompletion::EditorEventHook(cbEditor* editor, wxScintillaEvent& e
         bool m_CCAutoLaunch = true;
         int m_CCAutoLaunchChars = 2;
         const bool autoCC = m_CCAutoLaunch && (pos - wordStartPos >= m_CCAutoLaunchChars);
-        wxString t=autoCC ? _("true") : _("false");
-        Manager::Get()->GetLogManager()->Log(_("autoCC is ")+t);
 
         // update calltip highlight while we type
         if (control->CallTipActive())
@@ -533,13 +590,8 @@ void PythonCodeCompletion::EditorEventHook(cbEditor* editor, wxScintillaEvent& e
                 return;
             }
             wxString phrase=control->GetTextRange(wordStartPos,pos);
-            XmlRpc::XmlRpcValue value;
-            value.setSize(3);
-            value[0] = editor->GetFilename().utf8_str(); //mb_str(wxConvUTF8);
-            value[1] = control->GetText().utf8_str(); //mb_str(wxConvUTF8);
-            value[2] = pos;
             Manager::Get()->GetLogManager()->Log(_T("PYCC: Looking for ")+phrase+_T(" in ")+editor->GetFilename()+wxString::Format(_T(" %i"),pos));
-            py_server->ExecAsync(_T("complete_phrase"),value,this,ID_COMPLETE_PHRASE);
+            RequestCompletion(control,pos,editor->GetFilename());
             event.Skip();
             return;
         }
@@ -622,13 +674,7 @@ void PythonCodeCompletion::EditorEventHook(cbEditor* editor, wxScintillaEvent& e
         symbol.Replace(_T("\t"),wxEmptyString);
         m_ActiveSymbol=symbol;
         Manager::Get()->GetLogManager()->Log(_T("PYCC: Found calltip symbol ")+symbol);
-        XmlRpc::XmlRpcValue value;
-        value.setSize(3);
-        value[0] = editor->GetFilename().utf8_str(); //mb_str(wxConvUTF8);
-        value[1] = control->GetText().utf8_str(); //mb_str(wxConvUTF8);
-        value[2] = end_pos;
-        py_server->ExecAsync(_T("complete_tip"),value,this,ID_CALLTIP);
-        Manager::Get()->GetLogManager()->Log(_T("PYCC: Started server request"));
+        RequestCallTip(control, end_pos, editor->GetFilename());
     }
     // allow others to handle this event
     event.Skip();

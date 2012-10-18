@@ -133,6 +133,12 @@ class PythonCodeCompletion : public cbCodeCompletionPlugin
         void OnClickedGotoDeclaration(wxCommandEvent& event);
         void OnGotoDeclaration(XmlRpcResponseEvent &event);
 
+        void RequestCompletion(cbStyledTextCtrl *control, int pos, const wxString &filename);
+        void RequestCallTip(cbStyledTextCtrl *control, int pos, const wxString &filename);
+        void RequestDocString(cbStyledTextCtrl *control, int pos, const wxString &filename);
+        void CompleteCodeEvt(CodeBlocksEvent& event);
+        void ShowCallTipEvt(CodeBlocksEvent& event);
+
     private:
         wxString GetExtraFile(const wxString &short_name);
         XmlRpcInstance *py_server; //Code Completion Server (a python process running an XMLRPC server)

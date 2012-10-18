@@ -6,8 +6,6 @@ from SimpleXMLRPCServer import SimpleXMLRPCServer
 from rope.contrib import codeassist
 import rope.base.project
 
-user_rope_dir = os.path.join(os.getenv('HOME'),'.rope')
-
 '''
 Rope type/scope combinations
                                             type
@@ -111,18 +109,20 @@ class PythonCompletionServer:
             self.server.handle_request()
 
     def notify_active_path(self,path):
-        if self.active_path==os.path.split(path)[0]:
+        fdir,fname = os.path.split(path)
+        if self.project!=None and self.active_path==fdir:
             return True
         if not os.path.exists(path):
             return False
-        fdir,fname = os.path.split(path)
         self.active_path=fdir
         try:
             if os.path.exists(os.path.join(fdir,'.ropeproject')):
                 self.project = rope.base.project.Project(fdir)
             else:
-                self.project = rope.base.project.Project(fdir, ropefolder=os.path.relpath(user_rope_dir,fdir))
+                self.project = rope.base.project.Project(fdir, ropefolder=None)
         except:
+            self.project=None
+            self.active_path=None
             return False
         return True
 

@@ -5,7 +5,7 @@ import xmlrpclib
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 from rope.contrib import codeassist
 import rope.base.project
-
+import rope.base.exceptions
 '''
 Rope type/scope combinations
                                             type
@@ -133,7 +133,10 @@ class PythonCompletionServer:
                 return []
         if self.project==None:
             return []
-        results = codeassist.code_assist(self.project, source, position)
+        try:
+            results = codeassist.code_assist(self.project, source, position)
+        except rope.base.exceptions.ModuleSyntaxError as err:
+            return {'line':err.lineno, 'filename':err.filename, 'message':err.message}
         completions=sorted([s.name+type_suffix(s) for s in results])
         return completions
 
@@ -144,7 +147,10 @@ class PythonCompletionServer:
                 return []
         if self.project==None:
             return []
-        calltip = codeassist.get_calltip(self.project, source, position)
+        try:
+            calltip = codeassist.get_calltip(self.project, source, position)
+        except rope.base.exceptions.ModuleSyntaxError as err:
+            return {'line':err.lineno, 'filename':err.filename, 'message':err.message}
         if calltip==None:
             calltip=''
         doc = codeassist.get_doc(self.project, source, position)
@@ -179,7 +185,10 @@ class PythonCompletionServer:
         if path!=None:
             if not self.notify_active_path(path):
                 return ['',-1]
-        resource,lineno = codeassist.get_definition_location(self.project,source,position)
+        try:
+            resource,lineno = codeassist.get_definition_location(self.project,source,position)
+        except rope.base.exceptions.ModuleSyntaxError as err:
+            return {'line':err.lineno, 'filename':err.filename, 'message':err.message}
         if lineno == None:
             return ['',-1]
         if resource == None:

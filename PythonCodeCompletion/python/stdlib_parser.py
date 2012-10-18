@@ -1,5 +1,5 @@
-import sys
-import pkgutil
+'#import sys whyf'
+#import pkgutil fdthis is a sick fucking joke
 import imp
 import os,os.path
 import types

@@ -578,8 +578,8 @@ void PythonCodeCompletion::EditorEventHook(cbEditor* editor, wxScintillaEvent& e
         if (   (autoCC && !control->AutoCompActive()) // not already active autocompletion
                  || (ch == _T('.')))
         {
-            Manager::Get()->GetLogManager()->Log(_("PYCC: Checking lexical state"));
-            int style = control->GetStyleAt(pos);
+            Manager::Get()->GetLogManager()->Log(_("PYCC: Checking lexical state..."));
+            int style = control->GetStyleAt(pos-2);
             if (   style != wxSCI_P_DEFAULT
                 && style != wxSCI_P_CLASSNAME
                 && style != wxSCI_P_DEFNAME

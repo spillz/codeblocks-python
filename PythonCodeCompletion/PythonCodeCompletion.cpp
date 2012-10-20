@@ -618,7 +618,7 @@ void PythonCodeCompletion::EditorEventHook(cbEditor* editor, wxScintillaEvent& e
                 break;
             pos--;
         }
-        if(pos<minpos || control->BraceMatch(pos)<=control->GetCurrentPos() && control->BraceMatch(pos)!=-1)
+        if(pos<minpos || control->BraceMatch(pos)<control->GetCurrentPos() && control->BraceMatch(pos)!=-1)
         {
             Manager::Get()->GetLogManager()->Log(_T("PYCC: Not in function scope"));
             event.Skip();
@@ -672,6 +672,11 @@ void PythonCodeCompletion::EditorEventHook(cbEditor* editor, wxScintillaEvent& e
         wxString symbol=control->GetTextRange(start_pos,end_pos);
         symbol.Replace(_T(" "),wxEmptyString);
         symbol.Replace(_T("\t"),wxEmptyString);
+        if(symbol==wxEmptyString)
+        {
+            event.Skip();
+            return;
+        }
         m_ActiveSymbol=symbol;
         Manager::Get()->GetLogManager()->Log(_T("PYCC: Found calltip symbol ")+symbol);
         RequestCallTip(control, end_pos, editor->GetFilename());

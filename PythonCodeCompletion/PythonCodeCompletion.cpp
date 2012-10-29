@@ -469,6 +469,7 @@ void PythonCodeCompletion::RequestCompletion(cbStyledTextCtrl *control, int pos,
     value[0] = filename.utf8_str(); //mb_str(wxConvUTF8);
     value[1] = control->GetText().utf8_str(); //mb_str(wxConvUTF8);
     value[2] = pos;
+    py_server->ClearJobs();
     py_server->ExecAsync(_T("complete_phrase"),value,this,ID_COMPLETE_PHRASE);
 }
 
@@ -479,6 +480,7 @@ void PythonCodeCompletion::RequestCallTip(cbStyledTextCtrl *control, int pos, co
     value[0] = filename.utf8_str(); //mb_str(wxConvUTF8);
     value[1] = control->GetText().utf8_str(); //mb_str(wxConvUTF8);
     value[2] = pos;
+    py_server->ClearJobs();
     py_server->ExecAsync(_T("complete_tip"),value,this,ID_CALLTIP);
     Manager::Get()->GetLogManager()->Log(_T("PYCC: Started server request"));
 }
@@ -547,7 +549,6 @@ void PythonCodeCompletion::EditorEventHook(cbEditor* editor, wxScintillaEvent& e
     if (event.GetEventType() == wxEVT_SCI_CHARADDED)
     {
         // a character was just added in the editor
-//        m_TimerCodeCompletion.Stop();
         Manager::Get()->GetLogManager()->Log(_("PYCC: completion check begin"));
         wxChar ch = event.GetKey();
         int pos = control->GetCurrentPos();
@@ -702,6 +703,7 @@ void PythonCodeCompletion::OnClickedGotoDeclaration(wxCommandEvent& event)
     value[0] = ed->GetFilename().utf8_str();
     value[1] = control->GetText().utf8_str();
     value[2] = pos;
+    py_server->ClearJobs();
     py_server->ExecAsync(_T("get_definition_location"),value,this,ID_GOTO_DECLARATION);
 }
 

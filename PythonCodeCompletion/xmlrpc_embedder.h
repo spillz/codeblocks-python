@@ -81,7 +81,7 @@ public:
     // Stop threaded jobs from being process
     void PauseJobs();
 
-    // Clear all threaded jobs
+    // Clear all threaded jobs that have not started yet
     void ClearJobs();
 
     // Returns true if a job is active
@@ -101,6 +101,9 @@ protected:
 
     // Signal processed if the server process terminates
     void OnEndProcess(wxProcessEvent &event);
+
+    // Retrieves the next threaded job from the queue and starts it
+    bool NextJob();
 private:
     // Called by the constructor to actually start the process running
     long LaunchProcess(const wxString &processcmd);

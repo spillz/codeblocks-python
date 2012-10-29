@@ -435,16 +435,20 @@ void XmlRpcInstance::KillProcess(bool force)
     }
 }
 
-bool XmlRpcInstance::AddJob(XmlRpcJob *job)
+bool XmlRpcInstance::NextJob()
 {
-    if(job->Create()!=wxTHREAD_NO_ERROR)
+    if(m_queue.GetCount()<=0)
         return false;
-    m_queue.Append(job);
-    if(m_paused)
-        return true;
     XmlRpcJob *newjob=m_queue.GetFirst()->GetData();
     if(!newjob->finished && !newjob->started)
     {
+       if(newjob->Create()!=wxTHREAD_NO_ERROR)
+        {
+            wxMessageBox(_T("PYCC: Error creating a new thread. Unable to continue."));
+            m_queue.DeleteObject(newjob);
+            delete newjob;
+            return false;
+        }
         newjob->started=true;
         newjob->Run();
         m_jobrunning=true;
@@ -452,10 +456,34 @@ bool XmlRpcInstance::AddJob(XmlRpcJob *job)
     return true;
 }
 
+
+bool XmlRpcInstance::AddJob(XmlRpcJob *job)
+{
+    m_queue.Append(job);
+    if(m_paused)
+        return true;
+    NextJob();
+    return true;
+}
+
+void XmlRpcInstance::ClearJobs()
+{
+    int i = m_queue.GetCount()-1;
+    while(i>=0)
+    {
+        XmlRpcJob *job=m_queue.Item(i)->GetData();
+        if(job && !job->started && !job->finished)
+        {
+            m_queue.DeleteObject(job);
+            delete job;
+        }
+        i--;
+    }
+
+}
+
 void XmlRpcInstance::OnJobNotify(wxCommandEvent &event)
 {
-//    if(event.jobstate==PYSTATE_ABORTEDJOB||event.jobstate==PYSTATE_FINISHEDJOB)
-//    {
     XmlRpcJob *job=m_queue.GetFirst()->GetData();
 #ifdef __WXMSW__
     if(job->IsAlive())
@@ -464,28 +492,15 @@ void XmlRpcInstance::OnJobNotify(wxCommandEvent &event)
     job->Wait();
 #endif
     m_jobrunning=false;
-//    wxMessageBox(_T("Removing job from queue"));
     m_queue.DeleteObject(job);
     if(job->killonexit)
     {
         delete job;
         job=NULL;
     }
-//    }
-//    if(event.parent)
-//        ::wxPostEvent(event.parent,event);
     if(m_paused)
         return;
-    wxXmlRpcJobQueueNode *node=m_queue.GetFirst();
-    if(!node)
-        return;
-    XmlRpcJob *newjob=node->GetData();
-    if(!newjob->finished && !newjob->started)
-    {
-        newjob->started=true;
-        newjob->Run();
-        m_jobrunning=true;
-    }
+    NextJob();
 }
 
 XmlRpcMgr::XmlRpcMgr()

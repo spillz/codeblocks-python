@@ -291,7 +291,10 @@ void PythonCodeCompletion::OnCompletePhrase(XmlRpcResponseEvent &event)
                 m_comp_results.Add(wxString(std::string(val[i]).c_str(),wxConvUTF8));
             Manager::Get()->GetLogManager()->Log(wxString::Format(_("PYCC: Beginning comp with %i items"),val.size()));
             CodeComplete();
+            return;
         }
+        Manager::Get()->GetLogManager()->Log(_("PYCC: Unexpected phrase completion result"));
+        Manager::Get()->GetLogManager()->Log(wxString(val.toXml().c_str(),wxConvUTF8));
     }
     else
         Manager::Get()->GetLogManager()->Log(_("PYCC: Completion failed"));
@@ -360,6 +363,13 @@ void PythonCodeCompletion::BuildModuleMenu(const ModuleType type, wxMenu* menu, 
 
         }
     }
+}
+
+bool PythonCodeCompletion::IsProviderFor(cbEditor *ed)
+{
+    if(ed->GetControl()->GetLexer()!=wxSCI_LEX_PYTHON)
+        return true;
+    return false;
 }
 
 int PythonCodeCompletion::CodeComplete()

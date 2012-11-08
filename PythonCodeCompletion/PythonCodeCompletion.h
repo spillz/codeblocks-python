@@ -103,6 +103,8 @@ class PythonCodeCompletion : public cbCodeCompletionPlugin
           * @return The plugin should return true if it needed the toolbar, false if not
           */
         virtual bool BuildToolBar(wxToolBar* toolBar){ return false; }
+
+        virtual bool IsProviderFor(cbEditor* ed);
     protected:
         /** Any descendent plugin should override this virtual method and
           * perform any necessary initialization. This method is called by

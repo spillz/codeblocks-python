@@ -245,7 +245,6 @@ void PyDebugger::OnTimer(wxTimerEvent& event)
                 break;
             wxString logout=s.Mid(0,pos+5);
             wxString exprresult=s.Mid(0,pos);
-            size_t start,len;
             m_DebugCommandCount--;
             PythonCmdDispatchData cmd;
             if(!m_DispatchedCommands.empty())
@@ -267,9 +266,9 @@ void PyDebugger::OnTimer(wxTimerEvent& event)
                     exprresult=exprresult.AfterFirst(_T('\001'));
                     wxString type=exprresult.BeforeFirst(_T('\001'));
                     wxString value=exprresult.AfterFirst(_T('\001'));
-                    for(int i=0;i<m_watchlist.size();++i)
+                    for(size_t i=0;i<m_watchlist.size();++i)
                     {
-                        cbWatch::Pointer p;
+                        cb::shared_ptr<cbWatch> p;
                         wxString s;
                         m_watchlist[i]->GetSymbol(s);
                         if (s==symbol)
@@ -866,7 +865,7 @@ void PyDebugger::SwitchToFrame(int number)
 {
     if(number<0)
         return;
-    if(number>=m_stackinfo.frames.size())
+    if(number>=(int)m_stackinfo.frames.size())
     {
         wxMessageBox(_("Frame out of bounds"));
         return;

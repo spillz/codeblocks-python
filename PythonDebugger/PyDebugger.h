@@ -211,8 +211,6 @@ class PyDebugger : public cbDebuggerPlugin
         virtual void SwitchToFrame(int number);
         virtual int GetActiveStackFrame() const;
 
-        virtual cbDebuggerConfiguration* LoadConfig(const ConfigManagerWrapper &config) {return NULL;};
-
         // breakpoints calls
         /** @brief Request to add a breakpoint.
           * @param file The file to add the breakpoint based on a file/line pair.
@@ -235,7 +233,7 @@ class PyDebugger : public cbDebuggerPlugin
         virtual void ShiftBreakpoint(int index, int lines_to_shift)  {}
         // threads
         virtual int GetThreadsCount() const  {return 0;}
-        virtual cb::shared_ptr<const cbThread> GetThread(int index) const  {}
+        virtual cb::shared_ptr<const cbThread> GetThread(int index) const  { cb::shared_ptr<const cbThread> p(new cbThread()); return p;}
         virtual bool SwitchToThread(int thread_number)  {return false;}
 
         // watches

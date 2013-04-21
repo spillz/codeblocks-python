@@ -7,8 +7,8 @@
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="default">
-				<Option output="$(#cb)/devel/share/codeblocks/plugins/libPyDebugger.so" prefix_auto="0" extension_auto="0" />
-				<Option working_dir="$(#cb)/devel" />
+				<Option output="PyDebugger.so" prefix_auto="0" extension_auto="0" />
+				<Option working_dir="" />
 				<Option type="3" />
 				<Option compiler="gcc" />
 				<Option parameters="--personality=debug --multiple-instance -ns -ni" />
@@ -21,7 +21,8 @@
 					<Add library="codeblocks" />
 				</Linker>
 				<ExtraCommands>
-					<Add after="zip -j9 $(#cb)/devel/share/codeblocks/PyDebugger.zip manifest.xml" />
+					<Add after="zip -j9 PyDebugger.zip manifest.xml" />
+					<Add after="zip -j9 PyDebugger.cbplugin PyDebugger.so PyDebugger.zip" />
 				</ExtraCommands>
 			</Target>
 			<Target title="test">
@@ -51,6 +52,7 @@
 			<Add option="-Wall" />
 			<Add option="-g" />
 			<Add option="`wx-config --cflags`" />
+			<Add option="`pkg-config --cflags codeblocks`" />
 			<Add option="-fmessage-length=0" />
 			<Add option="-fexceptions" />
 			<Add option="-Winvalid-pch" />
@@ -59,11 +61,10 @@
 			<Add option="-fPIC" />
 			<Add option="-DcbDEBUG" />
 			<Add option="-DCB_PRECOMP" />
-			<Add directory="$(#cb)/include" />
-			<Add directory="$(#cb)/sdk/wxscintilla/include" />
 		</Compiler>
 		<Linker>
 			<Add option="`wx-config --libs`" />
+			<Add option="`pkg-config --libs codeblocks`" />
 			<Add directory="$(#cb)/devel" />
 		</Linker>
 		<Unit filename="ConfigDialog.cpp" />

@@ -914,6 +914,7 @@ void PyDebugger::OnTerminatePipedProcess(wxProcessEvent &event)
     m_TimerPollDebugger.Stop();
     delete m_pp;
     m_DebugLog->Append(_T("\n*** SESSION TERMINATED ***"));
+    MarkAsStopped();
 }
 
 void PyDebugger::OnSettings(wxCommandEvent& event)

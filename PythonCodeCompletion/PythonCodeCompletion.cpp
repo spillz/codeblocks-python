@@ -406,7 +406,7 @@ int PythonCodeCompletion::CodeComplete()
 //            ed->GetControl()->AutoCompSetChooseSingle(m_IsAutoPopup ? false : m_CCAutoSelectOne);
             ed->GetControl()->AutoCompSetAutoHide(true);
 //            ed->GetControl()->AutoCompSetDropRestOfWord(m_IsAutoPopup ? false : true);
-            wxString final = GetStringFromArray(m_comp_results, _T(" "));
+            wxString final = GetStringFromArray(m_comp_results, _T("\n"));
             final.RemoveLast(); // remove last space
 
             ed->GetControl()->AutoCompShow(pos - start, final);

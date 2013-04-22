@@ -71,7 +71,7 @@ class PyBreakpoint:public cbBreakpoint
         wxString GetType() const {return m_type;}
         wxString GetInfo() const {return m_info;}
         bool IsEnabled() const {return m_enabled;}
-        bool IsVisibleInEditor()const  {return false;}
+        bool IsVisibleInEditor()const  {return true;}
         bool IsTemporary() const {return false;}
     private:
         bool m_enabled;

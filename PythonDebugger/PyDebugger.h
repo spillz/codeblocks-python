@@ -23,7 +23,7 @@
 #include <sdk.h>
 
 #include <debuggermanager.h>
-#include "ConfigDialog.h"
+#include "debuggeroptionsdlg.h"
 #include "dialogs.h"
 
 
@@ -42,18 +42,18 @@ typedef std::set<int> BPLtype;
 
 typedef std::vector<cb::shared_ptr<cbStackFrame> > StackList;
 
-class PyDebuggerConfiguration:public cbDebuggerConfiguration
-{
-    public:
-        PyDebuggerConfiguration(const ConfigManagerWrapper &config):cbDebuggerConfiguration(config) {}
-        virtual ~PyDebuggerConfiguration() {}
-
-        virtual cbDebuggerConfiguration* Clone() const {return new PyDebuggerConfiguration(*this);}
-
-        virtual wxPanel* MakePanel(wxWindow *parent) {return new wxPanel();}
-        virtual bool SaveChanges(wxPanel *panel) {return true;}
-
-};
+//class PyDebuggerConfiguration:public cbDebuggerConfiguration
+//{
+//    public:
+//        PyDebuggerConfiguration(const ConfigManagerWrapper &config):cbDebuggerConfiguration(config) {}
+//        virtual ~PyDebuggerConfiguration() {}
+//
+//        virtual cbDebuggerConfiguration* Clone() const {return new PyDebuggerConfiguration(*this);}
+//
+//        virtual wxPanel* MakePanel(wxWindow *parent) {return new wxPanel();}
+//        virtual bool SaveChanges(wxPanel *panel) {return true;}
+//
+//};
 
 class PyBreakpoint:public cbBreakpoint
 {
@@ -279,7 +279,6 @@ class PyDebugger : public cbDebuggerPlugin
         bool IsRunning() const { return m_DebuggerActive; } /** Is the plugin currently debugging? */
         int GetExitCode() const { return 0; }
 // Misc Plugin Virtuals
-        virtual int Configure(); /** Invoke configuration dialog. */
         virtual cbDebuggerConfiguration* LoadConfig(const ConfigManagerWrapper &config) {return new PyDebuggerConfiguration(config);}
         virtual int GetConfigurationPriority() const { return 50; }
         virtual int GetConfigurationGroup() const { return cgUnknown; }
@@ -292,6 +291,11 @@ class PyDebugger : public cbDebuggerPlugin
 
         void OnValueTooltip(CodeBlocksEvent& event);
         void SetWatchTooltip(const wxString &tip, int definition_length);
+
+        PyDebuggerConfiguration& GetActiveConfigEx()
+        {
+            return static_cast<PyDebuggerConfiguration&>(GetActiveConfig());
+        }
 
     protected:
 //        virtual void OnAttach();
@@ -307,9 +311,7 @@ class PyDebugger : public cbDebuggerPlugin
         void OnSettings(wxCommandEvent& event);
         void OnSubMenuSelect(wxUpdateUIEvent& event);
         void OnSetTarget(wxCommandEvent& event);
-        void OnRunTarget(wxCommandEvent& event);
         void OnDebugTarget(wxCommandEvent& event);
-        void OnRun(wxCommandEvent& event);
         void OnRunPiped(wxCommandEvent &event);
         void OnStep(wxCommandEvent &event);
         void OnStop(wxCommandEvent &event);
@@ -317,11 +319,7 @@ class PyDebugger : public cbDebuggerPlugin
         void OnContinue(wxCommandEvent &event);
         void OnSendCommand(wxCommandEvent &event);
         void OnTerminatePipedProcess(wxProcessEvent &event);
-        void OnPipedOutput(wxCommandEvent& event);
-        void OnIdle(wxIdleEvent& event);
         void OnTimer(wxTimerEvent& event);
-        void ReadPluginConfig();
-        void WritePluginConfig();
         bool IsPythonFile(const wxString &file) const;
 
         void ClearActiveMarkFromAllEditors();
@@ -364,8 +362,6 @@ class PyDebugger : public cbDebuggerPlugin
         PythonWatchesContainer m_watchlist;
 
         bool m_DebuggerActive;
-        wxString m_DefaultInterpreter;
-        wxString m_DefaultDebugCmdLine;
         wxString m_debugfile; // file and line of current debug code position
         wxString m_debugline;
 

@@ -26,22 +26,4 @@ class SendCommandDlg : public wxDialog
 
 };
 
-
-
-class DebuggerWatch : public wxPanel
-{
-    public:
-        DebuggerWatch(wxWindow* parent, PyDebugger* debugger);
-        virtual ~DebuggerWatch();
-        wxTextCtrl *m_WatchText; // contains the watch variables and results
-    protected:
-        PyDebugger *m_debugger;
-    private:
-
-        DECLARE_EVENT_TABLE()
-};
-
-
-
-
 #endif // DIALOGS_H

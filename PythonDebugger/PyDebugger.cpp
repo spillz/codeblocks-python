@@ -51,40 +51,6 @@ BEGIN_EVENT_TABLE(PyDebugger, cbDebuggerPlugin)
 END_EVENT_TABLE()
 
 
-
-// Updates the Dialog controls to the stored values for the current interpreter
-void PyDebugger::ReadPluginConfig()
-{
-    ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("PyDebugger"));
-    m_DefaultDebugCmdLine=cfg->Read(_T("debug_cmd_line"),_T(" -u -m pdb "));
-    m_DefaultInterpreter=cfg->Read(_T("python_executable"),_T("python")); //TODO: make default command platform specific
-    m_PythonFileExtensions=cfg->Read(_T("python_file_extensions"),_T("*.py;*.pyc"));
-}
-
-// Retrieve configuration values from the dialog widgets and store them appropriately
-//void PyDebugger::WritePluginConfig()
-//{
-//    ConfigManager* cfg = Manager::Get()->GetConfigManager(_T("PyDebugger"));
-//    cfg->Write(_T("debug_cmd_line"),m_DefaultDebugCmdLine);
-//    cfg->Write(_T("python_executable"),m_DefaultInterpreter);
-//    cfg->Write(_T("python_file_extensions"),m_PythonFileExtensions);
-//}
-
-void PyDebugger::OnPipedOutput(wxCommandEvent& event)
-{
-    wxMessageBox(_T("Piped output"));
-    wxString msg = event.GetString();
-    if (!msg.IsEmpty())
-    {
-//        Manager::Get()->GetMessageManager()->Log(m_PageIndex, _T("O>>> %s"), msg.c_str());
-        wxMessageBox(msg);
-    }
-}
-
-void PyDebugger::OnIdle(wxIdleEvent& event)
-{
-}
-
 void PyDebugger::OnStep(wxCommandEvent &event)
 {
     Step();
@@ -151,9 +117,12 @@ bool PyDebugger::DispatchCommands(const wxString& cmd, int cmdtype, bool poll)
     return true;
 }
 
+
+static wxString PythonFileExtensions=wxT("*.py;*.pyc");
+
 bool PyDebugger::IsPythonFile(const wxString &file) const
 {
-    if(WildCardListMatch(m_PythonFileExtensions,file))
+    if(WildCardListMatch(PythonFileExtensions,file))
         return true;
     return false;
 }
@@ -510,7 +479,6 @@ bool PyDebugger::Debug(bool breakOnEntry)
     m_outbuf=_T("");
     m_outdebugbuf=_T("");
     m_outprogbuf=_T("");
-    ReadPluginConfig();
     if(!m_RunTarget)
     {
         EditorBase *ed=Manager::Get()->GetEditorManager()->GetActiveEditor();
@@ -530,8 +498,15 @@ bool PyDebugger::Debug(bool breakOnEntry)
     wxString olddir=wxGetCwd();
     wxSetWorkingDirectory(wxFileName(m_RunTarget).GetPath());
     target.Replace(_T("\\"),_T("/"),true);
-    wxString f=wxFileName(m_DefaultInterpreter).GetShortPath();
-    wxString commandln=f + m_DefaultDebugCmdLine+target;
+
+    PyDebuggerConfiguration &cfg =  GetActiveConfigEx();
+    wxString commandln = cfg.GetCommandLine(cfg.GetState());
+    commandln.Replace(wxT("$target"),target);
+
+//    wxString f=wxFileName(m_DefaultInterpreter).GetShortPath();
+//    wxString commandln=f + m_DefaultDebugCmdLine+target;
+
+
 //    cbMessageBox(commandln);
     #ifdef EXPERIMENTAL_PYTHON_DEBUG
 //    LogMessage(wxString::Format(_("Launching '%s': %s (in %s)"), consolename.c_str(), commandstr.c_str(), workingdir.c_str()));
@@ -938,33 +913,6 @@ void PyDebugger::OnSetTarget(wxCommandEvent& event)
     delete fd;
 }
 
-void PyDebugger::OnRunTarget(wxCommandEvent& event)
-{
-}
-
-void PyDebugger::OnRun(wxCommandEvent& event)
-{
-    if(!m_RunTargetSelected)
-        OnSetTarget(event);
-    m_RunTargetSelected=false;
-    if(m_RunTarget==_T(""))
-        return;
-    if(m_RunTarget.Contains(_T(" ")))
-    {
-        wxFileName f(m_RunTarget);
-        m_RunTarget=f.GetShortPath();
-    }
-    ReadPluginConfig();
-    wxString target=m_RunTarget;
-    wxString olddir=wxGetCwd();
-    wxSetWorkingDirectory(wxFileName(m_RunTarget).GetPath());
-    target.Replace(_T("\\"),_T("/"),true);
-    wxString commandln=wxFileName(m_DefaultInterpreter).GetShortPath()+_T(" ")+target;
-    wxExecute(commandln,wxEXEC_ASYNC,NULL);
-    wxSetWorkingDirectory(olddir);
-}
-
-
 // constructor
 PyDebugger::PyDebugger() : cbDebuggerPlugin(_T("PyDebugger"),_T("py_debugger"))
 {
@@ -985,7 +933,7 @@ cbConfigurationPanel* PyDebugger::GetConfigurationPanel(wxWindow* parent)
 //    MyDialog* dlg = new MyDialog(this, *m_pKeyProfArr, parent,
 //        wxT("Keybindings"), mode);
 
-    return new ConfigDialog(parent, this);
+    return NULL;//new ConfigDialog(parent, this);
 }
 
 // destructor
@@ -1002,17 +950,15 @@ void PyDebugger::OnAttachReal()
 	// You should check for it in other functions, because if it
 	// is FALSE, it means that the application did *not* "load"
 	// (see: does not need) this plugin...
-    this->ReadPluginConfig();
-    this->UpdateConfig();
+
     m_DebugLog = new TextCtrlLogger(true);
-
-    Manager::Get()->RegisterEventSink(cbEVT_EDITOR_TOOLTIP, new cbEventFunctor<PyDebugger, CodeBlocksEvent>(this, &PyDebugger::OnValueTooltip));
-
     CodeBlocksLogEvent evtlog(cbEVT_ADD_LOG_WINDOW,m_DebugLog, _("PyDebugger"));
     Manager::Get()->ProcessEvent(evtlog);
 
     DebuggerManager &dbg_manager = *Manager::Get()->GetDebuggerManager();
     dbg_manager.RegisterDebugger(this);
+
+    Manager::Get()->RegisterEventSink(cbEVT_EDITOR_TOOLTIP, new cbEventFunctor<PyDebugger, CodeBlocksEvent>(this, &PyDebugger::OnValueTooltip));
 
 }
 
@@ -1101,20 +1047,6 @@ void PyDebugger::OnValueTooltip(CodeBlocksEvent& event)
     m_watch_tooltip_pos=pos;
 }
 
-
-int PyDebugger::Configure()
-{
-	//create and display the configuration dialog for the plugin
-	cbConfigurationDialog dlg(Manager::Get()->GetAppWindow(), wxID_ANY, _("Python Language Properties"));
-	cbConfigurationPanel* panel = GetConfigurationPanel(&dlg);
-	if (panel)
-	{
-		dlg.AttachConfigurationPanel(panel);
-		PlaceWindow(&dlg);
-		return dlg.ShowModal() == wxID_OK ? 0 : -1;
-	}
-	return -1;
-}
 
 void PyDebugger::CreateMenu()
 {

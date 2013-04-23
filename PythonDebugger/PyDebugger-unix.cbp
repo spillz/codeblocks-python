@@ -8,7 +8,6 @@
 		<Build>
 			<Target title="default">
 				<Option output="PyDebugger.so" prefix_auto="0" extension_auto="0" />
-				<Option working_dir="" />
 				<Option type="3" />
 				<Option compiler="gcc" />
 				<Option parameters="--personality=debug --multiple-instance -ns -ni" />
@@ -21,8 +20,8 @@
 					<Add library="codeblocks" />
 				</Linker>
 				<ExtraCommands>
-					<Add after="zip -j9 PyDebugger.zip manifest.xml" />
-					<Add after="zip -j9 PyDebugger.cbplugin PyDebugger.so PyDebugger.zip" />
+					<Add after="zip -j9 PyDebugger.zip manifest.xml Resources/debugger_options_dlg.xrc" />
+					<Add after="zip -r9 PyDebugger.cbplugin PyDebugger.so PyDebugger.zip" />
 				</ExtraCommands>
 			</Target>
 			<Target title="test">
@@ -67,21 +66,19 @@
 			<Add option="`pkg-config --libs codeblocks`" />
 			<Add directory="$(#cb)/devel" />
 		</Linker>
-		<Unit filename="ConfigDialog.cpp" />
-		<Unit filename="ConfigDialog.h">
-			<Option target="default" />
-		</Unit>
 		<Unit filename="PyDebugger.cpp">
 			<Option target="default" />
 		</Unit>
 		<Unit filename="PyDebugger.h">
 			<Option target="default" />
 		</Unit>
+		<Unit filename="Resources/debugger_options_dlg.xrc" />
 		<Unit filename="Resources/dialogs.fbp" />
+		<Unit filename="debuggeroptionsdlg.cpp" />
+		<Unit filename="debuggeroptionsdlg.h" />
 		<Unit filename="dialogs.cpp" />
 		<Unit filename="dialogs.h" />
 		<Unit filename="manifest.xml" />
-		<Unit filename="pdb2.py" />
 		<Extensions>
 			<code_completion />
 			<envvars />

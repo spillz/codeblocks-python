@@ -61,23 +61,4 @@ SendCommandDlg::SendCommandDlg( wxWindow* parent, int id, wxString title, wxPoin
 //
 
 
-BEGIN_EVENT_TABLE(DebuggerWatch, wxPanel)
-END_EVENT_TABLE()
-
-DebuggerWatch::DebuggerWatch(wxWindow* parent, PyDebugger* debugger)
-    : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL | wxCLIP_CHILDREN),
-    m_debugger(debugger)
-{
-    wxBoxSizer* bs = new wxBoxSizer(wxVERTICAL);
-    m_WatchText = new wxTextCtrl(this, wxID_DEFAULT, _T(""), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxHSCROLL);
-        bs->Add(m_WatchText, 1, wxEXPAND | wxALL);
-    SetAutoLayout(TRUE);
-    SetSizer(bs);
-}
-
-DebuggerWatch::~DebuggerWatch()
-{
-    //dtor
-}
-
 

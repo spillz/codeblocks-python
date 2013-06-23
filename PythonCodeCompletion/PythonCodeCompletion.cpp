@@ -367,7 +367,7 @@ void PythonCodeCompletion::BuildModuleMenu(const ModuleType type, wxMenu* menu, 
 
 bool PythonCodeCompletion::IsProviderFor(cbEditor *ed)
 {
-    if(ed->GetControl()->GetLexer()!=wxSCI_LEX_PYTHON)
+    if(ed->GetControl()->GetLexer()==wxSCI_LEX_PYTHON)
         return true;
     return false;
 }

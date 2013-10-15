@@ -820,6 +820,19 @@ void PyDebugger::CollapseWatch(cb::shared_ptr<cbWatch> watch)
     }
 }
 
+void PyDebugger::UpdateWatch(cb::shared_ptr<cbWatch> watch)
+{
+    if(IsRunning())
+    {
+        watch->RemoveChildren(); //TODO: Update instead of removing children
+
+        wxString symbol;
+        watch->GetSymbol(symbol);
+        DispatchCommands(_T("ps ")+symbol+_T("\n"),DBGCMDTYPE_WATCHEXPRESSION);
+
+    }
+}
+
 void PyDebugger::OnWatchesContextMenu(wxMenu &menu, const cbWatch &watch, wxObject *property)
 {
 }

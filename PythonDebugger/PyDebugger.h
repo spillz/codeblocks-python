@@ -244,6 +244,7 @@ class PyDebugger : public cbDebuggerPlugin
         virtual bool SetWatchValue(cb::shared_ptr<cbWatch> watch, const wxString &value);
         virtual void ExpandWatch(cb::shared_ptr<cbWatch> watch);
         virtual void CollapseWatch(cb::shared_ptr<cbWatch> watch);
+        virtual void UpdateWatch(cb::shared_ptr<cbWatch> watch);
         virtual void OnWatchesContextMenu(wxMenu &menu, const cbWatch &watch, wxObject *property);
 
         virtual void SendCommand(const wxString& cmd, bool debugLog)  {}

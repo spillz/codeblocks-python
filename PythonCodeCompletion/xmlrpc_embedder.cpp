@@ -137,6 +137,8 @@ public:
         if(!generateRequest(method,params,msg))
         {
             std::cout<<"bad request value"<<std::endl;
+            result.setSize(1);
+            result[0] = "bad request value";
             return false;
         }
         uint32_t r_size=msg.size(); //TODO: Is it safer to use uint64_t (would need to use long long on the python side)
@@ -147,7 +149,11 @@ public:
         {
             m_ostream->PutC(msg[i]);
             if(m_ostream->GetLastError()!=wxSTREAM_NO_ERROR)
+            {
+                result.setSize(1);
+                result[0] = "broken stream attempting to write size of buffer";
                 return false;
+            }
         }
 //        m_ostream->Write(msg.c_str(),msg.size()); //On windows, this will frequently result in an incomplete write becasue the buffer gets full so better to use the blocking PutC instead
         std::cout<<"wrote "<<msg<<std::endl;
@@ -158,7 +164,11 @@ public:
             ch=m_istream->GetC();
         } while(m_istream->GetLastError()==wxSTREAM_EOF);
         if(m_istream->GetLastError()!=wxSTREAM_NO_ERROR && m_istream->GetLastError()!=wxSTREAM_EOF)
+        {
+            result.setSize(1);
+            result[0] = "broken stream attempting to write buffer";
             return false;
+        }
         std::cout<<"read ch "<<ch<<std::endl;
         for(uint32_t i=0;i<sizeof(uint32_t);i++)
         {
@@ -167,7 +177,11 @@ public:
                 ((char*)(&r_size))[i]=m_istream->GetC();
             } while(m_istream->GetLastError()==wxSTREAM_EOF);
             if(m_istream->GetLastError()!=wxSTREAM_NO_ERROR)
-                return false; //potentially return to early if reading faster thann the python server  fills the pipe??
+            {
+                result.setSize(1);
+                result[0] = "broken stream attempting to read size of buffer";
+                return false; //potentially return to early if reading faster than the python server fills the pipe??
+            }
         }
         std::cout<<"response size is "<<r_size<<std::endl;
         std::string buf;
@@ -176,7 +190,11 @@ public:
         {
             buf[i]=m_istream->GetC();
             if(m_istream->GetLastError()!=wxSTREAM_NO_ERROR)
+            {
+                result.setSize(1);
+                result[0] = "broken stream attempting to read buffer";
                 return false;
+            }
         }
         buf[r_size]=0;
         std::cout<<"response was "<<buf<<std::endl;
@@ -185,6 +203,8 @@ public:
             return true;
         }
         std::cout<<"bad xml response"<<std::endl;
+        result.setSize(1);
+        result[0] = "broken stream attempting to read buffer";
         return false;
     }
     // Convert the response xml into a result value

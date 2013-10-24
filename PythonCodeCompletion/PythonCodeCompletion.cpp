@@ -402,6 +402,8 @@ int PythonCodeCompletion::CodeComplete()
             ed->GetControl()->AutoCompSetFillUps(wxEmptyString);
             ed->GetControl()->AutoCompSetIgnoreCase(!caseSens);
             ed->GetControl()->AutoCompSetCancelAtStart(true);
+            ed->GetControl()->AutoCompSetSeparator(' ');
+            ed->GetControl()->AutoCompSetTypeSeparator('?');
 //            ed->GetControl()->AutoCompSetFillUps(m_CCFillupChars);
 //            ed->GetControl()->AutoCompSetChooseSingle(m_IsAutoPopup ? false : m_CCAutoSelectOne);
             ed->GetControl()->AutoCompSetAutoHide(true);

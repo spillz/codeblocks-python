@@ -29,7 +29,6 @@
 					<Add option="`pkg-config --cflags codeblocks`" />
 					<Add option="`wx-config --cflags`" />
 					<Add option="-fPIC" />
-					<Add option="-DEMBEDDER_DEBUG" />
 					<Add directory="XMLRPC/include" />
 				</Compiler>
 				<Linker>

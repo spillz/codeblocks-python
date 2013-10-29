@@ -163,7 +163,11 @@ public:
         {
             ch=m_istream->GetC();
         } while(m_istream->GetLastError()==wxSTREAM_EOF);
-        if(m_istream->GetLastError()!=wxSTREAM_NO_ERROR && m_istream->GetLastError()!=wxSTREAM_EOF)
+        if(m_istream->GetLastError()==wxSTREAM_EOF)
+            std::cout<<"read eof error"<<ch<<std::endl;
+        if(m_istream->GetLastError()==wxSTREAM_READ_ERROR)
+            std::cout<<"read error"<<ch<<std::endl;
+        if(m_istream->GetLastError()!=wxSTREAM_NO_ERROR)
         {
             result.setSize(1);
             result[0] = "broken stream attempting to write buffer";
@@ -175,7 +179,11 @@ public:
             do
             {
                 ((char*)(&r_size))[i]=m_istream->GetC();
-            } while(m_istream->GetLastError()==wxSTREAM_EOF);
+            } while(m_istream->GetLastError()==wxSTREAM_EOF);// while(m_istream->GetLastError()==wxSTREAM_EOF);
+            if(m_istream->GetLastError()==wxSTREAM_EOF)
+                std::cout<<"read eof error"<<ch<<std::endl;
+            if(m_istream->GetLastError()==wxSTREAM_READ_ERROR)
+                std::cout<<"read error"<<ch<<std::endl;
             if(m_istream->GetLastError()!=wxSTREAM_NO_ERROR)
             {
                 result.setSize(1);
@@ -188,7 +196,14 @@ public:
         buf.resize(r_size+1);
         for(uint32_t i=0;i<r_size;i++)
         {
-            buf[i]=m_istream->GetC();
+            do
+            {
+                buf[i]=m_istream->GetC();
+            } while(m_istream->GetLastError()==wxSTREAM_EOF);
+            if(m_istream->GetLastError()!=wxSTREAM_EOF)
+                std::cout<<"read eof error"<<ch<<std::endl;
+            if(m_istream->GetLastError()!=wxSTREAM_READ_ERROR)
+                std::cout<<"read error"<<ch<<std::endl;
             if(m_istream->GetLastError()!=wxSTREAM_NO_ERROR)
             {
                 result.setSize(1);
@@ -367,7 +382,8 @@ long XmlRpcInstance::LaunchProcess(const wxString &processcmd)
     if(m_port==-1)
         m_proc_id=wxExecute(processcmd,wxEXEC_ASYNC/*|wxEXEC_MAKE_GROUP_LEADER*/,m_proc);
     else
-        m_proc_id=wxExecuteHidden(processcmd,wxEXEC_ASYNC|wxEXEC_MAKE_GROUP_LEADER,m_proc);
+        m_proc_id=wxExecute(processcmd,wxEXEC_ASYNC/*|wxEXEC_MAKE_GROUP_LEADER*/,m_proc);
+//        m_proc_id=wxExecuteHidden(processcmd,wxEXEC_ASYNC|wxEXEC_MAKE_GROUP_LEADER,m_proc);
 #else
     m_proc_id=wxExecute(processcmd,wxEXEC_ASYNC|wxEXEC_MAKE_GROUP_LEADER,m_proc);
 #endif /*__WXMSW__*/

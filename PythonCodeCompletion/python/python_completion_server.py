@@ -3,9 +3,7 @@ import os
 import struct
 import xmlrpclib
 from SimpleXMLRPCServer import SimpleXMLRPCServer
-from rope.contrib import codeassist
-import rope.base.project
-import rope.base.exceptions
+import jedi
 '''
 Rope type/scope combinations
                                             type
@@ -20,17 +18,16 @@ Rope type/scope combinations
      |  parameter_keyword |          |       |          |        |  +
 '''
 
-def type_suffix(o):
+def type_suffix(d):
     #TODO: Add type/scope combinations here adding more bitmaps to the list in the plugin
-    t = o.type
-    s = o.scope
-    if t=='instance':
+    jedi
+    if d.startswith('statement'):
         return '?'+str(5)
-    elif t=='class':
+    elif d.startswith('class'):
         return '?'+str(2)
-    elif t=='function':
+    elif d.startswith('function'):
         return '?'+str(6)
-    elif t=='module':
+    elif d.startswith('import'):
         return '?'+str(1)
     elif s=='keyword':
         return ''
@@ -108,92 +105,41 @@ class PythonCompletionServer:
         while not self._quit:
             self.server.handle_request()
 
-    def notify_active_path(self,path):
-        fdir,fname = os.path.split(path)
-        if self.project!=None and self.active_path==fdir:
-            return True
-        if not os.path.exists(path):
-            return False
-        self.active_path=fdir
-        try:
-            if os.path.exists(os.path.join(fdir,'.ropeproject')):
-                self.project = rope.base.project.Project(fdir)
-            else:
-                self.project = rope.base.project.Project(fdir, ropefolder=None)
-        except:
-            self.project=None
-            self.active_path=None
-            return False
-        return True
-
-    def complete_phrase(self,path,source,position):
-#        print 'complete context',path,position
-        if path!=None:
-            if not self.notify_active_path(path):
-                return []
-        if self.project==None:
-            return []
-        try:
-            results = codeassist.code_assist(self.project, source, position)
-        except rope.base.exceptions.ModuleSyntaxError as err:
-            return {'line':err.lineno, 'filename':err.filename, 'message':err.message}
-        completions=sorted([s.name+type_suffix(s) for s in results])
+    def complete_phrase(self,path,source,line,column):
+        source=source.replace('\r','')
+        script = jedi.Script(source,line=line+1,column=column,source_path=path)
+        results = script.completions()
+        completions=sorted([s.name+type_suffix(s.description) for s in results])
         return completions
 
-    def complete_tip(self,path,source,position):
-#        print 'complete tip',symbol
-        if path!=None:
-            if not self.notify_active_path(path):
-                return []
-        if self.project==None:
-            return []
-        try:
-            calltip = codeassist.get_calltip(self.project, source, position)
-        except rope.base.exceptions.ModuleSyntaxError as err:
-            return {'line':err.lineno, 'filename':err.filename, 'message':err.message}
-        if calltip==None:
-            calltip=''
-        doc = codeassist.get_doc(self.project, source, position)
-        if doc is not None:
-            lines=doc.split('\n')
-            del lines[0] ##rope inserts its own header in the doc string
-            doc=doc.strip(' \t\n')
-            fnfull = calltip[:calltip.find('(')]
-            fn = calltip[fnfull.find('.'):]
-            if not (fnfull and lines[0].startswith(fnfull)):
-                if not (fn and lines[0].startswith(fn)):
-                    lines.insert(0,calltip)
-            if lines[0].strip()[-1]!=':':
-                lines[0]=lines[0]+':'
-            shortened=False
-            if len(lines)>6:
-                shortened=True
-                doc='\n'.join(lines[:8])
-            else:
-                doc='\n'.join(lines)
-            if len(doc)>250:
-                shortened=True
-                doc=doc[:250]
-            if shortened:
-                doc+='...'
-            calltip=doc
-        if calltip==None:
-            calltip='<unknown function>'
-        return calltip
+    def complete_tip(self,path,source,line,column):
+        source=source.replace('\r','')
+        script = jedi.Script(source,line=line+1,column=column,source_path=path)
+        call_def = script.call_signatures()
+        calltip = ''
+        print call_def
+        for c in call_def:
+            calltip=c.call_name+'('
+            calltip+=', '.join([p.get_name().names[0] for p in c.params])+')'
+#            docstr=''
+#            for p in c.params:
+#                docstr+=p.docstr
+#            if docstr!='':
+#                calltip+='\n'+docstr
+            return calltip
+        return ''
 
     def get_definition_location(self,path,source,position):
-        if path!=None:
-            if not self.notify_active_path(path):
-                return ['',-1]
-        try:
-            resource,lineno = codeassist.get_definition_location(self.project,source,position)
-        except rope.base.exceptions.ModuleSyntaxError as err:
-            return {'line':err.lineno, 'filename':err.filename, 'message':err.message}
-        if lineno == None:
-            return ['',-1]
-        if resource == None:
-            return [path,lineno]
-        return [resource.path,lineno]
+        return ['',-1]
+#        try:
+#            resource,lineno = codeassist.get_definition_location(self.project,source,position)
+#        except rope.base.exceptions.ModuleSyntaxError as err:
+#            return {'line':err.lineno, 'filename':err.filename, 'message':err.message}
+#        if lineno == None:
+#            return ['',-1]
+#        if resource == None:
+#            return [path,lineno]
+#        return [resource.path,lineno]
 
     def end(self):
         self._quit=True

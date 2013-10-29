@@ -4,23 +4,10 @@ import struct
 import xmlrpclib
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 import jedi
-'''
-Rope type/scope combinations
-                                            type
-                scope
-     |                    | instance | class | function | module | None
-     |              local |    +     |   +   |    +     |   +    |
-     |             global |    +     |   +   |    +     |   +    |
-     |            builtin |    +     |   +   |    +     |        |
-     |          attribute |    +     |   +   |    +     |   +    |
-     |           imported |    +     |   +   |    +     |   +    |
-     |            keyword |          |       |          |        |  +
-     |  parameter_keyword |          |       |          |        |  +
-'''
+import textwrap
 
 def type_suffix(d):
     #TODO: Add type/scope combinations here adding more bitmaps to the list in the plugin
-    jedi
     if d.startswith('statement'):
         return '?'+str(5)
     elif d.startswith('class'):
@@ -29,7 +16,7 @@ def type_suffix(d):
         return '?'+str(6)
     elif d.startswith('import'):
         return '?'+str(1)
-    elif s=='keyword':
+    elif d.startswith('keyword'):
         return ''
     return ''
 
@@ -65,11 +52,15 @@ class XmlRpcPipeServer:
             result = self.__call__(name, *args)
             if not isinstance(result,tuple):
                 result=(result,)
-            res_xml = bytes(xmlrpclib.dumps(result, methodresponse=True))
         except:
             import traceback
-            res_xml='Error running call'+name+'\n'+call_xml+'\n'
-            res_xml+='\n'.join(traceback.format_exception(*sys.exc_info()))
+            result ='Error running call'+name+'\n'+call_xml+'\n'
+            result += '\n'.join(traceback.format_exception(*sys.exc_info()))
+            result = (result,)
+        try:
+            res_xml = bytes(xmlrpclib.dumps(result, methodresponse=True))
+        except:
+            res_xml = bytes(xmlrpclib.dumps('Method result of length %i could not be converted to XML'%(len(res_xml)), methodresponse=True))
         size = len(res_xml)
         self.outpipe.write(struct.pack('I',size))
         self.outpipe.write(res_xml)
@@ -80,7 +71,7 @@ class XmlRpcPipeServer:
 
 class PythonCompletionServer:
     '''
-    An XMLRPC server that serves up a rope interface
+    An XMLRPC server that serves up a jedi interface
     '''
     def __init__(self,port):
         # Create XMLRPC server
@@ -117,10 +108,10 @@ class PythonCompletionServer:
         script = jedi.Script(source,line=line+1,column=column,source_path=path)
         call_def = script.call_signatures()
         calltip = ''
-        print call_def
         for c in call_def:
             calltip=c.call_name+'('
             calltip+=', '.join([p.get_name().names[0] for p in c.params])+')'
+            calltip = '\n'.join(textwrap.wrap(calltip,70))
 #            docstr=''
 #            for p in c.params:
 #                docstr+=p.docstr
@@ -129,17 +120,16 @@ class PythonCompletionServer:
             return calltip
         return ''
 
-    def get_definition_location(self,path,source,position):
+    def get_definition_location(self,path,source,line,column):
+        source=source.replace('\r','')
+        script = jedi.Script(source,line=line+1,column=column,source_path=path)
+        results = script.goto_definitions()
+        for d in results:
+            module_path = d.module_path
+            if module_path is None:
+                module_path = path
+            return [module_path,d.line-1]
         return ['',-1]
-#        try:
-#            resource,lineno = codeassist.get_definition_location(self.project,source,position)
-#        except rope.base.exceptions.ModuleSyntaxError as err:
-#            return {'line':err.lineno, 'filename':err.filename, 'message':err.message}
-#        if lineno == None:
-#            return ['',-1]
-#        if resource == None:
-#            return [path,lineno]
-#        return [resource.path,lineno]
 
     def end(self):
         self._quit=True

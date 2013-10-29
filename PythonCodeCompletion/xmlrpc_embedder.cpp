@@ -167,7 +167,7 @@ public:
             std::cout<<"read eof error"<<ch<<std::endl;
         if(m_istream->GetLastError()==wxSTREAM_READ_ERROR)
             std::cout<<"read error"<<ch<<std::endl;
-        if(m_istream->GetLastError()!=wxSTREAM_NO_ERROR)
+        if(m_istream->GetLastError()!=wxSTREAM_NO_ERROR && m_istream->GetLastError()!=wxSTREAM_EOF)
         {
             result.setSize(1);
             result[0] = "broken stream attempting to write buffer";
@@ -184,7 +184,7 @@ public:
                 std::cout<<"read eof error"<<ch<<std::endl;
             if(m_istream->GetLastError()==wxSTREAM_READ_ERROR)
                 std::cout<<"read error"<<ch<<std::endl;
-            if(m_istream->GetLastError()!=wxSTREAM_NO_ERROR)
+            if(m_istream->GetLastError()!=wxSTREAM_NO_ERROR && m_istream->GetLastError()!=wxSTREAM_EOF)
             {
                 result.setSize(1);
                 result[0] = "broken stream attempting to read size of buffer";
@@ -199,15 +199,18 @@ public:
             do
             {
                 buf[i]=m_istream->GetC();
+                if(m_istream->GetLastError()==wxSTREAM_EOF)
+                    wxMicroSleep(10);
             } while(m_istream->GetLastError()==wxSTREAM_EOF);
             if(m_istream->GetLastError()!=wxSTREAM_EOF)
                 std::cout<<"read eof error"<<ch<<std::endl;
             if(m_istream->GetLastError()!=wxSTREAM_READ_ERROR)
                 std::cout<<"read error"<<ch<<std::endl;
-            if(m_istream->GetLastError()!=wxSTREAM_NO_ERROR)
+            if(m_istream->GetLastError()!=wxSTREAM_NO_ERROR && m_istream->GetLastError()!=wxSTREAM_EOF)
             {
                 result.setSize(1);
-                result[0] = "broken stream attempting to read buffer";
+                wxString s = wxString::Format(_T("broken stream attempting to read buffer - chars read %i"),i);
+                result[0] = std::string(s.utf8_str());
                 return false;
             }
         }
@@ -218,8 +221,8 @@ public:
             return true;
         }
         std::cout<<"bad xml response"<<std::endl;
-        result.setSize(1);
-        result[0] = "broken stream attempting to read buffer";
+        wxString s = wxString::Format(_T("error parsing read buffer - chars read %i\n"),r_size);
+        result[0] = std::string(s.utf8_str()) + std::string(buf);
         return false;
     }
     // Convert the response xml into a result value

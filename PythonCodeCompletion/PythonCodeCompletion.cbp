@@ -7,7 +7,7 @@
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="XMLRPC">
-				<Option output="XMLRPC\XmlRpc" prefix_auto="1" extension_auto="1" />
+				<Option output="XMLRPC/XmlRpc" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="" />
 				<Option type="2" />
 				<Option compiler="gcc" />
@@ -18,7 +18,7 @@
 					<Add option="-D_WINDOWS" />
 					<Add option="-D_MBCS" />
 					<Add option="-D_LIB" />
-					<Add directory="XMLRPC\include" />
+					<Add directory="XMLRPC/include" />
 				</Compiler>
 				<Linker>
 					<Add library="Ws2_32" />
@@ -46,11 +46,11 @@
 					<Add option="-DwxUSE_UNICODE" />
 					<Add option="-D_WINDOWS" />
 					<Add option="-D_LIB" />
-					<Add directory="XMLRPC\include" />
-					<Add directory="$(#cb)\include" />
-					<Add directory="$(#cb)\sdk\wxscintilla\include" />
-					<Add directory="$(#wx)\include" />
-					<Add directory="$(#wx)\lib\gcc_dll\mswu" />
+					<Add directory="XMLRPC/include" />
+					<Add directory="$(#cb)/include" />
+					<Add directory="$(#cb)/sdk/wxscintilla/include" />
+					<Add directory="$(#wx)/include" />
+					<Add directory="$(#wx)/lib/gcc_dll/mswu" />
 				</Compiler>
 				<Linker>
 					<Add library="XmlRpc" />
@@ -58,8 +58,8 @@
 					<Add library="wxmsw28u" />
 					<Add library="Ws2_32" />
 					<Add directory="XMLRPC" />
-					<Add directory="$(#wx)\lib\gcc_dll" />
-					<Add directory="$(#cb)\devel" />
+					<Add directory="$(#wx)/lib/gcc_dll" />
+					<Add directory="$(#cb)/devel" />
 				</Linker>
 				<ExtraCommands>
 					<Add after="zip -j9 PythonCodeCompletion.zip manifest.xml" />
@@ -83,67 +83,67 @@
 		<Unit filename="PythonCodeCompletion.h">
 			<Option target="CodeCompletion" />
 		</Unit>
-		<Unit filename="XMLRPC\include\XmlRpc.h">
+		<Unit filename="XMLRPC/include/XmlRpc.h">
 			<Option target="XMLRPC" />
 		</Unit>
-		<Unit filename="XMLRPC\include\XmlRpcClient.h">
+		<Unit filename="XMLRPC/include/XmlRpcClient.h">
 			<Option target="XMLRPC" />
 		</Unit>
-		<Unit filename="XMLRPC\include\XmlRpcDispatch.h">
+		<Unit filename="XMLRPC/include/XmlRpcDispatch.h">
 			<Option target="XMLRPC" />
 		</Unit>
-		<Unit filename="XMLRPC\include\XmlRpcException.h">
+		<Unit filename="XMLRPC/include/XmlRpcException.h">
 			<Option target="XMLRPC" />
 		</Unit>
-		<Unit filename="XMLRPC\include\XmlRpcServer.h">
+		<Unit filename="XMLRPC/include/XmlRpcServer.h">
 			<Option target="XMLRPC" />
 		</Unit>
-		<Unit filename="XMLRPC\include\XmlRpcServerConnection.h">
+		<Unit filename="XMLRPC/include/XmlRpcServerConnection.h">
 			<Option target="XMLRPC" />
 		</Unit>
-		<Unit filename="XMLRPC\include\XmlRpcServerMethod.h">
+		<Unit filename="XMLRPC/include/XmlRpcServerMethod.h">
 			<Option target="XMLRPC" />
 		</Unit>
-		<Unit filename="XMLRPC\include\XmlRpcSocket.h">
+		<Unit filename="XMLRPC/include/XmlRpcSocket.h">
 			<Option target="XMLRPC" />
 		</Unit>
-		<Unit filename="XMLRPC\include\XmlRpcSource.h">
+		<Unit filename="XMLRPC/include/XmlRpcSource.h">
 			<Option target="XMLRPC" />
 		</Unit>
-		<Unit filename="XMLRPC\include\XmlRpcUtil.h">
+		<Unit filename="XMLRPC/include/XmlRpcUtil.h">
 			<Option target="XMLRPC" />
 		</Unit>
-		<Unit filename="XMLRPC\include\XmlRpcValue.h">
+		<Unit filename="XMLRPC/include/XmlRpcValue.h">
 			<Option target="XMLRPC" />
 		</Unit>
-		<Unit filename="XMLRPC\include\base64.h">
+		<Unit filename="XMLRPC/include/base64.h">
 			<Option target="XMLRPC" />
 		</Unit>
-		<Unit filename="XMLRPC\src\XmlRpcClient.cpp">
+		<Unit filename="XMLRPC/src/XmlRpcClient.cpp">
 			<Option target="XMLRPC" />
 		</Unit>
-		<Unit filename="XMLRPC\src\XmlRpcDispatch.cpp">
+		<Unit filename="XMLRPC/src/XmlRpcDispatch.cpp">
 			<Option target="XMLRPC" />
 		</Unit>
-		<Unit filename="XMLRPC\src\XmlRpcServer.cpp">
+		<Unit filename="XMLRPC/src/XmlRpcServer.cpp">
 			<Option target="XMLRPC" />
 		</Unit>
-		<Unit filename="XMLRPC\src\XmlRpcServerConnection.cpp">
+		<Unit filename="XMLRPC/src/XmlRpcServerConnection.cpp">
 			<Option target="XMLRPC" />
 		</Unit>
-		<Unit filename="XMLRPC\src\XmlRpcServerMethod.cpp">
+		<Unit filename="XMLRPC/src/XmlRpcServerMethod.cpp">
 			<Option target="XMLRPC" />
 		</Unit>
-		<Unit filename="XMLRPC\src\XmlRpcSocket.cpp">
+		<Unit filename="XMLRPC/src/XmlRpcSocket.cpp">
 			<Option target="XMLRPC" />
 		</Unit>
-		<Unit filename="XMLRPC\src\XmlRpcSource.cpp">
+		<Unit filename="XMLRPC/src/XmlRpcSource.cpp">
 			<Option target="XMLRPC" />
 		</Unit>
-		<Unit filename="XMLRPC\src\XmlRpcUtil.cpp">
+		<Unit filename="XMLRPC/src/XmlRpcUtil.cpp">
 			<Option target="XMLRPC" />
 		</Unit>
-		<Unit filename="XMLRPC\src\XmlRpcValue.cpp">
+		<Unit filename="XMLRPC/src/XmlRpcValue.cpp">
 			<Option target="XMLRPC" />
 		</Unit>
 		<Unit filename="XmlRpcEvents.cpp">
@@ -155,10 +155,13 @@
 		<Unit filename="manifest.xml">
 			<Option target="CodeCompletion" />
 		</Unit>
-		<Unit filename="python\python_completion_server.py">
+		<Unit filename="python/jedi_example.py">
 			<Option target="CodeCompletion" />
 		</Unit>
-		<Unit filename="python\stdlib_parser.py">
+		<Unit filename="python/python_completion_server.py">
+			<Option target="CodeCompletion" />
+		</Unit>
+		<Unit filename="python/stdlib_parser.py">
 			<Option target="CodeCompletion" />
 		</Unit>
 		<Unit filename="xmlrpc_embedder.cpp">

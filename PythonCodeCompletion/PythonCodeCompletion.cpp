@@ -40,8 +40,8 @@ BEGIN_EVENT_TABLE(PythonCodeCompletion, cbCodeCompletionPlugin)
     EVT_XMLRPC_RESPONSE(ID_STDLIB_LOAD,PythonCodeCompletion::OnStdLibLoaded)
     EVT_XMLRPC_RESPONSE(ID_COMPLETE_PHRASE,PythonCodeCompletion::OnCompletePhrase)
     EVT_XMLRPC_RESPONSE(ID_CALLTIP,PythonCodeCompletion::OnCalltip)
-    EVT_XMLRPC_RESPONSE(ID_GOTO_DECLARATION,PythonCodeCompletion::OnGotoDeclaration)
-    EVT_MENU(ID_GOTO_DECLARATION, PythonCodeCompletion::OnClickedGotoDeclaration)
+    EVT_XMLRPC_RESPONSE(ID_GOTO_DECLARATION,PythonCodeCompletion::OnGotoDefinition)
+    EVT_MENU(ID_GOTO_DECLARATION, PythonCodeCompletion::OnClickedGotoDefinition)
 END_EVENT_TABLE()
 
 // constructor
@@ -307,16 +307,11 @@ void PythonCodeCompletion::OnCompletePhrase(XmlRpcResponseEvent &event)
         }
         Manager::Get()->GetLogManager()->Log(_("PYCC: Unexpected phrase completion result"));
         Manager::Get()->GetLogManager()->Log(wxString(val.toXml().c_str(),wxConvUTF8));
+        return;
     }
-    else if(event.GetState()==XMLRPC_STATE_RESPONSE)
-    {
-        XmlRpc::XmlRpcValue val=event.GetResponse();
-        wxMessageBox(_("PYCC Error:\n")+wxString(val.toXml().c_str(),wxConvUTF8));
-        Manager::Get()->GetLogManager()->Log(_("PYCC: Error in completion result"));
-        Manager::Get()->GetLogManager()->Log(wxString(val.toXml().c_str(),wxConvUTF8));
-    }
-    else
-        Manager::Get()->GetLogManager()->Log(_("PYCC: Completion failed"));
+    XmlRpc::XmlRpcValue val=event.GetResponse();
+    Manager::Get()->GetLogManager()->Log(_("PYCC: Error in completion result"));
+    Manager::Get()->GetLogManager()->Log(wxString(val.toXml().c_str(),wxConvUTF8));
 }
 
 
@@ -499,7 +494,7 @@ void PythonCodeCompletion::RequestCompletion(cbStyledTextCtrl *control, int pos,
     int line = control->LineFromPosition(pos);
     int column = pos - control->PositionFromLine(line);
     XmlRpc::XmlRpcValue value;
-    value.setSize(3);
+    value.setSize(4);
     value[0] = filename.utf8_str(); //mb_str(wxConvUTF8);
     value[1] = control->GetText().utf8_str(); //mb_str(wxConvUTF8);
     value[2] = line;
@@ -513,7 +508,7 @@ void PythonCodeCompletion::RequestCallTip(cbStyledTextCtrl *control, int pos, co
     int line = control->LineFromPosition(pos);
     int column = pos - control->PositionFromLine(line);
     XmlRpc::XmlRpcValue value;
-    value.setSize(3);
+    value.setSize(4);
     value[0] = filename.utf8_str(); //mb_str(wxConvUTF8);
     value[1] = control->GetText().utf8_str(); //mb_str(wxConvUTF8);
     value[2] = line;
@@ -725,7 +720,7 @@ void PythonCodeCompletion::EditorEventHook(cbEditor* editor, wxScintillaEvent& e
     event.Skip();
 }
 
-void PythonCodeCompletion::OnClickedGotoDeclaration(wxCommandEvent& event)
+void PythonCodeCompletion::OnClickedGotoDefinition(wxCommandEvent& event)
 {
     cbEditor* ed = Manager::Get()->GetEditorManager()->GetBuiltinActiveEditor();
     if(!ed)
@@ -736,20 +731,23 @@ void PythonCodeCompletion::OnClickedGotoDeclaration(wxCommandEvent& event)
     if(control->GetLexer() != wxSCI_LEX_PYTHON)
         return;
     int pos   = control->GetCurrentPos();
+    int line = control->LineFromPosition(pos);
+    int column = pos - control->PositionFromLine(line);
     XmlRpc::XmlRpcValue value;
-    value.setSize(3);
+    value.setSize(4);
     value[0] = ed->GetFilename().utf8_str();
     value[1] = control->GetText().utf8_str();
-    value[2] = pos;
+    value[2] = line;
+    value[3] = column;
     py_server->ClearJobs();
     py_server->ExecAsync(_T("get_definition_location"),value,this,ID_GOTO_DECLARATION);
 }
 
-void PythonCodeCompletion::OnGotoDeclaration(XmlRpcResponseEvent &event)
+void PythonCodeCompletion::OnGotoDefinition(XmlRpcResponseEvent &event)
 {
     if(event.GetState()==XMLRPC_STATE_RESPONSE)
     {
-        Manager::Get()->GetLogManager()->Log(_("PYCC: Declaration response"));
+        Manager::Get()->GetLogManager()->Log(_("PYCC: Goto Definition response"));
         XmlRpc::XmlRpcValue val=event.GetResponse(); //Should return an array of path, lineno
         m_comp_results.Empty();
         Manager::Get()->GetLogManager()->Log(wxString::Format(_("PYCC: XML response \n%s"),val.toXml().c_str()));
@@ -762,20 +760,25 @@ void PythonCodeCompletion::OnGotoDeclaration(XmlRpcResponseEvent &event)
 //            if(!ed)
 //                return;
 //            f.MakeRelativeTo(ed->GetFilename());
-            Manager::Get()->GetLogManager()->Log(wxString::Format(_("PYCC: Declaration is at %s:%i"),f.GetFullPath().wx_str(),line));
+            Manager::Get()->GetLogManager()->Log(wxString::Format(_("PYCC: Definition is at %s:%i"),f.GetFullPath().wx_str(),line));
             if(f.FileExists())
             {
                 cbEditor* ed = Manager::Get()->GetEditorManager()->Open(f.GetFullPath());
                 if (ed)
                 {
                     ed->Show(true);
-                    ed->GotoLine(line - 1, false);
+                    ed->GotoLine(line, false);
                 }
                 return;
             }
             Manager::Get()->GetLogManager()->Log(_("PYCC: file could not be opened"));
+            XmlRpc::XmlRpcValue val=event.GetResponse();
+            Manager::Get()->GetLogManager()->Log(wxString(val.toXml().c_str(),wxConvUTF8));
+            return;
         }
     }
-    Manager::Get()->GetLogManager()->Log(_("PYCC: Bad response for goto declaration"));
+    Manager::Get()->GetLogManager()->Log(_("PYCC: Bad response for goto definition"));
+    XmlRpc::XmlRpcValue val=event.GetResponse();
+    Manager::Get()->GetLogManager()->Log(wxString(val.toXml().c_str(),wxConvUTF8));
 }
 

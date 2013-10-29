@@ -132,8 +132,8 @@ class PythonCodeCompletion : public cbCodeCompletionPlugin
         void OnStdLibLoaded(XmlRpcResponseEvent &event);
         void OnCalltip(XmlRpcResponseEvent &event);
         void OnCompletePhrase(XmlRpcResponseEvent &event);
-        void OnClickedGotoDeclaration(wxCommandEvent& event);
-        void OnGotoDeclaration(XmlRpcResponseEvent &event);
+        void OnClickedGotoDefinition(wxCommandEvent& event);
+        void OnGotoDefinition(XmlRpcResponseEvent &event);
 
         void RequestCompletion(cbStyledTextCtrl *control, int pos, const wxString &filename);
         void RequestCallTip(cbStyledTextCtrl *control, int pos, const wxString &filename);

@@ -371,7 +371,7 @@ void PythonCodeCompletion::BuildModuleMenu(const ModuleType type, wxMenu* menu, 
         {
             wxString msg;
             size_t pos = 0;
-            msg.Printf(_("Python: Find declaration of: '%s'"), word.wx_str());
+            msg.Printf(_("Python: goto definition of '%s'"), word.wx_str());
             menu->Insert(pos, ID_GOTO_DECLARATION, msg);
             ++pos;
 

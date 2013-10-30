@@ -128,7 +128,10 @@ class PythonCompletionServer:
             module_path = d.module_path
             if module_path is None:
                 module_path = path
-            return [module_path,d.line-1]
+            line=d.line-1
+            if line is None:
+                line=0
+            return [module_path,line]
         return ['',-1]
 
     def end(self):

@@ -56,11 +56,12 @@ class XmlRpcPipeServer:
             import traceback
             result ='Error running call'+name+'\n'+call_xml+'\n'
             result += '\n'.join(traceback.format_exception(*sys.exc_info()))
-            result = (result,)
+            result = ({'error':'ERROR','desc':result},)
         try:
             res_xml = bytes(xmlrpclib.dumps(result, methodresponse=True))
         except:
-            res_xml = bytes(xmlrpclib.dumps('Method result of length %i could not be converted to XML'%(len(res_xml)), methodresponse=True))
+            result = ({'error':'ERROR','desc':'Method result of length %i could not be converted to XML'%(len(res_xml))},)
+            res_xml = bytes(xmlrpclib.dumps(result), methodresponse=True)
         size = len(res_xml)
         self.outpipe.write(struct.pack('I',size))
         self.outpipe.write(res_xml)
@@ -109,7 +110,11 @@ class PythonCompletionServer:
         gets the documentation for the `index`th item of the last completion result in self.completions
         '''
         comp = self.completions[index]
-        return comp.doc.replace('\n','<br>')
+        doclines = comp.doc.splitlines()
+        if len(doclines)>0:
+            doclines[0] = '<b>'+doclines[0]+'</b>'
+        doc = '<br>'.join(doclines)
+        return doc
 
     def complete_tip(self,path,source,line,column):
         source=source.replace('\r','')

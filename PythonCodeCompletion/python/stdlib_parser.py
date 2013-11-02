@@ -1,5 +1,5 @@
-'#import sys whyf'
-#import pkgutil fdthis is a sick fucking joke
+import sys
+import pkgutil
 import imp
 import os,os.path
 import types
@@ -48,10 +48,20 @@ def parse_objs(symbols,obj_list,follow=True,prefix=''):
             continue
         chsyms=None
         args=None
+        path = None
+        line = None
         try:
             doc=str(o[1].__doc__)
         except:
             doc=''
+        try:
+            path = inspect.getsourcefile(o[1])
+        except TypeError:
+            pass
+        try:
+            lines,line = inspect.getsourcelines(o[1])
+        except:
+            pass
         try:
             o[1].__bases__
             has_bases=True
@@ -74,7 +84,7 @@ def parse_objs(symbols,obj_list,follow=True,prefix=''):
                     args+= ', **'+a.keywords
             except:
                 pass
-        symbols[o[0]]=(str(type(o[1])),args,doc,chsyms)
+        symbols[o[0]]=(str(type(o[1])),args,path,line,doc,chsyms)
 
 def parse_mods(mods):
     symbols={}  ##Symbol is formatted key:value key=symbol, value=tuple(type,args,docstring,children)
@@ -152,6 +162,17 @@ def load(src='STDLIB'):
 
 if __name__=='__main__':
     symbols=create()
-#    syms=load()
-#    for s in sorted(syms['os'][-1]):
-#        print s,syms['os'][-1][s][:2]
+    syms=load()
+    api = syms['statsmodels'][-1]['api'][-1]
+    for s in sorted(api):
+        print s,api[s][:-2]
+    ols = api['OLS'][-1]
+    for s in sorted(ols):
+        print s,ols[s][:-2]
+#    datasets = api['datasets'][-1]
+#    datasets2 = syms['statsmodels'][-1]['datasets'][-1]
+#    for s in sorted(datasets):
+#        print s
+#    for s in sorted(datasets2):
+#        print s
+#    print datasets == datasets2

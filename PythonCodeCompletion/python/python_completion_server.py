@@ -33,6 +33,7 @@ class XmlRpcPipeServer:
         self.inpipe=sys.stdin
         self.outpipe=sys.stdout
         sys.stdout=open(os.devnull,'wb')
+        sys.stderr=open(os.devnull,'wb')
 
     def register_function(self,fn,name):
         self.fn_dict[name]=fn
@@ -54,7 +55,7 @@ class XmlRpcPipeServer:
                 result=(result,)
         except:
             import traceback
-            result ='Error running call'+name+'\n'+call_xml+'\n'
+            result ='Error running call '+name+'\n'+call_xml+'\n'
             result += '\n'.join(traceback.format_exception(*sys.exc_info()))
             result = (result,)
         try:
@@ -64,6 +65,7 @@ class XmlRpcPipeServer:
         size = len(res_xml)
         self.outpipe.write(struct.pack('I',size))
         self.outpipe.write(res_xml)
+        self.outpipe.flush()
 
     def __call__(self,name,*args):
         return self.fn_dict[name](*args)

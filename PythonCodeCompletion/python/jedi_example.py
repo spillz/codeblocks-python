@@ -1,6 +1,4 @@
 import jedi
-import numpy
-numpy.
 script = '''
 def f(x,y,z):
     print x,y,z
@@ -9,7 +7,35 @@ print 1
 import os
 os.
 '''
+script1='''
+import numpy
+numpy.'''
+script2='''
+import pandas
+pandas.'''
 
+jedi.settings.cache_directory = 'c:\\jedi-cache'
+s = jedi.Script(script1,3,6)
+comps = s.completions()
+
+def repeated_import_test():
+    import time
+    for x in range(200):
+        s = jedi.Script(script1,3,6)
+        comps = s.completions()
+        time.sleep(10)
+        for c in comps:
+            print c.name
+            col = 6+len(c.name+'(')
+            s=jedi.Script(script1+c.name+'(',3,col)
+            time.sleep(10)
+
+#    s = jedi.Script(script2,3,7)
+#    comps = s.completions()
+#    for c in comps:
+#        print c.name
+#        col = 7+len(c.name+'(')
+#        s=jedi.Script(script2+c.name+'(',3,col)
 
 def get_definition_location(path,source,line,column):
     source=source.replace('\r','')
@@ -23,8 +49,6 @@ def get_definition_location(path,source,line,column):
             module_path = path
         return [module_path,d.line-1]
     return ['',-1]
-
-print get_definition_location(None,script,3,1)
 
 def complete_tip(path,source,line,column):
     source=source.replace('\r','')
@@ -42,7 +66,7 @@ def complete_tip(path,source,line,column):
         return calltip
     return ''
 
-print complete_tip(None,script,3,2)
+#print complete_tip(None,script,3,2)
 
 
 #s = jedi.Script(script,line=4,column=2)

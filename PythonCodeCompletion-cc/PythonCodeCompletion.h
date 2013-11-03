@@ -116,7 +116,7 @@ class PythonCodeCompletion : public cbCodeCompletionPlugin
           */
         virtual bool BuildToolBar(wxToolBar* toolBar){ return false; }
 
-        virtual bool IsProviderFor(cbEditor* ed);
+        virtual CCProviderStatus GetProviderStatusFor(cbEditor* ed);
 
         virtual std::vector<CCToken> GetAutocompList(bool isAuto, cbEditor* ed, int& tknStart, int& tknEnd);
         /// returns html

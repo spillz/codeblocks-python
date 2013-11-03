@@ -111,7 +111,9 @@ class PythonCompletionServer:
         '''
         comp = self.completions[index]
         doclines = comp.doc.splitlines()
-        if len(doclines)>0:
+        if len(doclines) == 0:
+            doclines = comp.raw_doc.splitlines()
+        else:
             doclines[0] = '<b>'+doclines[0]+'</b>'
         doc = '<br>'.join(doclines)
         return doc

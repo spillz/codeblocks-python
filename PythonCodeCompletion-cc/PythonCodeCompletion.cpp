@@ -7,6 +7,7 @@
 #include <cbeditor.h>
 #include <cbstyledtextctrl.h>
 #include <editor_hooks.h>
+#include <editorcolourset.h>
 #include <configmanager.h>
 #include <logmanager.h>
 //
@@ -390,11 +391,16 @@ void PythonCodeCompletion::BuildModuleMenu(const ModuleType type, wxMenu* menu, 
     }
 }
 
-bool PythonCodeCompletion::IsProviderFor(cbEditor *ed)
+PythonCodeCompletion::CCProviderStatus PythonCodeCompletion::GetProviderStatusFor(cbEditor* ed)
 {
-    if(ed->GetControl()->GetLexer()==wxSCI_LEX_PYTHON)
-        return true;
-    return false;
+    return ccpsActive; // WORKAROUND UNTIL ALPHA FIXES THIS
+    Manager::Get()->GetLogManager()->Log(_("PYCC: Provider status check"));
+    if (ed->GetLanguage() == ed->GetColourSet()->GetHighlightLanguage(wxSCI_LEX_PYTHON))
+        return ccpsActive;
+    if (ed->GetControl()->GetLexer()==wxSCI_LEX_PYTHON)
+        return ccpsActive;
+    Manager::Get()->GetLogManager()->Log(_("PYCC: Provider status check INACTIVE"));
+    return ccpsInactive;
 }
 
 std::vector<PythonCodeCompletion::CCToken> PythonCodeCompletion::GetAutocompList(bool isAuto, cbEditor* ed, int& tknStart, int& tknEnd)
@@ -405,7 +411,10 @@ std::vector<PythonCodeCompletion::CCToken> PythonCodeCompletion::GetAutocompList
     {
         for (int i = 0; i<m_comp_results.Count(); ++i)
         {
-            PythonCodeCompletion::CCToken t(i,m_comp_results[i]);
+            long int category=-1;
+            wxString cat = m_comp_results[i].AfterFirst('?');
+            cat.ToLong(&category);
+            PythonCodeCompletion::CCToken t(i,m_comp_results[i].BeforeFirst('?'),category);
             tokens.push_back(t);
         }
         cbStyledTextCtrl* control = ed->GetControl();

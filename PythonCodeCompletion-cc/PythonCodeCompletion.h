@@ -43,11 +43,7 @@ class PythonCodeCompletion : public cbCodeCompletionPlugin
         /** Destructor. */
         virtual ~PythonCodeCompletion();
 
-        virtual wxArrayString GetCallTips() {}
-        virtual int CodeComplete();
-        virtual void ShowCallTip();
-
-        void EditorEventHook(cbEditor* editor, wxScintillaEvent& event);
+        void GetCalltipPositions(cbEditor* editor, int &argsStartPos, int &argNumber);
 
         /** Invoke configuration dialog. */
         virtual int Configure();
@@ -162,22 +158,26 @@ class PythonCodeCompletion : public cbCodeCompletionPlugin
         void RequestCompletion(cbStyledTextCtrl *control, int pos, const wxString &filename);
         void RequestCallTip(cbStyledTextCtrl *control, int pos, const wxString &filename);
         wxString RequestDocString(int id);
-        void CompleteCodeEvt(CodeBlocksEvent& event);
-        void ShowCallTipEvt(CodeBlocksEvent& event);
+//        void CompleteCodeEvt(CodeBlocksEvent& event);
+//        void ShowCallTipEvt(CodeBlocksEvent& event);
 
     private:
-        int m_state; // takes on of the values of the StateType enum (used to report current state of the engine)
+        int m_state; // takes one of the values of the StateType enum (used to report current state of the engine)
         int m_request_id; // m_request_id is used to keep track of the active request and is used to prevent responses from stale requests from propagating
+        int m_argsPos; // position of the call args in the active editor
+        int m_argNumber; // zero-based numerical position of the cursor within the function call spec
         wxString GetExtraFile(const wxString &short_name);
+        //TODO: need to check py_server is still active before sending requests
+        //TODO: possible need to relaunch the py_server if it fails
         XmlRpcInstance *py_server; //Code Completion Server (a python process running an XMLRPC server)
-        wxImageList* m_pImageList;
-        bool m_libs_loaded;
-        int m_EditorHookId;
-        wxString m_ActiveSymbol;
-        int m_ActiveCalltipPos;
-        wxString m_ActiveCalltip;
-        wxString m_ActiveCalltipDef;
-        wxArrayString m_comp_results;
+        wxImageList* m_pImageList; //Type icons displayed in the code completion popup
+        bool m_libs_loaded; //unneeded?
+        int m_EditorHookId; //unneeded?
+        wxString m_ActiveSymbol; // unneeded?
+        int m_ActiveCalltipPos; //unneeded?
+        wxString m_ActiveCalltip; // unneeded?
+        wxString m_ActiveCalltipDef; //contains the call tip definition retrieved from the server
+        wxArrayString m_comp_results; //contains an array of completion results retrieved from the server
         DECLARE_EVENT_TABLE();
 };
 

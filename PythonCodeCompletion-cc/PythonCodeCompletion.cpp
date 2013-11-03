@@ -267,6 +267,8 @@ void PythonCodeCompletion::OnStdLibLoaded(XmlRpcResponseEvent &event)
 
 void PythonCodeCompletion::OnCalltip(XmlRpcResponseEvent &event)
 {
+    Manager::Get()->GetLogManager()->Log(_("PYCC: Got calltip response from server"));
+    m_state = STATE_NONE;
     if(event.GetState()==XMLRPC_STATE_RESPONSE)
     {
         XmlRpc::XmlRpcValue val=event.GetResponse();
@@ -275,8 +277,10 @@ void PythonCodeCompletion::OnCalltip(XmlRpcResponseEvent &event)
         if(val.getType()==val.TypeString)
         {
             m_ActiveCalltipDef=wxString(std::string(val).c_str(),wxConvUTF8);
+            m_state = STATE_CALLTIP_RETURNED;
             Manager::Get()->GetLogManager()->Log(_("PYCC: Call tip result ")+m_ActiveCalltipDef);
-            ShowCallTip();
+            CodeBlocksEvent evt(cbEVT_SHOW_CALL_TIP);
+            Manager::Get()->ProcessEvent(evt);//->GetPluginManager()->NotifyPlugins(evt);
         }
         else
         {
@@ -295,10 +299,10 @@ void PythonCodeCompletion::OnCalltip(XmlRpcResponseEvent &event)
 
 void PythonCodeCompletion::OnCompletePhrase(XmlRpcResponseEvent &event)
 {
-    Manager::Get()->GetLogManager()->Log(_("PYCC: Got complete code request"));
+    Manager::Get()->GetLogManager()->Log(_("PYCC: Got complete code response from server"));
 //    if(!((m_state == STATE_COMPLETION_REQUEST) && event.GetId() == m_request_id))
 //        return;
-    m_state = STATE_COMPLETION_RETURNED;
+    m_state = STATE_NONE;
     if(event.GetState()==XMLRPC_STATE_RESPONSE)
     {
         Manager::Get()->GetLogManager()->Log(_("PYCC: Completion response"));
@@ -311,8 +315,10 @@ void PythonCodeCompletion::OnCompletePhrase(XmlRpcResponseEvent &event)
                 m_comp_results.Add(wxString(std::string(val[i]).c_str(),wxConvUTF8));
             Manager::Get()->GetLogManager()->Log(wxString::Format(_("PYCC: Beginning comp with %i items"),val.size()));
 //            CodeComplete();
+            m_state = STATE_COMPLETION_RETURNED;
             CodeBlocksEvent evt(cbEVT_COMPLETE_CODE);
-            Manager::Get()->GetPluginManager()->NotifyPlugins(evt);
+            Manager::Get()->ProcessEvent(evt);
+//            Manager::Get()->GetPluginManager()->NotifyPlugins(evt);
             Manager::Get()->GetLogManager()->Log(_("PYCC: Sent complete code msg"));
             //::wxPostEvent(Manager::Get()->GetCCManager(),evt);
             return;
@@ -465,6 +471,27 @@ wxStringVec PythonCodeCompletion::GetCallTips(int pos, int style, cbEditor* ed, 
     {
         Manager::Get()->GetLogManager()->Log(_("PYCC: Supplying the calltip ")+m_ActiveCalltip);
         sv.push_back(m_ActiveCalltipDef);
+        wxString s=m_ActiveCalltipDef;
+        argsPos = m_argsPos;
+        int pos = s.Find('(')+1;
+        s=s.AfterFirst('(');
+        for (int i=0;i<m_argNumber;++i)
+        {
+             int inc = s.Find(',');
+             if (inc>=0)
+             {
+                pos+=inc+1;
+                s = s.AfterFirst(',');
+             }
+        }
+        hlStart = pos;
+        int linc = s.Find(',');
+        if (linc<0)
+            linc = s.Find(')');
+        hlEnd = hlStart;
+        if (linc>0)
+            hlEnd += linc;
+        Manager::Get()->GetLogManager()->Log(wxString::Format(_("PYCC: Showing calltip at pos %i, hl: %i %i"),argsPos,hlStart,hlEnd));
 //        for (int i = 0; i<m_calltip_results.Count(); ++i)
 //            sv.push_back(m_calltip_results[i]);
         m_state=STATE_NONE;
@@ -472,12 +499,18 @@ wxStringVec PythonCodeCompletion::GetCallTips(int pos, int style, cbEditor* ed, 
     }
     else
     {
-//        if (   (!ed->AutoCompActive()) // not already active autocompletion
-//                 || (ch == _T('.')))
-        Manager::Get()->GetLogManager()->Log(wxString::Format(_("PYCC: Requesting the calltip at pos %i"),pos));
+        //TODO: Probably don't need to hit the python server every time if we can figure out we are still in the scope of the same function as the last call
+        int argNumber;
+        int argsStartPos;
+        GetCalltipPositions(ed, argsStartPos, argNumber);
+        if (argsStartPos<0)
+            return sv;
+        m_argsPos = argsStartPos;
+        m_argNumber = argNumber;
+        Manager::Get()->GetLogManager()->Log(wxString::Format(_("PYCC: Requesting the calltip at pos %i, argnum %i"),argsStartPos,argNumber));
         cbStyledTextCtrl *control=ed->GetControl();
         m_state = STATE_CALLTIP_REQUEST;
-        RequestCallTip(control,pos,ed->GetFilename());
+        RequestCallTip(control,argsStartPos,ed->GetFilename());
         return sv;
     }
     return sv;
@@ -507,110 +540,6 @@ void PythonCodeCompletion::DoAutocomplete(const wxString& token, cbEditor* ed)
     DoAutocomplete(CCToken(-1, token), ed);
 }
 
-
-int PythonCodeCompletion::CodeComplete()
-{
-    if (!IsAttached() || !m_libs_loaded)
-        return -1;
-
-    EditorManager* edMan = Manager::Get()->GetEditorManager();
-    cbEditor* ed = edMan->GetBuiltinActiveEditor();
-    if (!ed)
-        return -3;
-
-    if(true)
-    {
-        int maxmatches=100;
-        int count=0;
-        if(count<maxmatches)
-        {
-            cbStyledTextCtrl* control = ed->GetControl();
-            control->ClearRegisteredImages();
-            for (int i = 0; i < m_pImageList->GetImageCount(); i++)
-                control->RegisterImage(i+1,m_pImageList->GetBitmap(i));
-
-            int pos   = control->GetCurrentPos();
-            //int start = ed->GetControl()->WordStartPosition(pos, true);
-            int wordStartPos = control->WordStartPosition(pos, true);
-//            while(control->GetCharAt(wordStartPos-1)==_T('.'))
-//                wordStartPos = control->WordStartPosition(wordStartPos-2, true);
-            int start=wordStartPos;
-            bool caseSens=true;
-            ed->GetControl()->AutoCompSetFillUps(wxEmptyString);
-            ed->GetControl()->AutoCompSetIgnoreCase(!caseSens);
-            ed->GetControl()->AutoCompSetCancelAtStart(true);
-            ed->GetControl()->AutoCompSetSeparator(' ');
-            ed->GetControl()->AutoCompSetTypeSeparator('?');
-//            ed->GetControl()->AutoCompSetFillUps(m_CCFillupChars);
-//            ed->GetControl()->AutoCompSetChooseSingle(m_IsAutoPopup ? false : m_CCAutoSelectOne);
-            ed->GetControl()->AutoCompSetAutoHide(true);
-//            ed->GetControl()->AutoCompSetDropRestOfWord(m_IsAutoPopup ? false : true);
-//            wxString final = GetStringFromArray(m_comp_results, _T("\n"));
-            wxString final = GetStringFromArray(m_comp_results, _T(" "));
-            final.RemoveLast(); // remove last space
-
-            ed->GetControl()->AutoCompShow(pos - start, final);
-            return 0;
-        }
-        else if (!ed->GetControl()->CallTipActive())
-        {
-            wxString msg = _("Too many results.\n"
-                             "Please edit results' limit in code-completion options,\n"
-                             "or type at least one more character to narrow the scope down.");
-            ed->GetControl()->CallTipShow(ed->GetControl()->GetCurrentPos(), msg);
-            return -2;
-        }
-    }
-    else if (!ed->GetControl()->CallTipActive())
-    {
-            wxString msg = _("The parser is still parsing files.");
-            ed->GetControl()->CallTipShow(ed->GetControl()->GetCurrentPos(), msg);
-    }
-
-    return -5;
-}
-
-void PythonCodeCompletion::ShowCallTip()
-{
-    if (!IsAttached() || !m_libs_loaded)
-        return;
-
-    if (!Manager::Get()->GetEditorManager())
-        return;
-
-    cbEditor* ed = Manager::Get()->GetEditorManager()->GetBuiltinActiveEditor();
-    if (!ed)
-        return;
-    Manager::Get()->GetLogManager()->Log(_T("PYCC: Showing calltip"));
-
-
-    // calculate the size of the calltips window
-    int pos = ed->GetControl()->GetCurrentPos();
-    wxPoint p = ed->GetControl()->PointFromPosition(pos); // relative point
-    int pixelWidthPerChar = ed->GetControl()->TextWidth(wxSCI_STYLE_LINENUMBER, _T("W"));
-    int maxCalltipLineSizeInChars = (ed->GetSize().x - p.x) / pixelWidthPerChar;
-    if (maxCalltipLineSizeInChars < 64)
-    {
-        // if less than a threshold in chars, recalculate the starting position (instead of shrinking it even more)
-        p.x -= (64 - maxCalltipLineSizeInChars) * pixelWidthPerChar;
-        // but if it goes out of range, continue shrinking
-        if (p.x >= 0)
-        {
-            maxCalltipLineSizeInChars = 64;
-            pos = ed->GetControl()->PositionFromPoint(p);
-        }
-        // else, out of range
-    }
-
-    int start = 0, end = 0, count = 0, typedCommas = 0;
-
-//    int pos=m_ActiveCalltipPos;
-    wxString definition=m_ActiveCalltipDef;
-
-    ed->GetControl()->CallTipShow(pos, definition);
-    if (start != 0 && end > start)
-        ed->GetControl()->CallTipSetHighlight(start, end);
-}
 
 void PythonCodeCompletion::RequestCompletion(cbStyledTextCtrl *control, int pos, const wxString &filename)
 {
@@ -674,201 +603,153 @@ wxString PythonCodeCompletion::RequestDocString(int id)
 
 }
 
-void PythonCodeCompletion::CompleteCodeEvt(CodeBlocksEvent& event)
+//void PythonCodeCompletion::CompleteCodeEvt(CodeBlocksEvent& event)
+//{
+//    event.Skip();
+//    cbEditor *ed = Manager::Get()->GetEditorManager()->GetBuiltinActiveEditor();
+//    if(!ed)
+//        return;
+//    cbStyledTextCtrl *control = ed->GetControl();
+//    if(control->GetLexer()!=wxSCI_LEX_PYTHON)
+//        return;
+//    int pos = control->GetCurrentPos();
+//    wxString filename = ed->GetFilename();
+//    RequestCompletion(control, pos, filename);
+//}
+//
+//void PythonCodeCompletion::ShowCallTipEvt(CodeBlocksEvent& event)
+//{
+//    event.Skip();
+//    cbEditor *ed = Manager::Get()->GetEditorManager()->GetBuiltinActiveEditor();
+//    if(!ed)
+//        return;
+//    cbStyledTextCtrl *control = ed->GetControl();
+//    if(control->GetLexer()!=wxSCI_LEX_PYTHON)
+//        return;
+//    int pos = control->GetCurrentPos();
+//    wxString filename = ed->GetFilename();
+//    RequestCallTip(control, pos, filename);
+//}
+
+/*
+This function computes
+argsStartPos: is the stc position of the brace
+argNumber: the number of the argument that the cursor is currently position at (0 for the first, 1 for the second etc.)
+*/
+void PythonCodeCompletion::GetCalltipPositions(cbEditor* editor, int &argsStartPos, int &argNumber)
 {
-    event.Skip();
-    cbEditor *ed = Manager::Get()->GetEditorManager()->GetBuiltinActiveEditor();
-    if(!ed)
-        return;
-    cbStyledTextCtrl *control = ed->GetControl();
-    if(control->GetLexer()!=wxSCI_LEX_PYTHON)
-        return;
-    int pos = control->GetCurrentPos();
-    wxString filename = ed->GetFilename();
-    RequestCompletion(control, pos, filename);
-}
-
-void PythonCodeCompletion::ShowCallTipEvt(CodeBlocksEvent& event)
-{
-    event.Skip();
-    cbEditor *ed = Manager::Get()->GetEditorManager()->GetBuiltinActiveEditor();
-    if(!ed)
-        return;
-    cbStyledTextCtrl *control = ed->GetControl();
-    if(control->GetLexer()!=wxSCI_LEX_PYTHON)
-        return;
-    int pos = control->GetCurrentPos();
-    wxString filename = ed->GetFilename();
-    RequestCallTip(control, pos, filename);
-}
-
-void PythonCodeCompletion::EditorEventHook(cbEditor* editor, wxScintillaEvent& event)
-{
-    if (!IsAttached())
-    {
-        Manager::Get()->GetLogManager()->Log(_("PYCC: Not attached"));
-        event.Skip();
-        return;
-    }
-
-    if(editor->GetControl()->GetLexer() != wxSCI_LEX_PYTHON)
-    {
-        event.Skip();
-        return;
-    }
-
     cbStyledTextCtrl* control = editor->GetControl();
 
-////    if      (event.GetEventType() == wxEVT_SCI_CHARADDED)
-////        TRACE(_T("wxEVT_SCI_CHARADDED"));
-////    else if (event.GetEventType() == wxEVT_SCI_CHANGE)
-////        TRACE(_T("wxEVT_SCI_CHANGE"));
-////    else if (event.GetEventType() == wxEVT_SCI_KEY)
-////        TRACE(_T("wxEVT_SCI_KEY"));
-////    else if (event.GetEventType() == wxEVT_SCI_MODIFIED)
-////        TRACE(_T("wxEVT_SCI_MODIFIED"));
-////    else if (event.GetEventType() == wxEVT_SCI_AUTOCOMP_SELECTION)
-////        TRACE(_T("wxEVT_SCI_AUTOCOMP_SELECTION"));
-
-    if (event.GetEventType() == wxEVT_SCI_CHARADDED)
+    //FROM CURRENT SCOPE REVERSE FIND FROM CURRENT POS FOR '(', IGNORING COMMENTS, STRINGS, CHAR STYLE
+    //LOOK FOR MATCHING BRACE, IF FOUND IS THE POSITION AHEAD OF THE CURRENT BRACE? NO, SKIP.
+    //RETRIEVE THE SYMBOL TO THE LEFT OF THE '(' E.G. 'os.path.exists' <- ACTIVE SYMBOL
+    //COUNT THE NUMBER OF COMMAS BETWEEN CURRENT POS AND '('    <- ACTIVE ARG
+    //RETRIEVE THE CALLTIP AND DOC STRING FROM THE PYTHON SERVER
+    Manager::Get()->GetLogManager()->Log(_T("PYCC: Checking for calltip"));
+    wxChar ch;
+    int pos=control->GetCurrentPos()-1;
+    int startpos=pos;
+    int cursorpos = pos+1;
+    int minpos=control->GetCurrentPos()-1000;
+    if (minpos<0)
+        minpos=0;
+    while(pos>=minpos)
     {
-        // a character was just added in the editor
-        Manager::Get()->GetLogManager()->Log(_("PYCC: completion check begin"));
-        wxChar ch = event.GetKey();
-        int pos = control->GetCurrentPos();
-        int wordStartPos = control->WordStartPosition(pos, true);
-        while(control->GetCharAt(wordStartPos-1)==_T('.'))
-            wordStartPos = control->WordStartPosition(wordStartPos-2, true);
-
-        // -2 is used next because the char has already been added and Pos is ahead of it...
-        const wxChar prevChar = control->GetCharAt(pos - 2);
-
-        // if more than two chars have been typed, invoke CC
-        bool m_CCAutoLaunch = true;
-        int m_CCAutoLaunchChars = 2;
-        const bool autoCC = m_CCAutoLaunch && (pos - wordStartPos >= m_CCAutoLaunchChars);
-
-        // update calltip highlight while we type
-        if (control->CallTipActive())
-            ShowCallTip();
-
-        //HOW TO DO CALLTIPS
-        //FROM CURRENT SCOPE REVERSE FIND FROM CURRENT POS FOR '(', IGNORING COMMENTS, STRINGS, CHAR STYLE
-        //LOOK FOR MATCHING BRACE, IF FOUND IS THE POSITION AHEAD OF THE CURRENT BRACE? NO, SKIP.
-        //RETRIEVE THE SYMBOL TO THE LEFT OF THE '(' E.G. 'os.path.exists' <- ACTIVE SYMBOL
-        //COUNT THE NUMBER OF COMMAS BETWEEN CURRENT POS AND '('    <- ACTIVE ARG
-        //RETRIEVE THE CALLTIP AND DOC STRING FROM THE PYTHON SERVER
-
-        // code completion
-        if (   (autoCC && !control->AutoCompActive()) // not already active autocompletion
-                 || (ch == _T('.')))
-        {
-            Manager::Get()->GetLogManager()->Log(_("PYCC: Checking lexical state..."));
-            int style = control->GetStyleAt(pos-2);
-            if (  ch != _T('.') && style != wxSCI_P_DEFAULT
-                && style != wxSCI_P_CLASSNAME
-                && style != wxSCI_P_DEFNAME
-                && style != wxSCI_P_IDENTIFIER )
-            {
-                Manager::Get()->GetLogManager()->Log(_("PYCC: Not a completable lexical state"));
-                event.Skip();
-                return;
-            }
-            wxString phrase=control->GetTextRange(wordStartPos,pos);
-            Manager::Get()->GetLogManager()->Log(_T("PYCC: Looking for ")+phrase+_T(" in ")+editor->GetFilename()+wxString::Format(_T(" %i"),pos));
-            RequestCompletion(control,pos,editor->GetFilename());
-            event.Skip();
-            return;
-        }
-
-        // calltip
-        Manager::Get()->GetLogManager()->Log(_T("PYCC: Checking for calltip"));
-        pos=control->GetCurrentPos()-1;
-        int startpos=pos;
-        int cursorpos = pos+1;
-        int minpos=control->GetCurrentPos()-1000;
-        if (minpos<0)
-            minpos=0;
-        while(pos>=minpos)
-        {
-            wxChar ch = control->GetCharAt(pos);
-            int style = control->GetStyleAt(pos);
-            if (control->IsString(style) || control->IsCharacter(style) || control->IsComment(style))
-            {
-                pos--;
-                continue;
-            }
-            if(ch==_T(')'))
-                pos=control->BraceMatch(pos);
-            else if(ch==_T('('))
-                break;
-            pos--;
-        }
-        if(pos<minpos || control->BraceMatch(pos)<control->GetCurrentPos() && control->BraceMatch(pos)!=-1)
-        {
-            Manager::Get()->GetLogManager()->Log(_T("PYCC: Not in function scope"));
-            event.Skip();
-            return;
-        }
-
-        m_ActiveCalltipPos=cursorpos;
-
-        Manager::Get()->GetLogManager()->Log(_T("PYCC: Finding the calltip symbol"));
-        //now find the symbol, if any, associated with the parens
-        int end_pos=pos;
-        pos--;
         ch = control->GetCharAt(pos);
-        while(pos>=0)
+        int style = control->GetStyleAt(pos);
+        if (control->IsString(style) || control->IsCharacter(style) || control->IsComment(style))
         {
-            while (ch == _T(' ') || ch == _T('\t'))
-            {
-                pos--;
-                ch = control->GetCharAt(pos);
-                wxString s=control->GetTextRange(pos,end_pos);
-                Manager::Get()->GetLogManager()->Log(_T("#")+s);
-            }
-            int npos=control->WordStartPosition(pos+1,true);
-            if(npos==pos+1)
-            {
-                event.Skip();
-                return;
-            }
-            pos=npos;
-            npos--;
-            wxString s1=control->GetTextRange(pos,end_pos);
-            Manager::Get()->GetLogManager()->Log(_T("#")+s1);
-            ch = control->GetCharAt(npos);
-            while (ch == _T(' ') || ch == _T('\t'))
-            {
-                npos--;
-                ch = control->GetCharAt(npos);
-                wxString s=control->GetTextRange(npos,end_pos);
-                Manager::Get()->GetLogManager()->Log(_T("#")+s);
-            }
-            if (ch!=_T('.'))
-                break;
-            pos=npos-1;
-            if(pos<0)
-            {
-                event.Skip();
-                return;
-            }
+            pos--;
+            continue;
         }
-        int start_pos=pos;
-        wxString symbol=control->GetTextRange(start_pos,end_pos);
-        symbol.Replace(_T(" "),wxEmptyString);
-        symbol.Replace(_T("\t"),wxEmptyString);
-        if(symbol==wxEmptyString)
+        if(ch==_T(')'))
+            pos=control->BraceMatch(pos);
+        else if(ch==_T('('))
+            break;
+        pos--;
+    }
+    if(pos<minpos || control->BraceMatch(pos)<control->GetCurrentPos() && control->BraceMatch(pos)!=-1)
+    {
+        Manager::Get()->GetLogManager()->Log(_T("PYCC: Not in function scope"));
+        argsStartPos = -1;
+        argNumber = 0;
+        return;
+    }
+
+    argsStartPos = pos + 1;
+
+    Manager::Get()->GetLogManager()->Log(_T("PYCC: Finding the calltip symbol"));
+    //now find the symbol, if any, associated with the parens
+    int end_pos=pos;
+    pos--;
+    ch = control->GetCharAt(pos);
+    while(pos>=0)
+    {
+        while (ch == _T(' ') || ch == _T('\t'))
         {
-            event.Skip();
+            pos--;
+            ch = control->GetCharAt(pos);
+            wxString s=control->GetTextRange(pos,end_pos);
+            Manager::Get()->GetLogManager()->Log(_T("#")+s);
+        }
+        int npos=control->WordStartPosition(pos+1,true);
+        if(npos==pos+1)
+        {
+            argsStartPos = -1;
+            argNumber = 0;
             return;
         }
-        m_ActiveSymbol=symbol;
-        Manager::Get()->GetLogManager()->Log(_T("PYCC: Found calltip symbol ")+symbol);
-        RequestCallTip(control, cursorpos, editor->GetFilename());
+        pos=npos;
+        npos--;
+        wxString s1=control->GetTextRange(pos,end_pos);
+        Manager::Get()->GetLogManager()->Log(_T("#")+s1);
+        ch = control->GetCharAt(npos);
+        while (ch == _T(' ') || ch == _T('\t'))
+        {
+            npos--;
+            ch = control->GetCharAt(npos);
+            wxString s=control->GetTextRange(npos,end_pos);
+            Manager::Get()->GetLogManager()->Log(_T("#")+s);
+        }
+        if (ch!=_T('.'))
+            break;
+        pos=npos-1;
+        if(pos<0)
+        {
+            argsStartPos = -1;
+            argNumber = 0;
+            return;
+        }
     }
-    // allow others to handle this event
-    event.Skip();
+    int token_pos=pos;
+    wxString symbol=control->GetTextRange(token_pos,end_pos);
+    symbol.Replace(_T(" "),wxEmptyString);
+    symbol.Replace(_T("\t"),wxEmptyString);
+    if(symbol==wxEmptyString) //No symbol means not a function call, so return
+    {
+        argsStartPos = -1;
+        argNumber = 0;
+        return;
+    }
+
+    //Now figure out which argument the cursor is at by counting "," characters
+    argNumber = 0;
+    pos = argsStartPos;
+    while(pos<=startpos)
+    {
+        ch = control->GetCharAt(pos);
+        int style = control->GetStyleAt(pos);
+        if ((ch=='(' || ch =='[' || ch =='{') && (style == wxSCI_P_DEFAULT || style==wxSCI_P_OPERATOR))
+        {
+            pos = control->BraceMatch(pos);
+            if (pos == wxSCI_INVALID_POSITION)
+                break;
+        }
+        if (ch==',' && (style==wxSCI_P_DEFAULT || style==wxSCI_P_OPERATOR))
+            argNumber++;
+        pos++;
+    }
+    Manager::Get()->GetLogManager()->Log(_T("PYCC: Found calltip symbol ")+symbol);
 }
 
 void PythonCodeCompletion::OnClickedGotoDefinition(wxCommandEvent& event)

@@ -6,6 +6,7 @@ import types
 import time
 import inspect
 import cPickle
+import json
 del sys.path[0]
 
 def get_builtin_mods(mods):
@@ -111,17 +112,18 @@ def parse_mods(mods):
     return symbols
 
 
-def create(dest='STDLIB'):
+def create(dest='STDLIB',use_json=True):
     '''
     creates the standard lib from path dest
     '''
     mods={}
 
-    get_builtin_mods(mods)
-    std_mod_list=[line.strip().split(' ')[0] for line in open("pymods.txt","r").readlines()]
-    for m in std_mod_list:
-        mods[m]=None
-    pkg_mod_list=['gtk','numpy','scipy','pandas','statsmodels']
+    #get_builtin_mods(mods)
+    #std_mod_list=[line.strip().split(' ')[0] for line in open("pymods.txt","r").readlines()]
+    #for m in std_mod_list:
+    #    mods[m]=None
+    #pkg_mod_list=['gtk','numpy','scipy','pandas','statsmodels']
+    pkg_mod_list=['numpy']
     get_package_mods(mods,pkg_mod_list)
 
     print 'MODULES'
@@ -135,12 +137,15 @@ def create(dest='STDLIB'):
 
     t=time.time()
     f=open(dest,'wb')
-    cPickle.dump(syms,f)
+    if use_json:
+        f.write(json.dumps(syms))
+    else:
+        cPickle.dump(syms,f)
     f.close()
     print 'write took',time.time()-t
     return syms
 
-def load(src='STDLIB'):
+def load(src='STDLIB',use_json=True):
     '''
     loads the stdlib from path src
     '''
@@ -148,7 +153,10 @@ def load(src='STDLIB'):
         if os.path.exists(src):
             t=time.time()
             f=open(src,'rb')
-            mods=cPickle.load(f)
+            if use_json:
+                mods=json.loads(f.read())
+            else:
+                mods=cPickle.load(f)
             f.close()
             print 'read took',time.time()-t
             print 'main scope'
@@ -161,14 +169,15 @@ def load(src='STDLIB'):
         return None
 
 if __name__=='__main__':
-    symbols=create()
+#    symbols=create()
     syms=load()
-    api = syms['statsmodels'][-1]['api'][-1]
+    print 'numpy' in syms
+    api = syms['numpy'][-1]
     for s in sorted(api):
         print s,api[s][:-2]
-    ols = api['OLS'][-1]
-    for s in sorted(ols):
-        print s,ols[s][:-2]
+#    ols = api['OLS'][-1]
+#    for s in sorted(ols):
+#        print s,ols[s][:-2]
 #    datasets = api['datasets'][-1]
 #    datasets2 = syms['statsmodels'][-1]['datasets'][-1]
 #    for s in sorted(datasets):

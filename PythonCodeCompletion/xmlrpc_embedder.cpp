@@ -132,11 +132,11 @@ public:
     }
     bool execute(const char* method, XmlRpc::XmlRpcValue const& params, XmlRpc::XmlRpcValue& result)
     {
-        std::cout<<"PyCC Execute start";
+//        std::cout<<"PyCC Execute start";
         std::string msg;
         if(!generateRequest(method,params,msg))
         {
-            std::cout<<"bad request value"<<std::endl;
+//            std::cout<<"bad request value"<<std::endl;
             result.setSize(1);
             result[0] = "bad request value";
             return false;
@@ -156,34 +156,34 @@ public:
             }
         }
 //        m_ostream->Write(msg.c_str(),msg.size()); //On windows, this will frequently result in an incomplete write becasue the buffer gets full so better to use the blocking PutC instead
-        std::cout<<"wrote "<<msg<<std::endl;
-        std::cout<<"with size "<<r_size<<std::endl;
+//        std::cout<<"wrote "<<msg<<std::endl;
+//        std::cout<<"with size "<<r_size<<std::endl;
         char ch;
         do
         {
             ch=m_istream->GetC();
         } while(m_istream->GetLastError()==wxSTREAM_EOF);
-        if(m_istream->GetLastError()==wxSTREAM_EOF)
-            std::cout<<"read eof error"<<ch<<std::endl;
-        if(m_istream->GetLastError()==wxSTREAM_READ_ERROR)
-            std::cout<<"read error"<<ch<<std::endl;
+//        if(m_istream->GetLastError()==wxSTREAM_EOF)
+//            std::cout<<"read eof error"<<ch<<std::endl;
+//        if(m_istream->GetLastError()==wxSTREAM_READ_ERROR)
+//            std::cout<<"read error"<<ch<<std::endl;
         if(m_istream->GetLastError()!=wxSTREAM_NO_ERROR && m_istream->GetLastError()!=wxSTREAM_EOF)
         {
             result.setSize(1);
             result[0] = "broken stream attempting to write buffer";
             return false;
         }
-        std::cout<<"read ch "<<ch<<std::endl;
+//        std::cout<<"read ch "<<ch<<std::endl;
         for(uint32_t i=0;i<sizeof(uint32_t);i++)
         {
             do
             {
                 ((char*)(&r_size))[i]=m_istream->GetC();
             } while(m_istream->GetLastError()==wxSTREAM_EOF);// while(m_istream->GetLastError()==wxSTREAM_EOF);
-            if(m_istream->GetLastError()==wxSTREAM_EOF)
-                std::cout<<"read eof error"<<ch<<std::endl;
-            if(m_istream->GetLastError()==wxSTREAM_READ_ERROR)
-                std::cout<<"read error"<<ch<<std::endl;
+//            if(m_istream->GetLastError()==wxSTREAM_EOF)
+//                std::cout<<"read eof error"<<ch<<std::endl;
+//            if(m_istream->GetLastError()==wxSTREAM_READ_ERROR)
+//                std::cout<<"read error"<<ch<<std::endl;
             if(m_istream->GetLastError()!=wxSTREAM_NO_ERROR && m_istream->GetLastError()!=wxSTREAM_EOF)
             {
                 result.setSize(1);
@@ -191,7 +191,7 @@ public:
                 return false; //potentially return to early if reading faster than the python server fills the pipe??
             }
         }
-        std::cout<<"response size is "<<r_size<<std::endl;
+//        std::cout<<"response size is "<<r_size<<std::endl;
         std::string buf;
         buf.resize(r_size+1);
         for(uint32_t i=0;i<r_size;i++)
@@ -202,10 +202,10 @@ public:
                 if(m_istream->GetLastError()==wxSTREAM_EOF)
                     wxMicroSleep(10);
             } while(m_istream->GetLastError()==wxSTREAM_EOF);
-            if(m_istream->GetLastError()!=wxSTREAM_EOF)
-                std::cout<<"read eof error"<<ch<<std::endl;
-            if(m_istream->GetLastError()!=wxSTREAM_READ_ERROR)
-                std::cout<<"read error"<<ch<<std::endl;
+//            if(m_istream->GetLastError()!=wxSTREAM_EOF)
+//                std::cout<<"read eof error"<<ch<<std::endl;
+//            if(m_istream->GetLastError()!=wxSTREAM_READ_ERROR)
+//                std::cout<<"read error"<<ch<<std::endl;
             if(m_istream->GetLastError()!=wxSTREAM_NO_ERROR && m_istream->GetLastError()!=wxSTREAM_EOF)
             {
                 result.setSize(1);
@@ -215,12 +215,12 @@ public:
             }
         }
         buf[r_size]=0;
-        std::cout<<"response was "<<buf<<std::endl;
+//        std::cout<<"response was "<<buf<<std::endl;
         if(parseResponse(buf, result))
         {
             return true;
         }
-        std::cout<<"bad xml response"<<std::endl;
+//        std::cout<<"bad xml response"<<std::endl;
         wxString s = wxString::Format(_T("error parsing read buffer - chars read %i\n"),r_size);
         result[0] = std::string(s.utf8_str()) + std::string(buf);
         return false;
@@ -371,7 +371,7 @@ XmlRpcInstance::XmlRpcInstance(const wxString &processcmd, const wxString &hosta
 
 long XmlRpcInstance::LaunchProcess(const wxString &processcmd)
 {
-    std::cout<<"PyCC: LAUNCHING PROCESS"<<std::endl;
+//    std::cout<<"PyCC: LAUNCHING PROCESS"<<std::endl;
     if(!m_proc_dead)
         return -1;
     if(m_proc) //this should never happen
@@ -392,7 +392,7 @@ long XmlRpcInstance::LaunchProcess(const wxString &processcmd)
 #endif /*__WXMSW__*/
     if(m_proc_id>0)
     {
-        std::cout<<"PyCC: LAUNCHING PROCESS SUCCEEDED"<<std::endl;
+//        std::cout<<"PyCC: LAUNCHING PROCESS SUCCEEDED"<<std::endl;
         m_proc_dead=false;
         m_proc_killlevel=0;
     }
@@ -429,7 +429,7 @@ bool XmlRpcInstance::ExecAsync(const wxString &method, const XmlRpc::XmlRpcValue
 
 void XmlRpcInstance::OnEndProcess(wxProcessEvent &event)
 {
-    std::cout<<"PYCC: PROCESS DIED!!"<<std::endl;
+//    std::cout<<"PYCC: PROCESS DIED!!"<<std::endl;
     //TODO: m_exitcode=event.GetExitCode();
     m_proc_dead=true;
     delete m_proc;

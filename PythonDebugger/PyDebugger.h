@@ -158,46 +158,8 @@ class PyDebugger : public cbDebuggerPlugin
         virtual void OnAttachReal();
         virtual void OnReleaseReal(bool appShutDown);
 
-        virtual void ShowToolMenu() {}
-        virtual void SetupToolsMenu(wxMenu &);
-        virtual bool ToolMenuEnabled() {return true;}
-        virtual bool SupportsFeature(cbDebuggerFeature::Flags f) {return true;}
-
-//        /** @brief Start a new debugging process. */
-//        virtual bool Debug(bool breakOnEntry) = 0;
-//
-//        /** @brief Continue running the debugged program. */
-//        virtual void Continue() = 0;
-//
-//        /** @brief Run the debugged program until it reaches the cursor at the current editor */
-//        virtual bool RunToCursor(const wxString& filename, int line, const wxString& line_text) {return false;}
-//
-//        /** @brief Sets the position of the Program counter to the specified filename:line */
-//        virtual void SetNextStatement(const wxString& filename, int line) {}
-//
-//        /** @brief Execute the next instruction and return control to the debugger. */
-//        virtual void Next() = 0;
-//
-//        /** @brief Execute the next instruction and return control to the debugger. */
-//        virtual void NextInstruction() {}
-//
-//        /** @brief Execute the next instruction and return control to the debugger, if the instruction is a function call step into it. */
-//        virtual void StepIntoInstruction() {}
-//
-//        /** @brief Execute the next instruction, stepping into function calls if needed, and return control to the debugger. */
-//        virtual void Step() = 0;
-//
-//        /** @brief Execute the next instruction, stepping out of function calls if needed, and return control to the debugger. */
-//        virtual void StepOut() {}
-//
-//        /** @brief Break the debugging process (stop the debuggee for debugging). */
-//        virtual void Break() = 0;
-//
-//        /** @brief Stop the debugging process (exit debugging). */
-//        virtual void Stop() = 0;
-//
-        /** @brief Is the plugin currently debugging? */
-//        virtual bool IsRunning() const  {}
+        virtual void SetupToolsMenu(wxMenu &) {}
+        virtual bool SupportsFeature(cbDebuggerFeature::Flags f);
 
         /** @brief Is the plugin stopped on breakpoint? */
         virtual bool IsStopped() const  {return m_DebugCommandCount==0;}
@@ -247,7 +209,7 @@ class PyDebugger : public cbDebuggerPlugin
         virtual void UpdateWatch(cb::shared_ptr<cbWatch> watch);
         virtual void OnWatchesContextMenu(wxMenu &menu, const cbWatch &watch, wxObject *property);
 
-        virtual void SendCommand(const wxString& cmd, bool debugLog)  {}
+        virtual void SendCommand(const wxString& cmd, bool debugLog);
 
         virtual void AttachToProcess(const wxString& pid)  {}
         virtual void DetachFromProcess()  {}
@@ -286,9 +248,6 @@ class PyDebugger : public cbDebuggerPlugin
         virtual cbConfigurationPanel* GetConfigurationPanel(wxWindow* parent); /** Return plugin's configuration panel.*/
         virtual cbConfigurationPanel* GetProjectConfigurationPanel(wxWindow* parent, cbProject* project){ return 0; } /** Return plugin's configuration panel for projects.*/
         virtual void BuildMenu(wxMenuBar* menuBar) {} /** add plugin items to the main menu bar*/
-        virtual void BuildModuleMenu(const ModuleType type, wxMenu* menu, const FileTreeData* data = 0); /** add context menu items for the plugin*/
-
-
 
         void OnValueTooltip(CodeBlocksEvent& event);
         void SetWatchTooltip(const wxString &tip, int definition_length);
@@ -298,10 +257,6 @@ class PyDebugger : public cbDebuggerPlugin
             return static_cast<PyDebuggerConfiguration&>(GetActiveConfig());
         }
 
-    protected:
-//        virtual void OnAttach();
-//        virtual void OnRelease(bool appShutDown);
-
 /// Non-boiler plate methods
     public:
         void UpdateMenu();
@@ -309,22 +264,11 @@ class PyDebugger : public cbDebuggerPlugin
         void CreateMenu();
 
     private:
-        void OnSettings(wxCommandEvent& event);
-        void OnSubMenuSelect(wxUpdateUIEvent& event);
-        void OnSetTarget(wxCommandEvent& event);
-        void OnDebugTarget(wxCommandEvent& event);
-        void OnRunPiped(wxCommandEvent &event);
-        void OnStep(wxCommandEvent &event);
-        void OnStop(wxCommandEvent &event);
-        void OnNext(wxCommandEvent &event);
-        void OnContinue(wxCommandEvent &event);
-        void OnSendCommand(wxCommandEvent &event);
         void OnTerminatePipedProcess(wxProcessEvent &event);
         void OnTimer(wxTimerEvent& event);
         bool IsPythonFile(const wxString &file) const;
 
         void ClearActiveMarkFromAllEditors();
-        //void SyncEditor(const wxString& filename, int line, bool setMarker=true);
 
         bool DispatchCommands(const wxString& cmd, int cmdtype=DBGCMDTYPE_FLOWCONTROL, bool poll=true);
         wxString AssembleBreakpointCommands();
@@ -332,7 +276,6 @@ class PyDebugger : public cbDebuggerPlugin
         wxString AssembleAliasCommands();
 
         wxMenu *LangMenu;  // pointer to the interpreters menu
-//        int m_interpnum;
         wxString m_PythonFileExtensions;
 
         // Information about current debug location

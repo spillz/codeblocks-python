@@ -4,7 +4,7 @@
     <Plugin name="PyDebugger">
         <Value title="PyDebugger" />
         <Value version="0.1.0" />
-        <Value description="" />
+        <Value description="An interactive debugger for python scripts using pdb as a backend" />
         <Value author="Damien Moore" />
         <Value authorEmail="" />
         <Value authorWebsite="" />

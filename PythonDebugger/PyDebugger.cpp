@@ -33,7 +33,6 @@ bool WildCardListMatch(wxString list, wxString name)
 
 int ID_LangMenu_Settings=wxNewId();
 int ID_LangMenu_Run=wxNewId();
-int ID_LangMenu_DebugSendCommand=wxNewId();
 int ID_LangMenu_ShowWatch=wxNewId();
 int ID_LangMenu_UpdateWatch=wxNewId();
 
@@ -45,44 +44,32 @@ int ID_LangMenu_RunPiped = wxNewId();//XRCID("idPyDebuggerMenuDebug");
 
 // events handling
 BEGIN_EVENT_TABLE(PyDebugger, cbDebuggerPlugin)
-    EVT_MENU(ID_LangMenu_DebugSendCommand,PyDebugger::OnSendCommand)
     EVT_END_PROCESS(ID_PipedProcess, PyDebugger::OnTerminatePipedProcess)
     EVT_TIMER(ID_TimerPollDebugger, PyDebugger::OnTimer)
 END_EVENT_TABLE()
 
 
-void PyDebugger::OnStep(wxCommandEvent &event)
+void PyDebugger::SendCommand(const wxString& cmd, bool debugLog)
 {
-    Step();
-}
-
-void PyDebugger::OnStop(wxCommandEvent &event)
-{
-    Stop();
-}
-
-void PyDebugger::OnNext(wxCommandEvent &event)
-{
-    Next();
-}
-
-void PyDebugger::OnContinue(wxCommandEvent &event)
-{
-    Continue();
-}
-
-void PyDebugger::OnSendCommand(wxCommandEvent &event)
-{
-    if(!m_DebuggerActive /* || m_TimerPollDebugger.IsRunning() */) //could be unsafe, but allows user to provide program input
+    wxString scmd = cmd;
+    if(!m_DebuggerActive) //could be unsafe, but allows user to provide program input
         return;
-    wxString cmd;
-    SendCommandDlg dlg(NULL);
-    if(dlg.ShowModal()==wxID_OK)
+    if(!scmd.EndsWith(_T("\n")))
+        scmd+=_T("\n");
+    DispatchCommands(scmd,DBGCMDTYPE_USERCOMMAND,true);
+}
+
+bool PyDebugger::SupportsFeature(cbDebuggerFeature::Flags f)
+{
+    switch(f)
     {
-        wxString cmd=dlg.m_cmd->GetValue();
-        if(dlg.m_newline->IsChecked())
-            cmd+=_T("\n");
-        DispatchCommands(cmd,DBGCMDTYPE_USERCOMMAND,true);
+        case Disassembly:
+        case ExamineMemory:
+        case CPURegisters:
+        case Threads: //Will be true with rpdb
+            return false;
+        default:
+            return true;
     }
 }
 
@@ -166,14 +153,14 @@ wxString PyDebugger::AssembleAliasCommands()
     //NB: \001 is the separator character used when parsing in OnTimer
 
     //Print variables associated with a child
-    commands+=_T("alias pm for x in sorted(%1.__dict__): print '%s\\001%s\\001'%(x,type(%1.__dict__[x])),%1.__dict__[x],'\\001',\n");
+    commands+=_T("alias pm for x in sorted(%1.__dict__): print '%s\\001%s\\001'%(x,type(%1.__dict__[x])),str(%1.__dict__[x])[:800],'\\001',\n");
     //Print variable name, type and value
-    commands+=_T("alias ps print '%1\\001',;print str(type(%1))+'\\001',;print %1\n");
+    commands+=_T("alias ps print '%1\\001',;print str(type(%1))+'\\001',;print str(%1)[:800]\n");
     //Print comment
     commands+=_T("alias pc print '%1'\n");
 
     //Alias for creating tooltip watch output
-    commands+=_T("alias pw print '%1',type(%1);print %1\n");
+    commands+=_T("alias pw print '%1',type(%1);print str(%1)[:800]\n");
     return commands;
 }
 
@@ -442,31 +429,8 @@ bool PyDebugger::IsAttachedToProcess() const
 }
 
 
-void PyDebugger::OnDebugTarget(wxCommandEvent &event)
-{
-    if(m_DebuggerActive)
-        return;
-    if(m_RunTarget==_T("")||!m_RunTargetSelected)
-    {
-        OnSetTarget(event);
-        if(m_RunTarget==_T(""))
-            return;
-    }
-    m_RunTargetSelected=false;
-    if(m_RunTarget.Contains(_T(" ")))
-    {
-        wxFileName f(m_RunTarget);
-        m_RunTarget=f.GetShortPath();
-    }
-    Debug(false);
-}
-
 bool PyDebugger::Debug(bool breakOnEntry)
 {
-// TODO: need to setup path finding for a pdb runner that will be embedded in the plugins resources
-//    m_DefaultDebugCmdLine=_T(" -u c:\\codeblockssrc\\cbpythonplugin\\pdb2.py ");
-//
-
 // TODO: figure out why debug watch and breakpoints fail after the first debug session - not erasing the command list with clear()???
     if(m_DebuggerActive)
         return 0;
@@ -490,7 +454,6 @@ bool PyDebugger::Debug(bool breakOnEntry)
         m_RunTarget=s;
     }
 
-//    m_DebugLog->Clear();
     m_TimerPollDebugger.SetOwner(this, ID_TimerPollDebugger);
     m_pp=new wxProcess(this,ID_PipedProcess);
     m_pp->Redirect();
@@ -503,19 +466,6 @@ bool PyDebugger::Debug(bool breakOnEntry)
     wxString commandln = cfg.GetCommandLine(cfg.GetState());
     commandln.Replace(wxT("$target"),target);
 
-//    wxString f=wxFileName(m_DefaultInterpreter).GetShortPath();
-//    wxString commandln=f + m_DefaultDebugCmdLine+target;
-
-
-//    cbMessageBox(commandln);
-    #ifdef EXPERIMENTAL_PYTHON_DEBUG
-//    LogMessage(wxString::Format(_("Launching '%s': %s (in %s)"), consolename.c_str(), commandstr.c_str(), workingdir.c_str()));
-//    InterpretedLangs* plugin = Manager::Get()->GetPluginManager()->LoadPlugin(_T("InterpretedLangs"));
-//    m_ilplugin->m_shellmgr->LaunchProcess(commandln,_(T"PyDEBUG"),0);
-//    m_ilplugin->ShowConsole();
-//    ilShellTermEvent e;
-//    ProcessEvent(e);
-    #else
     m_pid=wxExecute(commandln,wxEXEC_ASYNC,m_pp);
     if(!m_pid)
     {
@@ -524,7 +474,6 @@ bool PyDebugger::Debug(bool breakOnEntry)
     }
     m_ostream=m_pp->GetOutputStream();
     m_istream=m_pp->GetInputStream();
-    #endif
 
     wxSetWorkingDirectory(olddir);
 
@@ -542,6 +491,10 @@ bool PyDebugger::Debug(bool breakOnEntry)
     DispatchCommands(wcommands,DBGCMDTYPE_WATCHEXPRESSION,false);
     DispatchCommands(_T("w\n"),DBGCMDTYPE_CALLSTACK,true); //where
     m_DebuggerActive=true;
+
+    CodeBlocksLogEvent evtlog(cbEVT_SWITCH_TO_LOG_WINDOW,m_DebugLog);
+    Manager::Get()->ProcessEvent(evtlog);
+
     return 0;
 }
 
@@ -887,11 +840,11 @@ int PyDebugger::GetActiveStackFrame() const
     return m_stackinfo.activeframe;
 }
 
-void PyDebugger::OnRunPiped(wxCommandEvent &event)
-{
-    m_RunTarget=_T("");
-    OnDebugTarget(event);
-}
+//void PyDebugger::OnRunPiped(wxCommandEvent &event)
+//{
+//    m_RunTarget=_T("");
+//    OnDebugTarget(event);
+//}
 
 void PyDebugger::OnTerminatePipedProcess(wxProcessEvent &event)
 {
@@ -903,27 +856,6 @@ void PyDebugger::OnTerminatePipedProcess(wxProcessEvent &event)
     delete m_pp;
     m_DebugLog->Append(_T("\n*** SESSION TERMINATED ***"));
     MarkAsStopped();
-}
-
-void PyDebugger::OnSettings(wxCommandEvent& event)
-{
-    wxMessageBox(_T("Settings..."));
-}
-
-void PyDebugger::OnSubMenuSelect(wxUpdateUIEvent& event)
-{
-}
-
-void PyDebugger::OnSetTarget(wxCommandEvent& event)
-{
-    //TODO: use default file extensions
-    wxFileDialog *fd=new wxFileDialog(NULL,_T("Choose the interpreter Target"),_T(""),_T(""),m_PythonFileExtensions,wxOPEN|wxFILE_MUST_EXIST);
-    if(fd->ShowModal()==wxID_OK)
-    {
-        m_RunTarget=fd->GetPath();
-    } else
-        m_RunTarget=_T("");
-    delete fd;
 }
 
 // constructor
@@ -1058,112 +990,5 @@ void PyDebugger::OnValueTooltip(CodeBlocksEvent& event)
     cmd+=_T("pw ")+token+_T("\n");
     DispatchCommands(cmd,DBGCMDTYPE_WATCHTOOLTIP,true);
     m_watch_tooltip_pos=pos;
-}
-
-
-void PyDebugger::CreateMenu()
-{
-    //TODO: This should all disappear and use native SDK implementations
-//    LangMenu->Append(ID_LangMenu_Run,_T("Python &Run..."),_T(""));
-//    LangMenu->AppendSeparator();
-//    LangMenu->Append(ID_LangMenu_RunPiped,_T("Start &Debug..."),_T(""));
-//    LangMenu->Append(XRCID("idPyDebuggerMenuDebug"),_T("&Continue"),_T(""));
-//    LangMenu->Append(XRCID("idPyDebuggerMenuNext"),_T("&Next"),_T(""));
-//    LangMenu->Append(XRCID("idPyDebuggerMenuStep"),_T("Step &Into"),_T(""));
-//    LangMenu->Append(XRCID("idPyDebuggerMenuStop"),_T("&Stop"),_T(""));
-    LangMenu->Append(ID_LangMenu_DebugSendCommand,_T("&Send Debugger Command"),_T(""));
-//    LangMenu->Append(ID_LangMenu_ShowWatch,_T("Toggle &Watch"),_T(""),wxITEM_CHECK);
-//    LangMenu->Append(ID_LangMenu_UpdateWatch,_T("&Update Watch"),_T(""));
-}
-
-
-void PyDebugger::UpdateMenu()
-{
-}
-
-
-void PyDebugger::SetupToolsMenu(wxMenu& menuBar)
-{
-    //TODO: This should all be deleted once native implementations are in place
-	//The application is offering its menubar for your plugin,
-	//to add any menu items you want...
-	//Append any items you need in the menu...
-	//NOTE: Be careful in here... The application's menubar is at your disposal.
-	LangMenu=new wxMenu;
-	CreateMenu();
-	//int pos = menuBar.FindMenu(_("P&lugins"));
-	int pos=-1;
-	if(pos!=wxNOT_FOUND)
-        menuBar.AppendSubMenu(LangMenu, _("P&ython Debugger"));
-    else
-    {
-        delete LangMenu;
-        LangMenu=0;
-    }
-}
-
-void PyDebugger::BuildModuleMenu(const ModuleType type, wxMenu* menu, const FileTreeData* data)
-{
-	//Some library module is ready to display a pop-up menu.
-	//Check the parameter \"type\" and see which module it is
-	//and append any items you need in the menu...
-	//TIP: for consistency, add a separator as the first item...
-	if(type==mtProjectManager)
-	{
-	    if(data)
-	    {
-            if(data->GetKind()==FileTreeData::ftdkFile)
-            {
-                ProjectFile *f=data->GetProjectFile();
-                if(f)
-                {
-                    wxString name=f->file.GetFullPath();
-                    wxString ext=f->file.GetExt();
-                    if(IsPythonFile(name))
-                    {
-                        m_RunTarget=name;
-                        m_RunTargetSelected=true;
-                        menu->AppendSeparator();
-//                        menu->Append(ID_LangMenu_Run,_T("Python Run"),_T(""));
-                        menu->Append(ID_LangMenu_RunPiped,_T("Python Debug"),_T(""));
-                    }
-                }
-            }
-	    }
-	}
-	if(type==mtEditorManager) // also type==mtOpenFilesList - not sure how to find out which file has been right clicked.
-	{
-        EditorManager* edMan = Manager::Get()->GetEditorManager();
-        wxFileName activefile(edMan->GetActiveEditor()->GetFilename());
-        wxString name=activefile.GetFullPath();
-        if(IsPythonFile(name))
-        {
-            m_RunTarget=name;
-            m_RunTargetSelected=true;
-            menu->AppendSeparator();
-//            menu->Append(ID_LangMenu_Run,_T("Python Run"),_T(""));
-            menu->Append(ID_LangMenu_RunPiped,_T("Python Debug"),_T(""));
-
-        }
-	}
-	if(type==mtUnknown) // also type==mtOpenFilesList - not sure how to find out which file has been right clicked.
-	{
-        if(data->GetKind()==FileTreeData::ftdkFile)  //right clicked on folder in file explorer
-        {
-            wxFileName f(data->GetFolder());
-            wxString filename=f.GetFullPath();
-            wxString name=f.GetFullName();
-//            cbMessageBox(filename+_T("  ")+name);
-            if(IsPythonFile(name))
-            {
-                m_RunTarget=filename;
-                m_RunTargetSelected=true;
-                menu->AppendSeparator();
-//            menu->Append(ID_LangMenu_Run,_T("Python Run"),_T(""));
-                menu->Append(ID_LangMenu_RunPiped,_T("Python Debug"),_T(""));
-
-            }
-        }
-	}
 }
 

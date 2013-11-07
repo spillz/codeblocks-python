@@ -7,7 +7,6 @@
 #include <cbeditor.h>
 #include <cbstyledtextctrl.h>
 #include <editor_hooks.h>
-#include <editorcolourset.h>
 #include <configmanager.h>
 #include <logmanager.h>
 //
@@ -399,13 +398,8 @@ void PythonCodeCompletion::BuildModuleMenu(const ModuleType type, wxMenu* menu, 
 
 PythonCodeCompletion::CCProviderStatus PythonCodeCompletion::GetProviderStatusFor(cbEditor* ed)
 {
-    return ccpsActive; // WORKAROUND UNTIL ALPHA FIXES THIS
-    Manager::Get()->GetLogManager()->Log(_("PYCC: Provider status check"));
-    if (ed->GetLanguage() == ed->GetColourSet()->GetHighlightLanguage(wxSCI_LEX_PYTHON))
-        return ccpsActive;
     if (ed->GetControl()->GetLexer()==wxSCI_LEX_PYTHON)
         return ccpsActive;
-    Manager::Get()->GetLogManager()->Log(_("PYCC: Provider status check INACTIVE"));
     return ccpsInactive;
 }
 
@@ -529,18 +523,6 @@ wxString PythonCodeCompletion::OnDocumentationLink(wxHtmlLinkEvent& event, bool&
     return doc;
 }
 
-/// callbacks for actually autocompleting/writing the token to the editor
-void PythonCodeCompletion::DoAutocomplete(const CCToken& token, cbEditor* ed)
-{
-    return;
-}
-
-void PythonCodeCompletion::DoAutocomplete(const wxString& token, cbEditor* ed)
-{
-    DoAutocomplete(CCToken(-1, token), ed);
-}
-
-
 void PythonCodeCompletion::RequestCompletion(cbStyledTextCtrl *control, int pos, const wxString &filename)
 {
     int line = control->LineFromPosition(pos);
@@ -641,7 +623,7 @@ void PythonCodeCompletion::GetCalltipPositions(cbEditor* editor, int &argsStartP
     cbStyledTextCtrl* control = editor->GetControl();
 
     //FROM CURRENT SCOPE REVERSE FIND FROM CURRENT POS FOR '(', IGNORING COMMENTS, STRINGS, CHAR STYLE
-    //LOOK FOR MATCHING BRACE, IF FOUND IS THE POSITION AHEAD OF THE CURRENT BRACE? NO, SKIP.
+    //LOOK FOR MATCHING BRACE, IF FOUND, IS THE POSITION AHEAD OF THE CURRENT BRACE? NO, SKIP.
     //RETRIEVE THE SYMBOL TO THE LEFT OF THE '(' E.G. 'os.path.exists' <- ACTIVE SYMBOL
     //COUNT THE NUMBER OF COMMAS BETWEEN CURRENT POS AND '('    <- ACTIVE ARG
     //RETRIEVE THE CALLTIP AND DOC STRING FROM THE PYTHON SERVER

@@ -121,9 +121,6 @@ class PythonCodeCompletion : public cbCodeCompletionPlugin
         virtual std::vector<CCToken> GetTokenAt(int pos, cbEditor* ed);
         /// dismissPopup is false by default
         virtual wxString OnDocumentationLink(wxHtmlLinkEvent& event, bool& dismissPopup);
-        /// callbacks for actually autocompleting/writing the token to the editor
-        virtual void DoAutocomplete(const CCToken& token, cbEditor* ed);
-        virtual void DoAutocomplete(const wxString& token, cbEditor* ed);
 
     protected:
         /** Any descendent plugin should override this virtual method and

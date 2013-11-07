@@ -110,11 +110,14 @@ class PythonCompletionServer:
         gets the documentation for the `index`th item of the last completion result in self.completions
         '''
         comp = self.completions[index]
-        doclines = comp.doc.splitlines()
-        if len(doclines) == 0:
-            doclines = comp.raw_doc.splitlines()
+        if comp.type in ['class','import']:
+            doclines = comp.follow_definition()[0].raw_doc.splitlines()
         else:
+            doclines = comp.doc.splitlines()
+        if len(doclines)>0:
             doclines[0] = '<b>'+doclines[0]+'</b>'
+        else:
+            doclines =['<b>'+comp.type+' '+comp.name+'</b>']
         doc = '<br>'.join(doclines)
         return doc
 

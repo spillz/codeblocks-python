@@ -496,7 +496,7 @@ wxStringVec PythonCodeCompletion::GetCallTips(int pos, int style, cbEditor* ed, 
         //TODO: Probably don't need to hit the python server every time if we can figure out we are still in the scope of the same function as the last call
         int argNumber;
         int argsStartPos;
-        GetCalltipPositions(ed, argsStartPos, argNumber);
+        GetCalltipPositions(ed, pos, argsStartPos, argNumber);
         if (argsStartPos<0)
             return sv;
         m_argsPos = argsStartPos;
@@ -618,7 +618,7 @@ This function computes
 argsStartPos: is the stc position of the brace
 argNumber: the number of the argument that the cursor is currently position at (0 for the first, 1 for the second etc.)
 */
-void PythonCodeCompletion::GetCalltipPositions(cbEditor* editor, int &argsStartPos, int &argNumber)
+void PythonCodeCompletion::GetCalltipPositions(cbEditor* editor, int pos, int &argsStartPos, int &argNumber)
 {
     cbStyledTextCtrl* control = editor->GetControl();
 
@@ -629,28 +629,28 @@ void PythonCodeCompletion::GetCalltipPositions(cbEditor* editor, int &argsStartP
     //RETRIEVE THE CALLTIP AND DOC STRING FROM THE PYTHON SERVER
     Manager::Get()->GetLogManager()->Log(_T("PYCC: Checking for calltip"));
     wxChar ch;
-    int pos=control->GetCurrentPos()-1;
+    int cpos=pos-1;
     int startpos=pos;
     int cursorpos = pos+1;
-    int minpos=control->GetCurrentPos()-1000;
+    int minpos=pos-1000;
     if (minpos<0)
         minpos=0;
-    while(pos>=minpos)
+    while(cpos>=minpos)
     {
-        ch = control->GetCharAt(pos);
-        int style = control->GetStyleAt(pos);
+        ch = control->GetCharAt(cpos);
+        int style = control->GetStyleAt(cpos);
         if (control->IsString(style) || control->IsCharacter(style) || control->IsComment(style))
         {
-            pos--;
+            cpos--;
             continue;
         }
         if(ch==_T(')'))
-            pos=control->BraceMatch(pos);
+            cpos=control->BraceMatch(cpos);
         else if(ch==_T('('))
             break;
-        pos--;
+        cpos--;
     }
-    if(pos<minpos || control->BraceMatch(pos)<control->GetCurrentPos() && control->BraceMatch(pos)!=-1)
+    if(cpos<minpos || control->BraceMatch(cpos)<pos && control->BraceMatch(cpos)!=-1)
     {
         Manager::Get()->GetLogManager()->Log(_T("PYCC: Not in function scope"));
         argsStartPos = -1;
@@ -658,32 +658,32 @@ void PythonCodeCompletion::GetCalltipPositions(cbEditor* editor, int &argsStartP
         return;
     }
 
-    argsStartPos = pos + 1;
+    argsStartPos = cpos + 1;
 
     Manager::Get()->GetLogManager()->Log(_T("PYCC: Finding the calltip symbol"));
     //now find the symbol, if any, associated with the parens
-    int end_pos=pos;
-    pos--;
-    ch = control->GetCharAt(pos);
-    while(pos>=0)
+    int end_pos=cpos;
+    cpos--;
+    ch = control->GetCharAt(cpos);
+    while(cpos>=0)
     {
         while (ch == _T(' ') || ch == _T('\t'))
         {
-            pos--;
-            ch = control->GetCharAt(pos);
-            wxString s=control->GetTextRange(pos,end_pos);
+            cpos--;
+            ch = control->GetCharAt(cpos);
+            wxString s=control->GetTextRange(cpos,end_pos);
             Manager::Get()->GetLogManager()->Log(_T("#")+s);
         }
-        int npos=control->WordStartPosition(pos+1,true);
-        if(npos==pos+1)
+        int npos=control->WordStartPosition(cpos+1,true);
+        if(npos==cpos+1)
         {
             argsStartPos = -1;
             argNumber = 0;
             return;
         }
-        pos=npos;
+        cpos=npos;
         npos--;
-        wxString s1=control->GetTextRange(pos,end_pos);
+        wxString s1=control->GetTextRange(cpos,end_pos);
         Manager::Get()->GetLogManager()->Log(_T("#")+s1);
         ch = control->GetCharAt(npos);
         while (ch == _T(' ') || ch == _T('\t'))
@@ -695,15 +695,15 @@ void PythonCodeCompletion::GetCalltipPositions(cbEditor* editor, int &argsStartP
         }
         if (ch!=_T('.'))
             break;
-        pos=npos-1;
-        if(pos<0)
+        cpos=npos-1;
+        if(cpos<0)
         {
             argsStartPos = -1;
             argNumber = 0;
             return;
         }
     }
-    int token_pos=pos;
+    int token_pos=cpos;
     wxString symbol=control->GetTextRange(token_pos,end_pos);
     symbol.Replace(_T(" "),wxEmptyString);
     symbol.Replace(_T("\t"),wxEmptyString);
@@ -716,20 +716,20 @@ void PythonCodeCompletion::GetCalltipPositions(cbEditor* editor, int &argsStartP
 
     //Now figure out which argument the cursor is at by counting "," characters
     argNumber = 0;
-    pos = argsStartPos;
-    while(pos<=startpos)
+    cpos = argsStartPos;
+    while(cpos<=startpos)
     {
-        ch = control->GetCharAt(pos);
-        int style = control->GetStyleAt(pos);
+        ch = control->GetCharAt(cpos);
+        int style = control->GetStyleAt(cpos);
         if ((ch=='(' || ch =='[' || ch =='{') && (style == wxSCI_P_DEFAULT || style==wxSCI_P_OPERATOR))
         {
-            pos = control->BraceMatch(pos);
-            if (pos == wxSCI_INVALID_POSITION)
+            cpos = control->BraceMatch(cpos);
+            if (cpos == wxSCI_INVALID_POSITION)
                 break;
         }
         if (ch==',' && (style==wxSCI_P_DEFAULT || style==wxSCI_P_OPERATOR))
             argNumber++;
-        pos++;
+        cpos++;
     }
     Manager::Get()->GetLogManager()->Log(_T("PYCC: Found calltip symbol ")+symbol);
 }

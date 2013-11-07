@@ -43,8 +43,6 @@ class PythonCodeCompletion : public cbCodeCompletionPlugin
         /** Destructor. */
         virtual ~PythonCodeCompletion();
 
-        void GetCalltipPositions(cbEditor* editor, int &argsStartPos, int &argNumber);
-
         /** Invoke configuration dialog. */
         virtual int Configure();
 
@@ -146,12 +144,16 @@ class PythonCodeCompletion : public cbCodeCompletionPlugin
           */
         virtual void OnRelease(bool appShutDown);
 
+        //Handler for the responses to asynchronous XMLRPC requests
         void OnStdLibLoaded(XmlRpcResponseEvent &event);
         void OnCalltip(XmlRpcResponseEvent &event);
         void OnCompletePhrase(XmlRpcResponseEvent &event);
         void OnClickedGotoDefinition(wxCommandEvent& event);
         void OnGotoDefinition(XmlRpcResponseEvent &event);
 
+        // Additional implementation details
+        // Helper for figuring out the position of calltips
+        void GetCalltipPositions(cbEditor* editor, int pos, int &argsStartPos, int &argNumber);
         void RequestCompletion(cbStyledTextCtrl *control, int pos, const wxString &filename);
         void RequestCallTip(cbStyledTextCtrl *control, int pos, const wxString &filename);
         wxString RequestDocString(int id);

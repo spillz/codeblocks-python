@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="Python-Plugin" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="default">
+				<Option output="$(#cb)\devel\share\codeblocks\plugins\PyPlugin" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="$(#cb)\devel" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Option parameters="--personality=debug" />
+				<Option host_application="$(#cb)\devel\codeblocks.exe" />
+				<Compiler>
+					<Add option="-Wall" />
+					<Add option="-g" />
+					<Add option="-pipe" />
+					<Add option="-mthreads" />
+					<Add option="-fmessage-length=0" />
+					<Add option="-fexceptions" />
+					<Add option="-Winvalid-pch" />
+					<Add option="-DBUILDING_PLUGIN" />
+					<Add option="-DHAVE_W32API_H" />
+					<Add option="-D__WXMSW__" />
+					<Add option="-DWXUSINGDLL" />
+					<Add option="-DcbDEBUG" />
+					<Add option="-DCB_PRECOMP" />
+					<Add option="-DWX_PRECOMP" />
+					<Add option="-DwxUSE_UNICODE" />
+					<Add directory="$(#cb.include)" />
+					<Add directory="$(#cb.include)\wxscintilla\include" />
+					<Add directory="$(#wx.include)" />
+					<Add directory="$(#wx.lib)\gcc_dll\mswu" />
+				</Compiler>
+				<Linker>
+					<Add library="codeblocks" />
+					<Add library="wxmsw28u" />
+					<Add directory="$(#cb)\devel" />
+					<Add directory="$(#wx.lib)\gcc_dll" />
+				</Linker>
+				<ExtraCommands>
+					<Add after="zip -j9 $(#cb)\devel\share\codeblocks\PyPlugin.zip manifest.xml resources\*.xrc resources\images\*.png resources\images\16x16\*.png" />
+				</ExtraCommands>
+			</Target>
+			<Target title="experimental">
+				<Option output="$(#cb)\devel\share\codeblocks\plugins\PyPlugin" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="$(#cb)\devel" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Option parameters="--personality=debug" />
+				<Option host_application="$(#cb)\devel\codeblocks.exe" />
+				<Compiler>
+					<Add option="-Wall" />
+					<Add option="-g" />
+					<Add option="-pipe" />
+					<Add option="-mthreads" />
+					<Add option="-fmessage-length=0" />
+					<Add option="-fexceptions" />
+					<Add option="-Winvalid-pch" />
+					<Add option="-DBUILDING_PLUGIN" />
+					<Add option="-DHAVE_W32API_H" />
+					<Add option="-D__WXMSW__" />
+					<Add option="-DWXUSINGDLL" />
+					<Add option="-DcbDEBUG" />
+					<Add option="-DCB_PRECOMP" />
+					<Add option="-DWX_PRECOMP" />
+					<Add option="-DwxUSE_UNICODE" />
+					<Add directory="$(#cb.include)" />
+					<Add directory="$(#cb.include)\wxFlatNotebook\include" />
+					<Add directory="$(#cb.include)\wxscintilla\include" />
+					<Add directory="$(#wx.include)" />
+					<Add directory="$(#wx.lib)\gcc_dll\mswu" />
+					<Add directory="$(#xmlrpc.include)" />
+				</Compiler>
+				<Linker>
+					<Add library="$(#cb)\devel\ShellCtrlBase.dll" />
+					<Add library="codeblocks" />
+					<Add library="wxmsw28u" />
+					<Add library="libxmlrpc" />
+					<Add library="xmlrpc" />
+					<Add library="kernel32" />
+					<Add library="user32" />
+					<Add library="gdi32" />
+					<Add library="winspool" />
+					<Add library="comdlg32" />
+					<Add library="advapi32" />
+					<Add library="shell32" />
+					<Add library="ole32" />
+					<Add library="oleaut32" />
+					<Add library="uuid" />
+					<Add library="odbc32" />
+					<Add library="odbccp32" />
+					<Add library="ws2_32" />
+					<Add directory="$(#cb)\devel" />
+					<Add directory="$(#wx.lib)\gcc_dll" />
+					<Add directory="$(#xmlrpc.lib)" />
+				</Linker>
+				<ExtraCommands>
+					<Add after="zip -j9 $(#cb)\devel\share\codeblocks\PyPlugin.zip manifest.xml resources\*.xrc resources\images\*.png resources\images\16x16\*.png" />
+					<Add after="xcopy /y python\interp.py $(#cb)\devel\share\codeblocks\python\" />
+				</ExtraCommands>
+			</Target>
+			<Target title="experimental-binary">
+				<Option output="$(#cb_bin)\share\codeblocks\plugins\PyPlugin" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="$(#cb_bin)" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Option parameters="--personality=debug" />
+				<Option host_application="$(#cb)\devel\codeblocks.exe" />
+				<Compiler>
+					<Add option="-Wall" />
+					<Add option="-pipe" />
+					<Add option="-mthreads" />
+					<Add option="-fmessage-length=0" />
+					<Add option="-fexceptions" />
+					<Add option="-Winvalid-pch" />
+					<Add option="-DBUILDING_PLUGIN" />
+					<Add option="-DHAVE_W32API_H" />
+					<Add option="-D__WXMSW__" />
+					<Add option="-DWXUSINGDLL" />
+					<Add option="-DcbDEBUG" />
+					<Add option="-DCB_PRECOMP" />
+					<Add option="-DWX_PRECOMP" />
+					<Add option="-DwxUSE_UNICODE" />
+					<Add directory="$(#cb.include)" />
+					<Add directory="$(#cb.include)\wxFlatNotebook\include" />
+					<Add directory="$(#cb.include)\wxscintilla\include" />
+					<Add directory="$(#wx.include)" />
+					<Add directory="$(#wx.lib)\gcc_dll\mswu" />
+					<Add directory="$(#xmlrpc.include)" />
+				</Compiler>
+				<Linker>
+					<Add library="$(#cb_bin)\wxmsw28u_gcc_cb.dll" />
+					<Add library="$(#cb_bin)\ShellCtrlBase.dll" />
+					<Add library="codeblocks" />
+					<Add library="libxmlrpc" />
+					<Add library="xmlrpc" />
+					<Add library="kernel32" />
+					<Add library="user32" />
+					<Add library="gdi32" />
+					<Add library="winspool" />
+					<Add library="comdlg32" />
+					<Add library="advapi32" />
+					<Add library="shell32" />
+					<Add library="ole32" />
+					<Add library="oleaut32" />
+					<Add library="uuid" />
+					<Add library="odbc32" />
+					<Add library="odbccp32" />
+					<Add library="ws2_32" />
+					<Add directory="$(#cb_bin)" />
+					<Add directory="$(#xmlrpc.lib)" />
+				</Linker>
+				<ExtraCommands>
+					<Add after="zip -j9 $(#cb_bin)\share\codeblocks\PyPlugin.zip manifest.xml resources\*.xrc resources\images\*.png resources\images\16x16\*.png" />
+					<Add after="xcopy /y python\interp.py $(#cb_bin)\share\codeblocks\python\" />
+				</ExtraCommands>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-DCB_PRECOMP" />
+			<Add option="-DWX_PRECOMP" />
+		</Compiler>
+		<Unit filename="ConfigDialog.cpp" />
+		<Unit filename="ConfigDialog.h" />
+		<Unit filename="ExecHiddenMSW.cpp">
+			<Option target="experimental" />
+			<Option target="experimental-binary" />
+		</Unit>
+		<Unit filename="ExecHiddenMSW.h">
+			<Option target="experimental" />
+			<Option target="experimental-binary" />
+		</Unit>
+		<Unit filename="PyEvents.cpp">
+			<Option target="experimental" />
+			<Option target="experimental-binary" />
+		</Unit>
+		<Unit filename="PyEvents.h">
+			<Option target="experimental" />
+			<Option target="experimental-binary" />
+		</Unit>
+		<Unit filename="PyPlugin.cpp" />
+		<Unit filename="PyPlugin.h" />
+		<Unit filename="PythonInterpCtrl.cpp">
+			<Option target="experimental" />
+			<Option target="experimental-binary" />
+		</Unit>
+		<Unit filename="PythonInterpCtrl.h">
+			<Option target="experimental" />
+			<Option target="experimental-binary" />
+		</Unit>
+		<Unit filename="Resources\dialogs.fbp">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="dialogs.cpp" />
+		<Unit filename="dialogs.h" />
+		<Unit filename="manifest.xml">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="pdb2.py">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="py_embedder.cpp">
+			<Option target="experimental" />
+			<Option target="experimental-binary" />
+		</Unit>
+		<Unit filename="py_embedder.h">
+			<Option target="experimental" />
+			<Option target="experimental-binary" />
+		</Unit>
+		<Unit filename="python\interp.py">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="python\interp_client.py">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

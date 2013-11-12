@@ -2,17 +2,17 @@
 <CodeBlocks_project_file>
 	<FileVersion major="1" minor="6" />
 	<Project>
-		<Option title="Python-Plugin" />
+		<Option title="PythonInterpreter" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="default">
-				<Option output="$(#cb)\devel\share\codeblocks\plugins\PyPlugin" prefix_auto="1" extension_auto="1" />
-				<Option working_dir="$(#cb)\devel" />
+				<Option output="PythonInterpreter" prefix_auto="1" extension_auto="1" />
 				<Option type="3" />
 				<Option compiler="gcc" />
 				<Option parameters="--personality=debug" />
-				<Option host_application="$(#cb)\devel\codeblocks.exe" />
+				<Option host_application="$(#cb)/devel/codeblocks.exe" />
+				<Option run_host_application_in_terminal="0" />
 				<Compiler>
 					<Add option="-Wall" />
 					<Add option="-g" />
@@ -29,28 +29,39 @@
 					<Add option="-DCB_PRECOMP" />
 					<Add option="-DWX_PRECOMP" />
 					<Add option="-DwxUSE_UNICODE" />
+					<Add option="-DTOOLSPLUSLINK" />
 					<Add directory="$(#cb.include)" />
-					<Add directory="$(#cb.include)\wxscintilla\include" />
+					<Add directory="$(#cb)/sdk/wxscintilla/include" />
 					<Add directory="$(#wx.include)" />
-					<Add directory="$(#wx.lib)\gcc_dll\mswu" />
+					<Add directory="$(#wx.lib)/gcc_dll/mswu" />
+					<Add directory="$(#cb)/plugins/contrib/ToolsPlus" />
+					<Add directory="../PythonCodeCompletion/XMLRPC/include" />
 				</Compiler>
 				<Linker>
 					<Add library="codeblocks" />
 					<Add library="wxmsw28u" />
-					<Add directory="$(#cb)\devel" />
-					<Add directory="$(#wx.lib)\gcc_dll" />
+					<Add library="..\PythonCodeCompletion\XMLRPC\libXmlRpc.a" />
+					<Add library="Ws2_32" />
+					<Add library="C:\Users\damienm\Documents\damien\Source\codeblocks-code\src\devel\share\CodeBlocks\plugins\ToolsPlus.dll" />
+					<Add directory="$(#cb)/devel" />
+					<Add directory="$(#wx.lib)/gcc_dll" />
+					<Add directory="../PythonCodeCompletion-cc/XMLRPC" />
+					<Add directory="$(#cb)/devel/share/CodeBlocks/plugins" />
 				</Linker>
 				<ExtraCommands>
-					<Add after="zip -j9 $(#cb)\devel\share\codeblocks\PyPlugin.zip manifest.xml resources\*.xrc resources\images\*.png resources\images\16x16\*.png" />
+					<Add after="zip -j9 PythonInterpreter.zip manifest.xml" />
+					<Add after="zip -r9 PythonInterpreter.cbplugin PythonInterpreter.zip PythonInterpreter.dll python/interp.py" />
+					<Mode after="always" />
 				</ExtraCommands>
 			</Target>
 			<Target title="experimental">
-				<Option output="$(#cb)\devel\share\codeblocks\plugins\PyPlugin" prefix_auto="1" extension_auto="1" />
-				<Option working_dir="$(#cb)\devel" />
+				<Option output="$(#cb)/devel/share/codeblocks/plugins/PyPlugin" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="$(#cb)/devel" />
 				<Option type="3" />
 				<Option compiler="gcc" />
 				<Option parameters="--personality=debug" />
-				<Option host_application="$(#cb)\devel\codeblocks.exe" />
+				<Option host_application="$(#cb)/devel/codeblocks.exe" />
+				<Option run_host_application_in_terminal="0" />
 				<Compiler>
 					<Add option="-Wall" />
 					<Add option="-g" />
@@ -68,10 +79,10 @@
 					<Add option="-DWX_PRECOMP" />
 					<Add option="-DwxUSE_UNICODE" />
 					<Add directory="$(#cb.include)" />
-					<Add directory="$(#cb.include)\wxFlatNotebook\include" />
-					<Add directory="$(#cb.include)\wxscintilla\include" />
+					<Add directory="$(#cb.include)/wxFlatNotebook/include" />
+					<Add directory="$(#cb.include)/wxscintilla/include" />
 					<Add directory="$(#wx.include)" />
-					<Add directory="$(#wx.lib)\gcc_dll\mswu" />
+					<Add directory="$(#wx.lib)/gcc_dll/mswu" />
 					<Add directory="$(#xmlrpc.include)" />
 				</Compiler>
 				<Linker>
@@ -93,8 +104,8 @@
 					<Add library="odbc32" />
 					<Add library="odbccp32" />
 					<Add library="ws2_32" />
-					<Add directory="$(#cb)\devel" />
-					<Add directory="$(#wx.lib)\gcc_dll" />
+					<Add directory="$(#cb)/devel" />
+					<Add directory="$(#wx.lib)/gcc_dll" />
 					<Add directory="$(#xmlrpc.lib)" />
 				</Linker>
 				<ExtraCommands>
@@ -103,12 +114,13 @@
 				</ExtraCommands>
 			</Target>
 			<Target title="experimental-binary">
-				<Option output="$(#cb_bin)\share\codeblocks\plugins\PyPlugin" prefix_auto="1" extension_auto="1" />
+				<Option output="$(#cb_bin)/share/codeblocks/plugins/PyPlugin" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="$(#cb_bin)" />
 				<Option type="3" />
 				<Option compiler="gcc" />
 				<Option parameters="--personality=debug" />
-				<Option host_application="$(#cb)\devel\codeblocks.exe" />
+				<Option host_application="$(#cb)/devel/codeblocks.exe" />
+				<Option run_host_application_in_terminal="0" />
 				<Compiler>
 					<Add option="-Wall" />
 					<Add option="-pipe" />
@@ -125,10 +137,10 @@
 					<Add option="-DWX_PRECOMP" />
 					<Add option="-DwxUSE_UNICODE" />
 					<Add directory="$(#cb.include)" />
-					<Add directory="$(#cb.include)\wxFlatNotebook\include" />
-					<Add directory="$(#cb.include)\wxscintilla\include" />
+					<Add directory="$(#cb.include)/wxFlatNotebook/include" />
+					<Add directory="$(#cb.include)/wxscintilla/include" />
 					<Add directory="$(#wx.include)" />
-					<Add directory="$(#wx.lib)\gcc_dll\mswu" />
+					<Add directory="$(#wx.lib)/gcc_dll/mswu" />
 					<Add directory="$(#xmlrpc.include)" />
 				</Compiler>
 				<Linker>
@@ -158,63 +170,106 @@
 					<Add after="xcopy /y python\interp.py $(#cb_bin)\share\codeblocks\python\" />
 				</ExtraCommands>
 			</Target>
+			<Target title="simplified">
+				<Option output="$(#cb)/devel/share/codeblocks/plugins/PythonInterpreter" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="$(#cb)/devel" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Option parameters="--personality=debug" />
+				<Option host_application="$(#cb)/devel/codeblocks.exe" />
+				<Option run_host_application_in_terminal="0" />
+				<Compiler>
+					<Add option="-Wall" />
+					<Add option="-g" />
+					<Add option="-pipe" />
+					<Add option="-mthreads" />
+					<Add option="-fmessage-length=0" />
+					<Add option="-fexceptions" />
+					<Add option="-Winvalid-pch" />
+					<Add option="-DBUILDING_PLUGIN" />
+					<Add option="-DHAVE_W32API_H" />
+					<Add option="-D__WXMSW__" />
+					<Add option="-DWXUSINGDLL" />
+					<Add option="-DcbDEBUG" />
+					<Add option="-DCB_PRECOMP" />
+					<Add option="-DWX_PRECOMP" />
+					<Add option="-DwxUSE_UNICODE" />
+					<Add directory="$(#cb.include)" />
+					<Add directory="$(#cb)/sdk/wxscintilla/include" />
+					<Add directory="$(#wx.include)" />
+					<Add directory="$(#wx.lib)/gcc_dll/mswu" />
+					<Add directory="$(#cb)/plugins/contrib/ToolsPlus" />
+					<Add directory="../PythonCodeCompletion/XMLRPC/include" />
+				</Compiler>
+				<Linker>
+					<Add library="codeblocks" />
+					<Add library="wxmsw28u" />
+					<Add library="..\PythonCodeCompletion\XMLRPC\libXmlRpc.a" />
+					<Add library="Ws2_32" />
+					<Add library="C:\Users\damienm\Documents\damien\Source\codeblocks-code\src\devel\share\CodeBlocks\plugins\ToolsPlus.dll" />
+					<Add directory="$(#cb)/devel" />
+					<Add directory="$(#wx.lib)/gcc_dll" />
+					<Add directory="../PythonCodeCompletion-cc/XMLRPC" />
+					<Add directory="$(#cb)/devel/share/CodeBlocks/plugins" />
+				</Linker>
+				<ExtraCommands>
+					<Add after="zip -j9 $(#cb)\devel\share\codeblocks\PythonInterpreter.zip manifest.xml python\interp.py" />
+				</ExtraCommands>
+			</Target>
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-DCB_PRECOMP" />
 			<Add option="-DWX_PRECOMP" />
 		</Compiler>
-		<Unit filename="ConfigDialog.cpp" />
-		<Unit filename="ConfigDialog.h" />
-		<Unit filename="ExecHiddenMSW.cpp">
+		<Unit filename="ConfigDialog.cpp">
 			<Option target="experimental" />
 			<Option target="experimental-binary" />
 		</Unit>
-		<Unit filename="ExecHiddenMSW.h">
+		<Unit filename="ConfigDialog.h">
 			<Option target="experimental" />
 			<Option target="experimental-binary" />
 		</Unit>
-		<Unit filename="PyEvents.cpp">
-			<Option target="experimental" />
-			<Option target="experimental-binary" />
-		</Unit>
-		<Unit filename="PyEvents.h">
-			<Option target="experimental" />
-			<Option target="experimental-binary" />
-		</Unit>
+		<Unit filename="ExecHiddenMSW.cpp" />
+		<Unit filename="ExecHiddenMSW.h" />
+		<Unit filename="PyEvents.cpp" />
+		<Unit filename="PyEvents.h" />
 		<Unit filename="PyPlugin.cpp" />
 		<Unit filename="PyPlugin.h" />
 		<Unit filename="PythonInterpCtrl.cpp">
 			<Option target="experimental" />
 			<Option target="experimental-binary" />
+			<Option target="default" />
 		</Unit>
 		<Unit filename="PythonInterpCtrl.h">
 			<Option target="experimental" />
 			<Option target="experimental-binary" />
+			<Option target="default" />
 		</Unit>
-		<Unit filename="Resources\dialogs.fbp">
+		<Unit filename="Resources/dialogs.fbp">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="dialogs.cpp" />
-		<Unit filename="dialogs.h" />
+		<Unit filename="dialogs.cpp">
+			<Option target="experimental" />
+			<Option target="experimental-binary" />
+		</Unit>
+		<Unit filename="dialogs.h">
+			<Option target="experimental" />
+			<Option target="experimental-binary" />
+		</Unit>
 		<Unit filename="manifest.xml">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="pdb2.py">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="py_embedder.cpp">
-			<Option target="experimental" />
-			<Option target="experimental-binary" />
+		<Unit filename="py_embedder.cpp" />
+		<Unit filename="py_embedder.h" />
+		<Unit filename="python/interp.py">
+			<Option target="default" />
+			<Option target="simplified" />
 		</Unit>
-		<Unit filename="py_embedder.h">
-			<Option target="experimental" />
-			<Option target="experimental-binary" />
-		</Unit>
-		<Unit filename="python\interp.py">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="python\interp_client.py">
+		<Unit filename="python/interp_client.py">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Extensions>

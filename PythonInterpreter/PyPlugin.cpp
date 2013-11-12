@@ -3,8 +3,10 @@
 #include <configurationpanel.h>
 #include <wx/regex.h>
 
-#include "ConfigDialog.h"
+//#include "ConfigDialog.h"
+#ifdef TOOLSPLUSLINK
 #include "ToolsPlus.h"
+#endif
 
 // Register the plugin with Code::Blocks.
 // We are using an anonymous namespace so we don't litter the global one.
@@ -12,7 +14,6 @@ namespace
 {
     PluginRegistrant<PyPlugin> reg(_T("PythonInterpreter"));
 }
-
 
 
 bool WildCardListMatch(wxString list, wxString name)
@@ -45,7 +46,7 @@ int ID_TimerPollDebugger=wxNewId();
 int ID_LangMenu_RunPiped = wxNewId();//XRCID("idPyDebuggerMenuDebug");
 
 // events handling
-BEGIN_EVENT_TABLE(PyPlugin, cbPlugin)
+BEGIN_EVENT_TABLE(PyPlugin, cbToolPlugin)
 	// add any events you want to handle here
 //    EVT_MENU(ID_LangMenu_Run,PyPlugin::OnRun)
 //    EVT_MENU(ID_LangMenu_RunPiped,PyPlugin::OnDebugTarget)
@@ -68,18 +69,18 @@ PyPlugin::PyPlugin()
     // Make sure our resources are available.
     // In the generated boilerplate code we have no resources but when
     // we add some, it will be nice that this code is in place already ;)
-    if(!Manager::LoadResource(_T("PyPlugin.zip")))
-    {
-        NotifyMissingFile(_T("PyPlugin.zip"));
-    }
+//    if(!Manager::LoadResource(_T("PyPlugin.zip")))
+//    {
+//        NotifyMissingFile(_T("PyPlugin.zip"));
+//    }
 }
 
 cbConfigurationPanel* PyPlugin::GetConfigurationPanel(wxWindow* parent)
 {
 //    MyDialog* dlg = new MyDialog(this, *m_pKeyProfArr, parent,
 //        wxT("Keybindings"), mode);
-
-    return new ConfigDialog(parent, this);
+    return 0;
+//    return new ConfigDialog(parent, this);
 }
 
 // destructor
@@ -109,12 +110,16 @@ void PyPlugin::OnRelease(bool appShutDown)
 
 int PyPlugin::Execute()
 {
+#ifdef TOOLSPLUSLINK
     ToolsPlus *tp = dynamic_cast<ToolsPlus*>(Manager::Get()->GetPluginManager()->FindPluginByName(_T("ToolsPlus")));
     wxArrayString as;
     if (tp && tp->IsAttached())
         return tp->LaunchProcess(_T(""),_T("Python"),_T("Python Interpreter"),as);
     else
         return -1;
+#else
+    return 0;
+#endif
 }
 
 int PyPlugin::Configure()

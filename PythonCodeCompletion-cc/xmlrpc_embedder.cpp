@@ -126,37 +126,41 @@ public:
     XmlRpcPipeClient(wxProcess *proc)
     {
         m_proc=proc;
+        m_error_lock=false;
         m_istream=proc->GetInputStream();
         m_ostream=proc->GetOutputStream();
         m_estream=proc->GetErrorStream();
     }
-
+    bool set_error(const std::string &s,XmlRpc::XmlRpcValue& result)
+    {
+        result.setSize(1);
+        result[0] = s;
+        m_error_lock=true;
+        return false;
+    }
+    bool clear_error()
+    {
+        m_error_lock=false;
+    }
     bool execute(const char* method, XmlRpc::XmlRpcValue const& params, XmlRpc::XmlRpcValue& result)
     {
-        std::string msg;
-        if(!generateRequest(method,params,msg))
+        if(m_error_lock)
         {
-            result.setSize(1);
-            result[0] = "bad request value for method call "+std::string(method);
+            result[0] = "XmlRpc pipe client is in an error state. Clear the error or reset the server.";
             return false;
         }
+        std::string msg;
+        if(!generateRequest(method,params,msg))
+            return set_error("bad request value for method call "+std::string(method),result);
         uint32_t r_size=msg.size(); //TODO: Is it safer to use uint64_t (would need to use long long on the python side)
         m_ostream->Write(&r_size,sizeof(uint32_t));
         if(m_ostream->GetLastError()!=wxSTREAM_NO_ERROR)
-        {
-            result.setSize(1);
-            result[0] = "broken stream attempting to write size of request to pipe";
-            return false;
-        }
+            return set_error("broken stream attempting to write request size to pipe",result);
         for(uint32_t i=0;i<msg.size();++i)
         {
             m_ostream->PutC(msg[i]);
             if(m_ostream->GetLastError()!=wxSTREAM_NO_ERROR)
-            {
-                result.setSize(1);
-                result[0] = "Broken stream attempting to write request to pipe";
-                return false;
-            }
+                return set_error("Broken stream attempting to write request to pipe",result);
         }
 
         //NOW WAIT FOR THE REPLY
@@ -172,11 +176,7 @@ public:
                 wxMilliSleep(10); //Delay might be necessary to avoid a freeze on MS windows
         } while(eof);
         if(m_istream->GetLastError()!=wxSTREAM_NO_ERROR && m_istream->GetLastError()!=wxSTREAM_EOF)
-        {
-            result.setSize(1);
-            result[0] = "Broken stream attempting to read message char 'M' from pipe";
-            return false;
-        }
+            return set_error("Broken stream attempting to read message char 'M' from pipe",result);
 
         // THEN GET THE SIZE OF THE MESSAGE AS UNSIGNED 32 BIT INT
         for(uint32_t i=0;i<sizeof(uint32_t);i++)
@@ -189,11 +189,7 @@ public:
                     wxMilliSleep(10); //Delay might be necessary to avoid a freeze on MS windows
             } while(eof);
             if(m_istream->GetLastError()!=wxSTREAM_NO_ERROR && m_istream->GetLastError()!=wxSTREAM_EOF)
-            {
-                result.setSize(1);
-                result[0] = "broken stream attempting to read size of buffer";
-                return false; //potentially return to early if reading faster than the python server fills the pipe??
-            }
+                return set_error("broken stream attempting to read size of buffer",result);
         }
 
         // FINALLY RETRIEVE THE ACTUAL MESSAGE
@@ -209,12 +205,7 @@ public:
                     wxMilliSleep(10); //Delay might be necessary to avoid a freeze on MS windows
             } while(eof);
             if(m_istream->GetLastError()!=wxSTREAM_NO_ERROR && m_istream->GetLastError()!=wxSTREAM_EOF)
-            {
-                result.setSize(1);
-                wxString s = wxString::Format(_T("broken stream attempting to read buffer - chars read %i"),i);
-                result[0] = std::string(s.utf8_str());
-                return false;
-            }
+                return set_error(std::string(wxString::Format(_T("broken stream attempting to read buffer - chars read %i of %i"),i,r_size).utf8_str()),result);
         }
         buf[r_size]=0;
 
@@ -224,11 +215,11 @@ public:
             return true;
         }
         wxString s = wxString::Format(_T("error parsing read buffer - chars read %i\n"),r_size);
-        result[0] = std::string(s.utf8_str()) + std::string(buf);
-        return false;
+        std::string out = std::string(s.utf8_str()) + std::string(buf);
+        return set_error(out,result);
     }
 
-    // Convert the response xml into a result value
+    // Converts the response xml into a result value
     bool parseResponse(std::string _response, XmlRpcValue& result)
     {
       // Parse response xml into result
@@ -296,12 +287,12 @@ public:
     }
 
 private:
+    bool m_error_lock;
     wxProcess *m_proc;
     wxInputStream *m_istream;
     wxOutputStream *m_ostream;
     wxInputStream *m_estream;
 };
-
 
 //////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////

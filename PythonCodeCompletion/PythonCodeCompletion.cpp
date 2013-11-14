@@ -112,7 +112,9 @@ void PythonCodeCompletion::OnAttach()
     wxString command = wxString::Format(_T("python -u %s %i"),script.c_str(),port);
     #else
     int port = 34567;
-    wxString command = wxString::Format(_T("gnome-terminal -e \"python -u %s %i\""),script.c_str(),port);
+    wxString command = wxString::Format(_T("python -u %s %i"),script.c_str(),port);
+//    wxString command = wxString::Format(_T("python -u -m memory_profiler %s %i"),script.c_str(),port);
+//    wxString command = wxString::Format(_T("gnome-terminal -e \"python -u %s %i\""),script.c_str(),port);
     #endif
     Manager::Get()->GetLogManager()->Log(_T("PYCC: Launching python on ")+script);
     Manager::Get()->GetLogManager()->Log(_T("PYCC: with command ")+command);
@@ -248,6 +250,18 @@ void PythonCodeCompletion::OnRelease(bool appShutDown)
         delete m_pImageList;
 }
 
+void PythonCodeCompletion::HandleError(XmlRpcResponseEvent &event, wxString message)
+{
+    //TODO: Should probably kill/restart the XmlRpc server here
+    if(event.GetState()==XMLRPC_STATE_REQUEST_FAILED)
+    {
+        wxMessageBox(_("ERROR PROCESSING PYCC REQUEST: Check the log for details"));
+        Manager::Get()->GetLogManager()->LogError(message);
+        Manager::Get()->GetLogManager()->LogError(wxString(event.GetResponse().toXml().c_str(),wxConvUTF8));
+    }
+}
+
+
 void PythonCodeCompletion::OnStdLibLoaded(XmlRpcResponseEvent &event)
 {
     if(event.GetState()==XMLRPC_STATE_RESPONSE)
@@ -255,10 +269,8 @@ void PythonCodeCompletion::OnStdLibLoaded(XmlRpcResponseEvent &event)
         m_libs_loaded=true;
         Manager::Get()->GetLogManager()->Log(_("PyCC: Completion Library is Initialized"));
     }
-    if(event.GetState()==XMLRPC_STATE_REQUEST_FAILED)
-    {
-        Manager::Get()->GetLogManager()->Log(_("PyCC: Completion Library Failed to initialize"));
-    }
+    else
+        HandleError(event,_T("PYCC: Error loading completion library"));
 }
 
 void PythonCodeCompletion::OnCalltip(XmlRpcResponseEvent &event)
@@ -282,11 +294,7 @@ void PythonCodeCompletion::OnCalltip(XmlRpcResponseEvent &event)
         }
     }
     else
-    {
-        Manager::Get()->GetLogManager()->Log(_("PYCC: Call tip failed"));
-        XmlRpc::XmlRpcValue val=event.GetResponse();
-        Manager::Get()->GetLogManager()->Log(wxString(val.toXml().c_str(),wxConvUTF8));
-    }
+        HandleError(event,_T("Error requesting calltip"));
 }
 
 void PythonCodeCompletion::OnCompletePhrase(XmlRpcResponseEvent &event)
@@ -309,9 +317,8 @@ void PythonCodeCompletion::OnCompletePhrase(XmlRpcResponseEvent &event)
         Manager::Get()->GetLogManager()->Log(wxString(val.toXml().c_str(),wxConvUTF8));
         return;
     }
-    XmlRpc::XmlRpcValue val=event.GetResponse();
-    Manager::Get()->GetLogManager()->Log(_("PYCC: Error in completion result"));
-    Manager::Get()->GetLogManager()->Log(wxString(val.toXml().c_str(),wxConvUTF8));
+    else
+        HandleError(event,_T("PYCC: Error requesting completion result"));
 }
 
 
@@ -777,8 +784,7 @@ void PythonCodeCompletion::OnGotoDefinition(XmlRpcResponseEvent &event)
             return;
         }
     }
-    Manager::Get()->GetLogManager()->Log(_("PYCC: Bad response for goto definition"));
-    XmlRpc::XmlRpcValue val=event.GetResponse();
-    Manager::Get()->GetLogManager()->Log(wxString(val.toXml().c_str(),wxConvUTF8));
+    else
+        HandleError(event,_T("PYCC: Bad response for goto definition"));
 }
 

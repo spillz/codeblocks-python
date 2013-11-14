@@ -135,7 +135,6 @@ public:
         std::string msg;
         if(!generateRequest(method,params,msg))
         {
-//            std::cout<<"bad request value"<<std::endl;
             result.setSize(1);
             result[0] = "bad request value for method call "+std::string(method);
             return false;
@@ -154,7 +153,7 @@ public:
             if(m_ostream->GetLastError()!=wxSTREAM_NO_ERROR)
             {
                 result.setSize(1);
-                result[0] = "broken stream attempting to write request to pipe";
+                result[0] = "Broken stream attempting to write request to pipe";
                 return false;
             }
         }
@@ -174,7 +173,7 @@ public:
         if(m_istream->GetLastError()!=wxSTREAM_NO_ERROR && m_istream->GetLastError()!=wxSTREAM_EOF)
         {
             result.setSize(1);
-            result[0] = "Broken stream attempting to read from buffer";
+            result[0] = "Broken stream attempting to read message char 'M' from pipe";
             return false;
         }
 
@@ -388,8 +387,8 @@ long XmlRpcInstance::LaunchProcess(const wxString &processcmd)
     if(m_port==-1)
         m_proc_id=wxExecute(processcmd,wxEXEC_ASYNC/*|wxEXEC_MAKE_GROUP_LEADER*/,m_proc);
     else
-        m_proc_id=wxExecute(processcmd,wxEXEC_ASYNC/*|wxEXEC_MAKE_GROUP_LEADER*/,m_proc);
-//        m_proc_id=wxExecuteHidden(processcmd,wxEXEC_ASYNC|wxEXEC_MAKE_GROUP_LEADER,m_proc);
+        m_proc_id=wxExecuteHidden(processcmd,wxEXEC_ASYNC|wxEXEC_MAKE_GROUP_LEADER,m_proc);
+//        m_proc_id=wxExecute(processcmd,wxEXEC_ASYNC/*|wxEXEC_MAKE_GROUP_LEADER*/,m_proc);
 #else
     m_proc_id=wxExecute(processcmd,wxEXEC_ASYNC|wxEXEC_MAKE_GROUP_LEADER,m_proc);
 #endif /*__WXMSW__*/
@@ -422,6 +421,8 @@ bool XmlRpcInstance::Exec(const wxString &method, const XmlRpc::XmlRpcValue &ina
         return m_client->execute(method.utf8_str(), inarg, result);
     else if(m_pipeclient)
         return m_pipeclient->execute(method.utf8_str(), inarg, result);
+    result.setSize(1);
+    result[0] = "XmlRpc server is not connected.";
     return false;
 }
 

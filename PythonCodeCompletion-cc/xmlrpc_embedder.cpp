@@ -130,60 +130,64 @@ public:
         m_ostream=proc->GetOutputStream();
         m_estream=proc->GetErrorStream();
     }
+
     bool execute(const char* method, XmlRpc::XmlRpcValue const& params, XmlRpc::XmlRpcValue& result)
     {
-        std::cout<<"PyCC Execute start";
         std::string msg;
         if(!generateRequest(method,params,msg))
         {
-            std::cout<<"bad request value"<<std::endl;
             result.setSize(1);
-            result[0] = "bad request value";
+            result[0] = "bad request value for method call "+std::string(method);
             return false;
         }
         uint32_t r_size=msg.size(); //TODO: Is it safer to use uint64_t (would need to use long long on the python side)
         m_ostream->Write(&r_size,sizeof(uint32_t));
         if(m_ostream->GetLastError()!=wxSTREAM_NO_ERROR)
+        {
+            result.setSize(1);
+            result[0] = "broken stream attempting to write size of request to pipe";
             return false;
+        }
         for(uint32_t i=0;i<msg.size();++i)
         {
             m_ostream->PutC(msg[i]);
             if(m_ostream->GetLastError()!=wxSTREAM_NO_ERROR)
             {
                 result.setSize(1);
-                result[0] = "broken stream attempting to write size of buffer";
+                result[0] = "Broken stream attempting to write request to pipe";
                 return false;
             }
         }
-//        m_ostream->Write(msg.c_str(),msg.size()); //On windows, this will frequently result in an incomplete write becasue the buffer gets full so better to use the blocking PutC instead
-        std::cout<<"wrote "<<msg<<std::endl;
-        std::cout<<"with size "<<r_size<<std::endl;
+
+        //NOW WAIT FOR THE REPLY
+        //FIRST RETRIEVE A SINGLE CHARACTER "M" THAT DENOTES THE START OF THE REPLY
+        //TODO: CHANGE 'M' TO 0 AND ACTUALLY CHECK IT!!!
         char ch;
+        bool eof;
         do
         {
             ch=m_istream->GetC();
-        } while(m_istream->GetLastError()==wxSTREAM_EOF);
-        if(m_istream->GetLastError()==wxSTREAM_EOF)
-            std::cout<<"read eof error"<<ch<<std::endl;
-        if(m_istream->GetLastError()==wxSTREAM_READ_ERROR)
-            std::cout<<"read error"<<ch<<std::endl;
+            eof = m_istream->GetLastError()==wxSTREAM_EOF;
+            if(eof)
+                wxMilliSleep(10); //Delay might be necessary to avoid a freeze on MS windows
+        } while(eof);
         if(m_istream->GetLastError()!=wxSTREAM_NO_ERROR && m_istream->GetLastError()!=wxSTREAM_EOF)
         {
             result.setSize(1);
-            result[0] = "broken stream attempting to write buffer";
+            result[0] = "Broken stream attempting to read message char 'M' from pipe";
             return false;
         }
-        std::cout<<"read ch "<<ch<<std::endl;
+
+        // THEN GET THE SIZE OF THE MESSAGE AS UNSIGNED 32 BIT INT
         for(uint32_t i=0;i<sizeof(uint32_t);i++)
         {
             do
             {
                 ((char*)(&r_size))[i]=m_istream->GetC();
-            } while(m_istream->GetLastError()==wxSTREAM_EOF);// while(m_istream->GetLastError()==wxSTREAM_EOF);
-            if(m_istream->GetLastError()==wxSTREAM_EOF)
-                std::cout<<"read eof error"<<ch<<std::endl;
-            if(m_istream->GetLastError()==wxSTREAM_READ_ERROR)
-                std::cout<<"read error"<<ch<<std::endl;
+                eof = m_istream->GetLastError()==wxSTREAM_EOF;
+                if(eof)
+                    wxMilliSleep(10); //Delay might be necessary to avoid a freeze on MS windows
+            } while(eof);
             if(m_istream->GetLastError()!=wxSTREAM_NO_ERROR && m_istream->GetLastError()!=wxSTREAM_EOF)
             {
                 result.setSize(1);
@@ -191,7 +195,8 @@ public:
                 return false; //potentially return to early if reading faster than the python server fills the pipe??
             }
         }
-        std::cout<<"response size is "<<r_size<<std::endl;
+
+        // FINALLY RETRIEVE THE ACTUAL MESSAGE
         std::string buf;
         buf.resize(r_size+1);
         for(uint32_t i=0;i<r_size;i++)
@@ -199,13 +204,10 @@ public:
             do
             {
                 buf[i]=m_istream->GetC();
-                if(m_istream->GetLastError()==wxSTREAM_EOF)
-                    wxMicroSleep(10);
-            } while(m_istream->GetLastError()==wxSTREAM_EOF);
-            if(m_istream->GetLastError()!=wxSTREAM_EOF)
-                std::cout<<"read eof error"<<ch<<std::endl;
-            if(m_istream->GetLastError()!=wxSTREAM_READ_ERROR)
-                std::cout<<"read error"<<ch<<std::endl;
+                eof = m_istream->GetLastError()==wxSTREAM_EOF;
+                if(eof)
+                    wxMilliSleep(10); //Delay might be necessary to avoid a freeze on MS windows
+            } while(eof);
             if(m_istream->GetLastError()!=wxSTREAM_NO_ERROR && m_istream->GetLastError()!=wxSTREAM_EOF)
             {
                 result.setSize(1);
@@ -215,16 +217,17 @@ public:
             }
         }
         buf[r_size]=0;
-        std::cout<<"response was "<<buf<<std::endl;
+
+        // NOW CONVERT THE XML INTO AN XMLRPCVALUE
         if(parseResponse(buf, result))
         {
             return true;
         }
-        std::cout<<"bad xml response"<<std::endl;
         wxString s = wxString::Format(_T("error parsing read buffer - chars read %i\n"),r_size);
         result[0] = std::string(s.utf8_str()) + std::string(buf);
         return false;
     }
+
     // Convert the response xml into a result value
     bool parseResponse(std::string _response, XmlRpcValue& result)
     {
@@ -291,8 +294,6 @@ public:
       request = body;
       return true;
     }
-
-
 
 private:
     wxProcess *m_proc;

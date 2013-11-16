@@ -36,6 +36,7 @@
 					<Add directory="$(#wx.lib)/gcc_dll/mswu" />
 					<Add directory="$(#cb)/plugins/contrib/ToolsPlus" />
 					<Add directory="../PythonCodeCompletion/XMLRPC/include" />
+					<Add directory="../PythonCodeCompletion" />
 				</Compiler>
 				<Linker>
 					<Add library="codeblocks" />
@@ -43,6 +44,7 @@
 					<Add library="..\PythonCodeCompletion\XMLRPC\libXmlRpc.a" />
 					<Add library="Ws2_32" />
 					<Add library="C:\Users\damienm\Documents\damien\Source\codeblocks-code\src\devel\share\CodeBlocks\plugins\ToolsPlus.dll" />
+					<Add library="C:\Users\damienm\Documents\damien\Source\codeblocks-code\src\devel\share\CodeBlocks\plugins\PythonCodeCompletion.dll" />
 					<Add directory="$(#cb)/devel" />
 					<Add directory="$(#wx.lib)/gcc_dll" />
 					<Add directory="../PythonCodeCompletion-cc/XMLRPC" />
@@ -230,10 +232,26 @@
 			<Option target="experimental" />
 			<Option target="experimental-binary" />
 		</Unit>
-		<Unit filename="ExecHiddenMSW.cpp" />
-		<Unit filename="ExecHiddenMSW.h" />
-		<Unit filename="PyEvents.cpp" />
-		<Unit filename="PyEvents.h" />
+		<Unit filename="ExecHiddenMSW.cpp">
+			<Option target="experimental" />
+			<Option target="experimental-binary" />
+			<Option target="simplified" />
+		</Unit>
+		<Unit filename="ExecHiddenMSW.h">
+			<Option target="experimental" />
+			<Option target="experimental-binary" />
+			<Option target="simplified" />
+		</Unit>
+		<Unit filename="PyEvents.cpp">
+			<Option target="experimental" />
+			<Option target="experimental-binary" />
+			<Option target="simplified" />
+		</Unit>
+		<Unit filename="PyEvents.h">
+			<Option target="experimental" />
+			<Option target="experimental-binary" />
+			<Option target="simplified" />
+		</Unit>
 		<Unit filename="PyPlugin.cpp" />
 		<Unit filename="PyPlugin.h" />
 		<Unit filename="PythonInterpCtrl.cpp">
@@ -263,8 +281,16 @@
 		<Unit filename="pdb2.py">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="py_embedder.cpp" />
-		<Unit filename="py_embedder.h" />
+		<Unit filename="py_embedder.cpp">
+			<Option target="experimental" />
+			<Option target="experimental-binary" />
+			<Option target="simplified" />
+		</Unit>
+		<Unit filename="py_embedder.h">
+			<Option target="experimental" />
+			<Option target="experimental-binary" />
+			<Option target="simplified" />
+		</Unit>
 		<Unit filename="python/interp.py">
 			<Option target="default" />
 			<Option target="simplified" />

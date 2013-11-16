@@ -20,7 +20,7 @@
 				</Compiler>
 				<Linker>
 					<Add library="codeblocks" />
-					<Add library="XmlRpc" />
+					<Add library="XmlRpcEmbedder" />
 					<Add library="shelldock" />
 				</Linker>
 				<ExtraCommands>
@@ -43,8 +43,9 @@
 				</Compiler>
 				<Linker>
 					<Add library="codeblocks" />
-					<Add library="XmlRpc" />
-					<Add library="$(#cb)/devel/share/codeblocks/plugins/libToolsPlus.so" />
+					<Add library="XmlRpcEmbedder" />
+					<Add library="/home/damien/src/codeblocks/src/devel/share/codeblocks/plugins/libtodo.so" />
+					<Add library="../XmlRpcEmbedder/XMLRPC/libXmlRpc.a" />
 				</Linker>
 				<ExtraCommands>
 					<Add after="zip -j9 PythonInterpreter.zip manifest.xml" />
@@ -67,14 +68,15 @@
 			<Add option="-fPIC" />
 			<Add option="-DcbDEBUG" />
 			<Add option="-DCB_PRECOMP" />
-			<Add directory="../PythonCodeCompletion/XMLRPC/include" />
+			<Add directory="../XmlRpcEmbedder" />
+			<Add directory="../XmlRpcEmbedder/XMLRPC/include" />
 			<Add directory="$(#cb)/plugins/contrib/ToolsPlus" />
 			<Add directory="$(#cb)/include" />
 		</Compiler>
 		<Linker>
 			<Add option="`wx-config --libs`" />
 			<Add directory="$(#cb)/devel" />
-			<Add directory="../PythonCodeCompletion/XMLRPC" />
+			<Add directory="../XmlRpcEmbedder" />
 		</Linker>
 		<Unit filename="ConfigDialog.cpp">
 			<Option target="&lt;{~None~}&gt;" />

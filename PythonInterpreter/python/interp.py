@@ -180,10 +180,13 @@ class AsyncServer(threading.Thread):
         logmsg('returning result ',result)
         return result
         #return status, stdout, stderr
+    def break(self):
+        if self.interp._runningeval:
+            raise KeyboardInterrupt
 
 def cmd_err():
     print 'Correct usage: pyinterp.py <port>'
-    print '<port> must be a positive integer'
+    print '<port> must be a port number or -1 for a pipe'
     exit()
 
 

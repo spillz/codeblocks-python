@@ -160,7 +160,7 @@ class PyInterp (code.InteractiveInterpreter):
         while self._running: #runs the eval_str queued by the server, then waits for the next eval_str. the loop ends when the server requests exit
             try:
                 if self.eval_str!='':
-                    logmsg('running code '+self.eval_str)
+                    logmsg('running code ',self.eval_str)
                     try:
                         self.runsource(self.eval_str+'\n')
                         logmsg('ran code')
@@ -213,7 +213,7 @@ class AsyncServer(threading.Thread):
         self._quit=True
         self.lock.notify()
         self.lock.release()
-        return "Session Terminated"
+        return self.cont(None)
     def run_code(self,eval_str,stdin):
         logmsg("compiling code")
         try:
@@ -224,14 +224,15 @@ class AsyncServer(threading.Thread):
         if cobj==None:
             logmsg("statement incomplete")
             return -2,'','',False
-        logmsg("running code "+eval_str)
+        logmsg("running code ",eval_str)
         if self.interp.queue_code(eval_str):
             return self.cont(stdin)
         else:
             return -3,self.interp._stdout.read(),self.interp._stderr.read(),self.interp._stdin.HasInputRequest()
     def cont(self,stdin):
-        logmsg('continuing with stdin: '+stdin)
-        self.interp._stdin.write(stdin)
+        logmsg('continuing with stdin: ',stdin)
+        if stdin is not None:
+            self.interp._stdin.write(stdin)
         if self.interp._stdin.HasInputRequest():
             self.interp._stdin.InputRequestNotify()
         self.lock.acquire()
@@ -245,6 +246,7 @@ class AsyncServer(threading.Thread):
     def break_code(self):
         if self.interp._runningeval:
             raise KeyboardInterrupt
+        return self.cont(None)
 
 def cmd_err():
     print 'Correct usage: pyinterp.py <port>'

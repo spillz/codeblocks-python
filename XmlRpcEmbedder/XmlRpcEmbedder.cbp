@@ -46,19 +46,15 @@
 					<Add option="-D_WINDOWS" />
 					<Add option="-D_LIB" />
 					<Add directory="XMLRPC/include" />
-					<Add directory="$(#cb)/include" />
-					<Add directory="$(#cb)/sdk/wxscintilla/include" />
 					<Add directory="$(#wx)/include" />
 					<Add directory="$(#wx)/lib/gcc_dll/mswu" />
 				</Compiler>
 				<Linker>
 					<Add library="XmlRpc" />
-					<Add library="codeblocks" />
 					<Add library="wxmsw28u" />
 					<Add library="Ws2_32" />
 					<Add directory="XMLRPC" />
 					<Add directory="$(#wx)/lib/gcc_dll" />
-					<Add directory="$(#cb)/devel" />
 				</Linker>
 			</Target>
 		</Build>

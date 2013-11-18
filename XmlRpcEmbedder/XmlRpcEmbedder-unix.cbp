@@ -26,6 +26,9 @@
 					<Add option="-ansi" />
 					<Add option="-g" />
 					<Add option="`wx-config --cflags`" />
+					<Add option="-fmessage-length=0" />
+					<Add option="-fexceptions" />
+					<Add option="-Winvalid-pch" />
 					<Add option="-fPIC" />
 					<Add directory="XMLRPC/include" />
 				</Compiler>
@@ -39,12 +42,8 @@
 		<VirtualTargets>
 			<Add alias="All" targets="XMLRPC;wxEmbedder;" />
 		</VirtualTargets>
-		<Unit filename="ExecHiddenMSW.cpp">
-			<Option target="CodeCompletion" />
-		</Unit>
-		<Unit filename="ExecHiddenMSW.h">
-			<Option target="CodeCompletion" />
-		</Unit>
+		<Unit filename="ExecHiddenMSW.cpp" />
+		<Unit filename="ExecHiddenMSW.h" />
 		<Unit filename="XMLRPC/include/XmlRpc.h">
 			<Option target="XMLRPC" />
 		</Unit>
@@ -108,10 +107,18 @@
 		<Unit filename="XMLRPC/src/XmlRpcValue.cpp">
 			<Option target="XMLRPC" />
 		</Unit>
-		<Unit filename="XmlRpcEvents.cpp" />
-		<Unit filename="XmlRpcEvents.h" />
-		<Unit filename="xmlrpc_embedder.cpp" />
-		<Unit filename="xmlrpc_embedder.h" />
+		<Unit filename="XmlRpcEvents.cpp">
+			<Option target="wxEmbedder" />
+		</Unit>
+		<Unit filename="XmlRpcEvents.h">
+			<Option target="wxEmbedder" />
+		</Unit>
+		<Unit filename="xmlrpc_embedder.cpp">
+			<Option target="wxEmbedder" />
+		</Unit>
+		<Unit filename="xmlrpc_embedder.h">
+			<Option target="wxEmbedder" />
+		</Unit>
 		<Extensions>
 			<code_completion />
 			<envvars />

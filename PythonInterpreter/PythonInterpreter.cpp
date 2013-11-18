@@ -1,4 +1,4 @@
-#include "PyPlugin.h"
+#include "PythonInterpreter.h"
 
 #include <configurationpanel.h>
 #include <wx/regex.h>

@@ -105,8 +105,6 @@
 			<Add directory="$(#cb)/devel" />
 			<Add directory="../XmlRpcEmbedder" />
 		</Linker>
-		<Unit filename="PyPlugin.cpp" />
-		<Unit filename="PyPlugin.h" />
 		<Unit filename="PythonInterpCtrl.cpp">
 			<Option target="default" />
 			<Option target="toolspluslink" />
@@ -115,6 +113,8 @@
 			<Option target="default" />
 			<Option target="toolspluslink" />
 		</Unit>
+		<Unit filename="PythonInterpreter.cpp" />
+		<Unit filename="PythonInterpreter.h" />
 		<Unit filename="Resources/dialogs.fbp">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>

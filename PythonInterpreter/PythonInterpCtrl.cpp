@@ -169,17 +169,18 @@ long PythonInterpCtrl::LaunchProcess(const wxString &processcmd, const wxArraySt
 {
     if(!IsDead())
         return -1;
-    //wxMessageBox(m_portalloc.GetPorts());
     m_port=m_portalloc.RequestPort();
     if(m_port<0)
         return -1;
-    //TODO: get the command and working dir from the
+//TODO: XmlRpc over pipe doesn't work because of the way interp.py is implemented
+//    m_port = -1; //Use XmlRpc over pipe
+    //TODO: get the command and working dir from config
 #ifdef __WXMSW__
     wxString cmd=_T("cmd /c interp.py ")+wxString::Format(_T(" %i"),m_port); //TODO: this could have process destruction issues on earlier version of wxWidgets (kills cmd, but not python)
     wxString python=_T("\\python");
     wxString interp=_T("\\interp.py");
 #else
-    wxString cmd=_T("python interp.py ")+wxString::Format(_T(" %i"),m_port);
+    wxString cmd=_T("python -u interp.py ")+wxString::Format(_T(" %i"),m_port);
     wxString python=_T("/python");
     wxString interp=_T("/interp.py");
 #endif

@@ -143,8 +143,6 @@ class PythonInterpCtrl : public ShellCtrlBase
 
         void stdin_append(const wxString &data);
         wxString stdin_retrieve();
-        wxString stdout_retrieve();
-        wxString stderr_retrieve();
 
     protected:
         bool RunCode(const wxString &codestr);

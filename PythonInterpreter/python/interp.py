@@ -4,6 +4,65 @@ import threading
 import time
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 
+import os
+import struct
+import xmlrpclib
+
+o_stdin = sys.stdin
+o_stdout = sys.stdout
+
+isz=struct.calcsize('I')
+
+class XmlRpcPipeServer:
+    '''
+    A simple XMLRPC server implementation that uses the stdin, stdout
+    pipes to communicate with the owner of the process. Implements
+    most of the features of SimpleXMLRPCServer
+    '''
+    def __init__(self):
+        self.fn_dict={}
+        self.inpipe=o_stdin
+        self.outpipe=o_stdout
+        sys.stdout=open(os.devnull,'wb')
+        sys.stderr=open(os.devnull,'wb')
+
+    def register_function(self,fn,name):
+        self.fn_dict[name]=fn
+
+    def register_introspection_functions(self):
+        pass
+
+    def handle_request(self):
+        ##TODO: Need more error handling!
+        size_buf = self.inpipe.read(isz)
+        size = struct.unpack('I',size_buf)[0]
+        call_xml = self.inpipe.read(size)
+        self.outpipe.write(struct.pack('c','M'))
+        name=''
+        try:
+            args,name = xmlrpclib.loads(call_xml)
+            result = self.__call__(name, *args)
+            if not isinstance(result,tuple):
+                result=(result,)
+        except:
+            import traceback
+            result ='Error running call '+name+'\n'+call_xml+'\n'
+            result += '\n'.join(traceback.format_exception(*sys.exc_info()))
+            result = (result,)
+        try:
+            res_xml = bytes(xmlrpclib.dumps(result, methodresponse=True))
+        except:
+            res_xml = bytes(xmlrpclib.dumps('Method result of length %i could not be converted to XML'%(len(res_xml)), methodresponse=True))
+        size = len(res_xml)
+        self.outpipe.write(struct.pack('I',size))
+        self.outpipe.write(res_xml)
+        self.outpipe.flush()
+
+    def __call__(self,name,*args):
+        return self.fn_dict[name](*args)
+
+
+
 DEBUG=False
 
 if DEBUG:
@@ -134,7 +193,10 @@ class AsyncServer(threading.Thread):
     def start_interp(self):
         self.interp.main_loop()
     def run(self):
-        self.server = SimpleXMLRPCServer(("localhost", self.port))
+        if self.port==-1:
+            self.server = XmlRpcPipeServer()
+        else:
+            self.server = SimpleXMLRPCServer(("localhost", self.port))
         self.server.logRequests=0
         self.server.register_introspection_functions()
         #self.server.socket.settimeout(self.timeout) ##timeouts cause probs
@@ -180,7 +242,7 @@ class AsyncServer(threading.Thread):
         logmsg('returning result ',result)
         return result
         #return status, stdout, stderr
-    def break(self):
+    def break_code(self):
         if self.interp._runningeval:
             raise KeyboardInterrupt
 
@@ -197,7 +259,7 @@ if __name__ == '__main__':
         port = int(sys.argv[1])
     except:
         cmd_err()
-    if port<=0:
+    if port<-1:
         cmd_err()
 
     logmsg('starting server on port', port)

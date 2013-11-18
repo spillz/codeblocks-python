@@ -6,24 +6,6 @@
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
-			<Target title="XMLRPC">
-				<Option output="XMLRPC/XmlRpc" prefix_auto="1" extension_auto="1" />
-				<Option working_dir="" />
-				<Option type="2" />
-				<Option compiler="gcc" />
-				<Option createDefFile="1" />
-				<Compiler>
-					<Add option="-DWIN32" />
-					<Add option="-D_DEBUG" />
-					<Add option="-D_WINDOWS" />
-					<Add option="-D_MBCS" />
-					<Add option="-D_LIB" />
-					<Add directory="XMLRPC/include" />
-				</Compiler>
-				<Linker>
-					<Add library="Ws2_32" />
-				</Linker>
-			</Target>
 			<Target title="CodeCompletion">
 				<Option output="PythonCodeCompletion" prefix_auto="1" extension_auto="1" />
 				<Option type="3" />
@@ -54,10 +36,12 @@
 				</Compiler>
 				<Linker>
 					<Add library="XmlRpc" />
+					<Add library="XmlRpcEmbedder" />
 					<Add library="codeblocks" />
 					<Add library="wxmsw28u" />
 					<Add library="Ws2_32" />
-					<Add directory="XMLRPC" />
+					<Add directory="../XmlRpcEmbedder" />
+					<Add directory="../XmlRpcEmbedder/XMLRPC" />
 					<Add directory="$(#wx)/lib/gcc_dll" />
 					<Add directory="$(#cb)/devel" />
 				</Linker>
@@ -69,87 +53,12 @@
 			</Target>
 		</Build>
 		<VirtualTargets>
-			<Add alias="All" targets="XMLRPC;CodeCompletion;" />
+			<Add alias="All" targets="CodeCompletion;" />
 		</VirtualTargets>
-		<Unit filename="ExecHiddenMSW.cpp">
-			<Option target="CodeCompletion" />
-		</Unit>
-		<Unit filename="ExecHiddenMSW.h">
-			<Option target="CodeCompletion" />
-		</Unit>
 		<Unit filename="PythonCodeCompletion.cpp">
 			<Option target="CodeCompletion" />
 		</Unit>
 		<Unit filename="PythonCodeCompletion.h">
-			<Option target="CodeCompletion" />
-		</Unit>
-		<Unit filename="XMLRPC/include/XmlRpc.h">
-			<Option target="XMLRPC" />
-		</Unit>
-		<Unit filename="XMLRPC/include/XmlRpcClient.h">
-			<Option target="XMLRPC" />
-		</Unit>
-		<Unit filename="XMLRPC/include/XmlRpcDispatch.h">
-			<Option target="XMLRPC" />
-		</Unit>
-		<Unit filename="XMLRPC/include/XmlRpcException.h">
-			<Option target="XMLRPC" />
-		</Unit>
-		<Unit filename="XMLRPC/include/XmlRpcServer.h">
-			<Option target="XMLRPC" />
-		</Unit>
-		<Unit filename="XMLRPC/include/XmlRpcServerConnection.h">
-			<Option target="XMLRPC" />
-		</Unit>
-		<Unit filename="XMLRPC/include/XmlRpcServerMethod.h">
-			<Option target="XMLRPC" />
-		</Unit>
-		<Unit filename="XMLRPC/include/XmlRpcSocket.h">
-			<Option target="XMLRPC" />
-		</Unit>
-		<Unit filename="XMLRPC/include/XmlRpcSource.h">
-			<Option target="XMLRPC" />
-		</Unit>
-		<Unit filename="XMLRPC/include/XmlRpcUtil.h">
-			<Option target="XMLRPC" />
-		</Unit>
-		<Unit filename="XMLRPC/include/XmlRpcValue.h">
-			<Option target="XMLRPC" />
-		</Unit>
-		<Unit filename="XMLRPC/include/base64.h">
-			<Option target="XMLRPC" />
-		</Unit>
-		<Unit filename="XMLRPC/src/XmlRpcClient.cpp">
-			<Option target="XMLRPC" />
-		</Unit>
-		<Unit filename="XMLRPC/src/XmlRpcDispatch.cpp">
-			<Option target="XMLRPC" />
-		</Unit>
-		<Unit filename="XMLRPC/src/XmlRpcServer.cpp">
-			<Option target="XMLRPC" />
-		</Unit>
-		<Unit filename="XMLRPC/src/XmlRpcServerConnection.cpp">
-			<Option target="XMLRPC" />
-		</Unit>
-		<Unit filename="XMLRPC/src/XmlRpcServerMethod.cpp">
-			<Option target="XMLRPC" />
-		</Unit>
-		<Unit filename="XMLRPC/src/XmlRpcSocket.cpp">
-			<Option target="XMLRPC" />
-		</Unit>
-		<Unit filename="XMLRPC/src/XmlRpcSource.cpp">
-			<Option target="XMLRPC" />
-		</Unit>
-		<Unit filename="XMLRPC/src/XmlRpcUtil.cpp">
-			<Option target="XMLRPC" />
-		</Unit>
-		<Unit filename="XMLRPC/src/XmlRpcValue.cpp">
-			<Option target="XMLRPC" />
-		</Unit>
-		<Unit filename="XmlRpcEvents.cpp">
-			<Option target="CodeCompletion" />
-		</Unit>
-		<Unit filename="XmlRpcEvents.h">
 			<Option target="CodeCompletion" />
 		</Unit>
 		<Unit filename="manifest.xml">
@@ -162,12 +71,6 @@
 			<Option target="CodeCompletion" />
 		</Unit>
 		<Unit filename="python/stdlib_parser.py">
-			<Option target="CodeCompletion" />
-		</Unit>
-		<Unit filename="xmlrpc_embedder.cpp">
-			<Option target="CodeCompletion" />
-		</Unit>
-		<Unit filename="xmlrpc_embedder.h">
 			<Option target="CodeCompletion" />
 		</Unit>
 		<Extensions>

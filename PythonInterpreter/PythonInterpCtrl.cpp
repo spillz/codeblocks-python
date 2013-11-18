@@ -259,14 +259,14 @@ void PythonInterpCtrl::OnPyNotify(XmlRpcResponseEvent& event)
         int return_code = val[0];
         std::string stdout(val[1]);
         std::string stderr(val[2]);
-        int input_request = val[3];
+        bool input_request = val[3];
 
         m_ioctrl->AppendText(wxString(stdout.c_str(),wxConvUTF8));
         //TODO: Color errors
         m_ioctrl->AppendText(wxString(stderr.c_str(),wxConvUTF8));
 
         if (input_request)
-            m_ioctrl->ProcessEvent(event);
+            m_ioctrl->ProcessEvent(event); //TODO: Need to set up the handler on the ioctrl
 
         if (return_code == 1)
             this->Continue();
@@ -307,11 +307,21 @@ void PythonInterpCtrl::OnPyJobAbort(wxCommandEvent& event)
 
 void PythonInterpCtrl::OnEndProcess(wxCommandEvent &ce)
 {
-    m_ioctrl->AppendText(stdout_retrieve());
-    m_ioctrl->AppendText(stderr_retrieve());
     m_portalloc.ReleasePort(m_port);
     if(m_shellmgr)
         m_shellmgr->OnShellTerminate(this);
+}
+
+void PythonInterpCtrl::stdin_append(const wxString &data)
+{ //asynchronously dispatch data to python interpreter's stdin
+    stdin_data+=data;
+}
+
+wxString PythonInterpCtrl::stdin_retrieve()
+ {
+    wxString s(stdin_data);
+    stdin_data=_T("");
+    return s;
 }
 
 void PythonInterpCtrl::SyncOutput(int maxchars)
@@ -399,7 +409,7 @@ void PythonInterpCtrl::OnUserInput(wxKeyEvent& ke)
 bool PythonInterpCtrl::RunCode(const wxString &codestr)
 {
 //TODO: Should use a common ID for this and cont
-    XmlRpc::XmlRpcValue args, result;
+    XmlRpc::XmlRpcValue args;
     args[0]=codestr.utf8_str();
     args[1]=stdin_retrieve().utf8_str();
     return m_pyinterp->ExecAsync(_T("run_code"), args, this);
@@ -407,22 +417,22 @@ bool PythonInterpCtrl::RunCode(const wxString &codestr)
 
 bool PythonInterpCtrl::Continue()
 {
-    XmlRpc::XmlRpcValue args, result;
+    XmlRpc::XmlRpcValue args;
     args[0]=stdin_retrieve().utf8_str();
-    return m_pyinterp->ExecAsync(_("cont"), args, this);
+    return m_pyinterp->ExecAsync(_T("cont"), args, this);
 }
 
 bool PythonInterpCtrl::BreakCode()
 {
 //TODO: Need to use a separate ID for this
     XmlRpc::XmlRpcValue args;
-    return m_pyinterp->ExecAsync(_("break_code"), args, this);
+    return m_pyinterp->ExecAsync(_T("break_code"), args, this);
 }
 
 bool PythonInterpCtrl::SendKill()
 {
 //TODO: Need to use a separate ID for this
-    XmlRpc::XmlRpcValue args, result;
-    return m_pyinterp->ExecAsync(_("end"), args, this);
+    XmlRpc::XmlRpcValue args;
+    return m_pyinterp->ExecAsync(_T("end"), args, this);
 }
 

@@ -142,8 +142,6 @@ class PythonInterpCtrl : public ShellCtrlBase
         static PortAllocator m_portalloc;
 
         void stdin_append(const wxString &data);
-        void stdout_append(const wxString &data);
-        void stderr_append(const wxString &data);
         wxString stdin_retrieve();
         wxString stdout_retrieve();
         wxString stderr_retrieve();
@@ -154,7 +152,7 @@ class PythonInterpCtrl : public ShellCtrlBase
         bool SendKill();
 
     private:
-        wxString stdin_data, stdout_data, stderr_data;
+        wxString stdin_data;
         PythonIOCtrl *m_ioctrl;
         PythonCodeCtrl *m_codectrl;
         wxSplitterWindow *m_sw;

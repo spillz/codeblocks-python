@@ -10,7 +10,8 @@
 				<Option output="PythonCodeCompletion" prefix_auto="1" extension_auto="1" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option host_application="codeblocks" />
+				<Option parameters="--debug-log --no-dde --no-check-associations --multiple-instance --no-splash-screen --verbose -p Debug" />
+				<Option host_application="$(#cb)/devel/codeblocks" />
 				<Option run_host_application_in_terminal="0" />
 				<Compiler>
 					<Add option="-g" />
@@ -19,31 +20,27 @@
 					<Add option="-fmessage-length=0" />
 					<Add option="-fexceptions" />
 					<Add option="-Winvalid-pch" />
-					<Add option="-DHAVE_W32API_H" />
 					<Add option="-D__WXMSW__" />
 					<Add option="-DWXUSINGDLL" />
-					<Add option="-DcbDEBUG" />
-					<Add option="-DCB_PRECOMP" />
 					<Add option="-DWX_PRECOMP" />
 					<Add option="-DwxUSE_UNICODE" />
 					<Add option="-D_WINDOWS" />
-					<Add option="-D_LIB" />
-					<Add directory="XMLRPC/include" />
+					<Add directory="$(#wx)/lib/gcc_dll/mswu" />
+					<Add directory="$(#wx)/include" />
 					<Add directory="$(#cb)/include" />
 					<Add directory="$(#cb)/sdk/wxscintilla/include" />
-					<Add directory="$(#wx)/include" />
-					<Add directory="$(#wx)/lib/gcc_dll/mswu" />
+					<Add directory="../XmlRpcEmbedder/XMLRPC/include" />
+					<Add directory="../XmlRpcEmbedder" />
 				</Compiler>
 				<Linker>
+					<Add library="wxmsw28u" />
+					<Add library="codeblocks" />
 					<Add library="XmlRpc" />
 					<Add library="XmlRpcEmbedder" />
-					<Add library="codeblocks" />
-					<Add library="wxmsw28u" />
-					<Add library="Ws2_32" />
-					<Add directory="../XmlRpcEmbedder" />
-					<Add directory="../XmlRpcEmbedder/XMLRPC" />
 					<Add directory="$(#wx)/lib/gcc_dll" />
 					<Add directory="$(#cb)/devel" />
+					<Add directory="../XmlRpcEmbedder/XMLRPC" />
+					<Add directory="../XmlRpcEmbedder" />
 				</Linker>
 				<ExtraCommands>
 					<Add after="zip -j9 PythonCodeCompletion.zip manifest.xml" />
@@ -55,24 +52,12 @@
 		<VirtualTargets>
 			<Add alias="All" targets="CodeCompletion;" />
 		</VirtualTargets>
-		<Unit filename="PythonCodeCompletion.cpp">
-			<Option target="CodeCompletion" />
-		</Unit>
-		<Unit filename="PythonCodeCompletion.h">
-			<Option target="CodeCompletion" />
-		</Unit>
-		<Unit filename="manifest.xml">
-			<Option target="CodeCompletion" />
-		</Unit>
-		<Unit filename="python/jedi_example.py">
-			<Option target="CodeCompletion" />
-		</Unit>
-		<Unit filename="python/python_completion_server.py">
-			<Option target="CodeCompletion" />
-		</Unit>
-		<Unit filename="python/stdlib_parser.py">
-			<Option target="CodeCompletion" />
-		</Unit>
+		<Unit filename="PythonCodeCompletion.cpp" />
+		<Unit filename="PythonCodeCompletion.h" />
+		<Unit filename="manifest.xml" />
+		<Unit filename="python/jedi_example.py" />
+		<Unit filename="python/python_completion_server.py" />
+		<Unit filename="python/stdlib_parser.py" />
 		<Extensions>
 			<code_completion />
 			<envvars />

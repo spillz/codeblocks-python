@@ -258,13 +258,13 @@ void PythonInterpCtrl::OnPyNotify(XmlRpcResponseEvent& event)
     {
         XmlRpc::XmlRpcValue val = event.GetResponse();
         int return_code = val[0];
-        std::string stdout(val[1]);
-        std::string stderr(val[2]);
+        std::string sstdout(val[1]);
+        std::string sstderr(val[2]);
         bool input_request = val[3];
 
-        m_ioctrl->AppendText(wxString(stdout.c_str(),wxConvUTF8));
+        m_ioctrl->AppendText(wxString(sstdout.c_str(),wxConvUTF8));
         //TODO: Color errors
-        m_ioctrl->AppendText(wxString(stderr.c_str(),wxConvUTF8));
+        m_ioctrl->AppendText(wxString(sstderr.c_str(),wxConvUTF8));
 
         if (input_request)
             m_ioctrl->ProcessEvent(event); //TODO: Need to set up the handler on the ioctrl

@@ -10,7 +10,7 @@
 				<Option output="PythonInterpreter" prefix_auto="1" extension_auto="1" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option parameters="--personality=debug" />
+				<Option parameters="--debug-log --no-dde --no-check-associations --multiple-instance --no-splash-screen --verbose -p debug" />
 				<Option host_application="$(#cb)/devel/codeblocks.exe" />
 				<Option run_host_application_in_terminal="0" />
 				<Compiler>
@@ -47,7 +47,7 @@
 					<Add library="$(#cb)\devel\share\CodeBlocks\plugins\ToolsPlus.dll" />
 					<Add directory="$(#cb)/devel" />
 					<Add directory="$(#wx.lib)/gcc_dll" />
-					<Add directory="../XmlRpcEmbedder/XMLRPC/include" />
+					<Add directory="../XmlRpcEmbedder/XMLRPC" />
 					<Add directory="../XmlRpcEmbedder" />
 					<Add directory="$(#cb)/devel/share/CodeBlocks/plugins" />
 				</Linker>
@@ -63,27 +63,15 @@
 			<Add option="-DCB_PRECOMP" />
 			<Add option="-DWX_PRECOMP" />
 		</Compiler>
-		<Unit filename="PythonInterpreter.cpp">
-			<Option target="default" />
-		</Unit>
-		<Unit filename="PythonInterpreter.h">
-			<Option target="default" />
-		</Unit>
-		<Unit filename="PythonInterpCtrl.cpp">
-			<Option target="default" />
-		</Unit>
-		<Unit filename="PythonInterpCtrl.h">
-			<Option target="default" />
-		</Unit>
+		<Unit filename="PythonInterpCtrl.cpp" />
+		<Unit filename="PythonInterpCtrl.h" />
+		<Unit filename="PythonInterpreter.cpp" />
+		<Unit filename="PythonInterpreter.h" />
 		<Unit filename="manifest.xml">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="python/interp.py">
-			<Option target="default" />
-		</Unit>
-		<Unit filename="python/interp_client.py">
-			<Option target="default" />
-		</Unit>
+		<Unit filename="python/interp.py" />
+		<Unit filename="python/interp_client.py" />
 		<Extensions>
 			<code_completion />
 			<envvars />

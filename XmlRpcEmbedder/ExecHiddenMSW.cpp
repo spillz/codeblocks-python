@@ -1,7 +1,7 @@
 // For compilers that support precompilation, includes "wx.h".
 #include "ExecHiddenMSW.h"
-#ifdef __WXMSW__
 
+#ifdef __WXMSW__
 #include <wx/wxprec.h>
 
 #ifdef __BORLANDC__

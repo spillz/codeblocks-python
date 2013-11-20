@@ -200,7 +200,7 @@ long PythonInterpCtrl::LaunchProcess(const wxString &processcmd, const wxArraySt
     if(!global&&!local) //No interpreter script found, return failure.
         return -2; //TODO: Return meaningful messages (or at least use the codeblocks logger)
 
-    m_pyinterp = XmlRpcMgr::Get().LaunchProcess(cmd,m_port);
+    m_pyinterp = new XmlRpcInstance(cmd,m_port);
     if(m_pyinterp->IsDead())
     {
         Manager::Get()->GetLogManager()->Log(_("Error Starting Interpreter"));

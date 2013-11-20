@@ -14,6 +14,7 @@
 				<Option host_application="$(#cb)/devel/codeblocks" />
 				<Option run_host_application_in_terminal="0" />
 				<Compiler>
+					<Add option="-ansi" />
 					<Add option="-g" />
 				</Compiler>
 				<Linker>
@@ -66,6 +67,9 @@
 			<Add option="`pkg-config --libs codeblocks`" />
 			<Add directory="$(#cb)/devel" />
 		</Linker>
+		<Unit filename="DebuggerController.h">
+			<Option target="default" />
+		</Unit>
 		<Unit filename="PyDebugger.cpp">
 			<Option target="default" />
 		</Unit>

@@ -42,19 +42,6 @@ typedef std::set<int> BPLtype;
 
 typedef std::vector<cb::shared_ptr<cbStackFrame> > StackList;
 
-//class PyDebuggerConfiguration:public cbDebuggerConfiguration
-//{
-//    public:
-//        PyDebuggerConfiguration(const ConfigManagerWrapper &config):cbDebuggerConfiguration(config) {}
-//        virtual ~PyDebuggerConfiguration() {}
-//
-//        virtual cbDebuggerConfiguration* Clone() const {return new PyDebuggerConfiguration(*this);}
-//
-//        virtual wxPanel* MakePanel(wxWindow *parent) {return new wxPanel();}
-//        virtual bool SaveChanges(wxPanel *panel) {return true;}
-//
-//};
-
 class PyBreakpoint:public cbBreakpoint
 {
     public:

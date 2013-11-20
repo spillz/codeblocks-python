@@ -118,7 +118,7 @@ void PythonCodeCompletion::OnAttach()
     #endif
     Manager::Get()->GetLogManager()->DebugLog(_T("PYCC: Launching python on ")+script);
     Manager::Get()->GetLogManager()->DebugLog(_T("PYCC: with command ")+command);
-    py_server = XmlRpcMgr::Get().LaunchProcess(command,port);
+    py_server = new XmlRpcInstance(command,port);
     if(py_server->IsDead())
     {
         Manager::Get()->GetLogManager()->LogError(_("Error Starting Python Code Completion Server"));
@@ -244,7 +244,10 @@ void PythonCodeCompletion::OnRelease(bool appShutDown)
     // m_IsAttached will be FALSE...
     EditorHooks::UnregisterHook(m_EditorHookId, true);
     if(py_server && !py_server->IsDead()) //TODO: Really should wait until serverr is no longer busy and request it to terminate via XMLRPC
+    {
         py_server->KillProcess(true);
+        delete py_server;
+    }
     if(m_pImageList)
         delete m_pImageList;
 }

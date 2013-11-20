@@ -3,7 +3,7 @@
 
 #include <wx/wx.h>
 #include <wx/app.h>
-#include <wx/dynarray.h>
+//#include <wx/dynarray.h>
 #include <wx/process.h>
 
 #include <memory>
@@ -58,7 +58,7 @@ class XmlRpcInstance: public wxEvtHandler
     friend class XmlRpcJob;
 public:
     // Standard constructor -- generally should use the Manager instance to create these
-    XmlRpcInstance(const wxString &processcmd, const wxString &hostaddress, int port=-1, wxWindow *parent=NULL);
+    XmlRpcInstance(const wxString &processcmd, int port=-1, const wxString &hostaddress=_T("localhost"), wxWindow *parent=NULL);
 
     // Copy constructor
     XmlRpcInstance(const XmlRpcInstance &copy);
@@ -124,25 +124,26 @@ private:
     DECLARE_EVENT_TABLE()
 };
 
-WX_DECLARE_OBJARRAY(XmlRpcInstance, XmlRpcInstanceCollection);
-
-/////////////////////////////////////////////////////////////////////////////////////
-// XmlRpcMgr: manages the collection of interpreters
-/////////////////////////////////////////////////////////////////////////////////////
-class XmlRpcMgr
-{
-public:
-    XmlRpcInstance *LaunchProcess(const wxString &cmd,int port=-1,const wxString &address=_("localhost"));
-    static XmlRpcMgr &Get();
-    ~XmlRpcMgr();
-protected:
-    XmlRpcMgr();
-private:
-    XmlRpcInstanceCollection m_Interpreters;
-    static std::auto_ptr<XmlRpcMgr> theSingleInstance;
-// todo: create an xmlrpc server?
-
-};
-
+//WX_DECLARE_OBJARRAY(XmlRpcInstance, XmlRpcInstanceCollection);
+//
+///////////////////////////////////////////////////////////////////////////////////////
+//// XmlRpcMgr: manages the collection of interpreters
+///////////////////////////////////////////////////////////////////////////////////////
+//class XmlRpcMgr
+//{
+//public:
+//    XmlRpcInstance *LaunchProcess(const wxString &cmd,int port=-1,const wxString &address=_("localhost"));
+//    void Remove(XmlRpcInstance *p);
+//    static XmlRpcMgr &Get();
+//    ~XmlRpcMgr();
+//protected:
+//    XmlRpcMgr();
+//private:
+//    XmlRpcInstanceCollection m_Interpreters;
+//    static std::auto_ptr<XmlRpcMgr> theSingleInstance;
+//// todo: create an xmlrpc server?
+//
+//};
+//
 
 #endif //PYEMBEDDER_H_INCLUDED

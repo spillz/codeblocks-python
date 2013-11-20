@@ -4,7 +4,7 @@
 #include <wx/listimpl.cpp>
 #include <wx/arrimpl.cpp>
 #include "ExecHiddenMSW.h"
-WX_DEFINE_OBJARRAY(XmlRpcInstanceCollection);
+//WX_DEFINE_OBJARRAY(XmlRpcInstanceCollection);
 WX_DEFINE_LIST(XmlRpcJobQueue);
 
 using namespace std;
@@ -341,7 +341,7 @@ XmlRpcInstance::~XmlRpcInstance()
     m_pipeclient=NULL;
 }
 
-XmlRpcInstance::XmlRpcInstance(const wxString &processcmd, const wxString &hostaddress, int port, wxWindow *parent)
+XmlRpcInstance::XmlRpcInstance(const wxString &processcmd, int port, const wxString &hostaddress, wxWindow *parent)
 {
     m_parent=parent;
     m_port=port;
@@ -354,12 +354,8 @@ XmlRpcInstance::XmlRpcInstance(const wxString &processcmd, const wxString &hosta
     m_proc_killlevel=0;
     m_jobrunning=false;
     // Launch process
-    LaunchProcess(processcmd); //TODO: The command for the interpreter process should come from the manager (and be stored in a config file)
-    // Setup XMLRPC client and use introspection API to look up the supported methods
-    if(port==-1)
-        m_pipeclient = new XmlRpcPipeClient(m_proc);
-    else
-        m_client = new XmlRpc::XmlRpcClient(hostaddress.char_str(), port);
+    if (processcmd!=wxEmptyString)
+        LaunchProcess(processcmd); //TODO: The command for the interpreter process should come from the manager (and be stored in a config file)
 }
 
 long XmlRpcInstance::LaunchProcess(const wxString &processcmd)
@@ -388,6 +384,12 @@ long XmlRpcInstance::LaunchProcess(const wxString &processcmd)
 //        std::cout<<"PyCC: LAUNCHING PROCESS SUCCEEDED"<<std::endl;
         m_proc_dead=false;
         m_proc_killlevel=0;
+
+        // Setup XMLRPC client and use introspection API to look up the supported methods
+        if(m_port==-1)
+            m_pipeclient = new XmlRpcPipeClient(m_proc);
+        else
+            m_client = new XmlRpc::XmlRpcClient(m_hostaddress.char_str(), m_port);
     }
     return m_proc_id;
 }
@@ -434,6 +436,7 @@ void XmlRpcInstance::OnEndProcess(wxProcessEvent &event)
     wxCommandEvent ce(wxEVT_XMLRPC_PROC_END,0);
     if(m_parent)
         m_parent->AddPendingEvent(ce);
+//    XmlRpcMgr::Get().Remove(this);
 }
 
 void XmlRpcInstance::Break()
@@ -544,29 +547,42 @@ void XmlRpcInstance::OnJobNotify(wxCommandEvent &event)
     NextJob();
 }
 
-XmlRpcMgr::XmlRpcMgr()
-{
-}
-
-XmlRpcMgr::~XmlRpcMgr()
-{
-    m_Interpreters.Empty();
-}
-
-XmlRpcInstance *XmlRpcMgr::LaunchProcess(const wxString &cmd,int port,const wxString &address)
-{
-    XmlRpcInstance *p=new XmlRpcInstance(cmd,address,port);
-    if(p)
-        m_Interpreters.Add(p);
-    return p;
-}
-
-XmlRpcMgr &XmlRpcMgr::Get()
-{
-    if (theSingleInstance.get() == 0)
-      theSingleInstance.reset(new XmlRpcMgr);
-    return *theSingleInstance;
-}
-
-std::auto_ptr<XmlRpcMgr> XmlRpcMgr::theSingleInstance;
-
+//XmlRpcMgr::XmlRpcMgr()
+//{
+//}
+//
+//XmlRpcMgr::~XmlRpcMgr()
+//{
+//    m_Interpreters.Clear();
+//}
+//
+//XmlRpcInstance *XmlRpcMgr::LaunchProcess(const wxString &cmd,int port,const wxString &address)
+//{
+//    XmlRpcInstance *p=new XmlRpcInstance(cmd,address,port);
+//    if(p)
+//        m_Interpreters.Add(p);
+//    return p;
+//}
+//
+//void XmlRpcMgr::Remove(XmlRpcInstance *p)
+//{
+////    m_Interpreters.Remove(*p);
+////    for (size_t i=0; i<m_Interpreters.GetCount(); ++i)
+////    {
+////        if (m_Interpreters.Item(i) == *p)
+////        {
+////            m_Interpreters.RemoveAt(i);
+////            return;
+////        }
+////    }
+//}
+//
+//XmlRpcMgr &XmlRpcMgr::Get()
+//{
+//    if (theSingleInstance.get() == 0)
+//      theSingleInstance.reset(new XmlRpcMgr);
+//    return *theSingleInstance;
+//}
+//
+//std::auto_ptr<XmlRpcMgr> XmlRpcMgr::theSingleInstance;
+//

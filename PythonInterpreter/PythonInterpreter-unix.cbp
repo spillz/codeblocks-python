@@ -11,8 +11,8 @@
 				<Option working_dir="$(#cb)/devel" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option parameters="--personality=debug" />
-				<Option host_application="$(#cb)/devel/run.sh" />
+				<Option parameters="--debug-log --multiple-instance -ns -ni -p debug" />
+				<Option host_application="$(#cb)/devel/codeblocks" />
 				<Option run_host_application_in_terminal="0" />
 				<Compiler>
 					<Add option="-g" />
@@ -43,11 +43,11 @@
 					<Add option="`wx-config --cflags`" />
 					<Add option="`pkg-config --cflags codeblocks`" />
 					<Add option="-DTOOLSPLUSLINK" />
+					<Add directory="$(#cb)/plugins/contrib/ToolsPlus" />
 				</Compiler>
 				<Linker>
 					<Add option="-Wl,-z,defs" />
 					<Add library="codeblocks" />
-					<Add library="XmlRpc" />
 					<Add library="XmlRpcEmbedder" />
 					<Add library="$(#cb)/devel/share/codeblocks/plugins/libToolsPlus.so" />
 				</Linker>
@@ -97,7 +97,6 @@
 			<Add option="-DCB_PRECOMP" />
 			<Add directory="../XmlRpcEmbedder" />
 			<Add directory="../XmlRpcEmbedder/XMLRPC/include" />
-			<Add directory="$(#cb)/plugins/contrib/ToolsPlus" />
 			<Add directory="$(#cb)/include" />
 		</Compiler>
 		<Linker>

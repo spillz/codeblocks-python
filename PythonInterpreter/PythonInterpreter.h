@@ -19,13 +19,8 @@
 
 #include <sdk.h>
 #include <cbplugin.h> // for "class cbPlugin"
-//#include "ConfigDialog.h"
-//#include "dialogs.h"
 
-//class ConfigDialog;
-
-//class InterpreterCollection;
-
+#include "ShellCtrlBase.h"
 
 class PyPlugin : public cbToolPlugin
 {
@@ -53,6 +48,9 @@ class PyPlugin : public cbToolPlugin
     public:
 
     private:
+#ifndef TOOLSPLUSLINK
+        ShellManager *m_shellmgr;
+#endif
 
         DECLARE_EVENT_TABLE();
 };

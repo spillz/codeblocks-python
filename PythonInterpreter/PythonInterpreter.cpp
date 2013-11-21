@@ -91,21 +91,41 @@ PyPlugin::~PyPlugin()
 
 void PyPlugin::OnAttach()
 {
-	// do whatever initialization you need for your plugin
-	// NOTE: after this function, the inherited member variable
-	// m_IsAttached will be TRUE...
-	// You should check for it in other functions, because if it
-	// is FALSE, it means that the application did *not* "load"
-	// (see: does not need) this plugin...
+#ifndef TOOLSPLUSLINK
+    m_shellmgr = new ShellManager(Manager::Get()->GetAppWindow());
+
+    CodeBlocksDockEvent evt(cbEVT_ADD_DOCK_WINDOW);
+    evt.name = _T("PythonWindow");
+    evt.title = _("Python Interpreters");
+    evt.pWindow = m_shellmgr;
+    evt.dockSide = CodeBlocksDockEvent::dsFloating;
+    evt.desiredSize.Set(400, 300);
+    evt.floatingSize.Set(400, 300);
+    evt.minimumSize.Set(200, 150);
+    Manager::Get()->ProcessEvent(evt);
+
+    CodeBlocksDockEvent evt2(cbEVT_SHOW_DOCK_WINDOW);
+    evt2.pWindow = m_shellmgr;
+    Manager::Get()->ProcessEvent(evt2);
+    wxArrayString as;
+    m_shellmgr->LaunchProcess(_T(""),_T("Python"),_("Python Interpreter"),as);
+    m_shellmgr->Enable();
+
+#endif
 }
 
 void PyPlugin::OnRelease(bool appShutDown)
 {
-	// do de-initialization for your plugin
-	// if appShutDown is false, the plugin is unloaded because Code::Blocks is being shut down,
-	// which means you must not use any of the SDK Managers
-	// NOTE: after this function, the inherited member variable
-	// m_IsAttached will be FALSE...
+#ifndef TOOLSPLUSLINK
+    if (m_shellmgr) //remove the Shell Terminals Notebook from its dockable window and delete it
+    {
+        CodeBlocksDockEvent evt(cbEVT_REMOVE_DOCK_WINDOW);
+        evt.pWindow = m_shellmgr;
+        Manager::Get()->ProcessEvent(evt);
+        m_shellmgr->Destroy();
+    }
+    m_shellmgr = 0;
+#endif
 }
 
 int PyPlugin::Execute()
@@ -118,7 +138,11 @@ int PyPlugin::Execute()
     else
         return -1;
 #else
-    return 0;
+    CodeBlocksDockEvent evt(cbEVT_SHOW_DOCK_WINDOW);
+    evt.pWindow = m_shellmgr;
+    Manager::Get()->ProcessEvent(evt);
+    wxArrayString as;
+    return m_shellmgr->LaunchProcess(_T(""),_T("Python"),_("Python Interpreter"),as);
 #endif
 }
 

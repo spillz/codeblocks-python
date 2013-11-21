@@ -40,26 +40,22 @@ void PythonIOCtrl::OnUserInput(wxKeyEvent& ke)
             return;
         }
     }
-    if(!ke.HasModifiers())
+    if(ke.GetKeyCode()==WXK_RETURN)
     {
-        if(ke.GetKeyCode()==WXK_RETURN)
+        if(!ke.ShiftDown() && !ke.ControlDown())
         {
-            if(!ke.ShiftDown())
+            if(m_line_entry_mode)
             {
-                if(m_line_entry_mode)
-                {
-                    m_line_entry_mode=false;
-                    this->SetEditable(false);
-                    wxString line;
-                    if(m_line_entry_point<GetLastPosition())
-                        line=GetRange(m_line_entry_point,GetLastPosition());
-                    line.Replace(_T("\n"),_T("")); //will cause major problems if there is more than one line feed returned here, so we remove them (TODO: fix on server side?? server should treat buffered lines as new input without errors)
-                    line.Append(_T("\n"));
-                    m_pyctrl->stdin_append(line);
-                    return;
-                }
+                m_line_entry_mode=false;
+                this->SetEditable(false);
+                wxString line;
+                if(m_line_entry_point<GetLastPosition())
+                    line=GetRange(m_line_entry_point,GetLastPosition());
+                line.Replace(_T("\n"),_T("")); //will cause major problems if there is more than one line feed returned here, so we remove them (TODO: fix on server side?? server should treat buffered lines as new input without errors)
+                line.Append(_T("\n"));
+                m_pyctrl->stdin_append(line);
+                return;
             }
-            return;
         }
     }
     ke.Skip();
@@ -85,42 +81,40 @@ void PythonIOCtrl::LineInputRequest()
 ////////////////////////////////////// PythonCodeCtrl //////////////////////////////////////////////
 
 BEGIN_EVENT_TABLE(PythonCodeCtrl, wxTextCtrl)
-    EVT_CHAR(PythonCodeCtrl::OnUserInput)
+    EVT_KEY_DOWN(PythonCodeCtrl::OnUserInput)
 END_EVENT_TABLE()
+
+PythonCodeCtrl::PythonCodeCtrl(wxWindow *parent, PythonInterpCtrl *py)
+    : wxTextCtrl(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, /*wxTE_RICH|*/ wxTE_MULTILINE|wxTE_PROCESS_ENTER|wxTE_PROCESS_TAB|wxEXPAND)
+{
+    m_pyctrl = py;
+//    Connect(wxEVT_KEY_DOWN, wxKeyEventHandler(PythonCodeCtrl::OnUserInput));
+}
 
 void PythonCodeCtrl::OnUserInput(wxKeyEvent& ke)
 {
+    Manager::Get()->GetLogManager()->Log(_T("Key event"));
     if(ke.GetModifiers()==wxMOD_CONTROL)
     {
 //        wxMessageBox(_T("control pressed"));
 //        wxMessageBox(wxString::Format(_("Key: %i"),ke.GetKeyCode()));
-        if(ke.GetKeyCode()==4)
+        if(ke.GetKeyCode()=='D')
         {
             m_pyctrl->DispatchCode(GetValue());
 //            if(m_pyctrl->DispatchCode(GetValue()))
 //                ChangeValue(_T(""));
             return;
         }
-        if(ke.GetKeyCode()==5)
+        if(ke.GetKeyCode()=='K')
         {
             m_pyctrl->BreakCode();
             return;
         }
-    }
-    if(!ke.HasModifiers())
-    {
         if(ke.GetKeyCode()==WXK_RETURN)
         {
-            if(!ke.ShiftDown())
-            {
-                m_pyctrl->DispatchCode(GetValue());
-                return;
-            } else
-            {
-                ke.Skip();
-            }
+            m_pyctrl->DispatchCode(GetValue());
+            return;
         }
-
     }
     ke.Skip();
 }
@@ -152,11 +146,12 @@ PythonInterpCtrl::PythonInterpCtrl(wxWindow* parent, int id, const wxString &nam
     m_ioctrl=new PythonIOCtrl(m_sw, this);//new wxTextCtrl(m_sw, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_RICH|wxTE_MULTILINE|wxTE_READONLY|wxTE_PROCESS_ENTER|wxTE_PROCESS_TAB|wxEXPAND);
     m_codectrl=new PythonCodeCtrl(m_sw, this);
     m_codectrl->AppendText(_("print 'Python'"));
+    m_sw->SetMinimumPaneSize(20);
+    m_sw->SetSashGravity(0.3);
     int sash_pos=parent->GetClientSize().GetHeight()/5;
     if(sash_pos<20)
         sash_pos=0;
     m_sw->SplitHorizontally(m_codectrl, m_ioctrl, sash_pos);
-    m_sw->SetMinimumPaneSize(20);
     wxBoxSizer* bs = new wxBoxSizer(wxVERTICAL);
     bs->Add(m_sw, 1, wxEXPAND | wxALL);
     SetAutoLayout(TRUE);
@@ -235,15 +230,7 @@ bool PythonInterpCtrl::DispatchCode(const wxString &code)
     m_code=code;
     if (RunCode(wxString(code.c_str())))
     {
-        wxTextAttr oldta=m_ioctrl->GetDefaultStyle();
-        wxTextAttr ta=oldta;
-        wxFont f=ta.GetFont();
-        f.SetWeight(wxFONTWEIGHT_BOLD);
-        ta.SetFont(f);
-        m_ioctrl->SetDefaultStyle(ta);
-        m_ioctrl->AppendText(m_code);
-        m_ioctrl->SetDefaultStyle(oldta);
-        m_ioctrl->AppendText(_T("\n"));
+        m_codectrl->Enable(false);
 //        wxCommandEvent pe(wxEVT_PY_NOTIFY_UI_CODEOK,0);
 //        ::wxPostEvent(this,pe);
     }
@@ -262,15 +249,41 @@ void PythonInterpCtrl::OnPyNotify(XmlRpcResponseEvent& event)
         std::string sstderr(val[2]);
         bool input_request = val[3];
 
+        if (return_code>=0 && m_code!=wxEmptyString)
+        {
+            wxTextAttr oldta=m_ioctrl->GetDefaultStyle();
+            wxTextAttr ta=oldta;
+            wxFont f=ta.GetFont();
+            f.SetWeight(wxFONTWEIGHT_BOLD);
+            ta.SetFont(f);
+            m_ioctrl->SetDefaultStyle(ta);
+            m_ioctrl->AppendText(m_code);
+            m_ioctrl->SetDefaultStyle(oldta);
+            m_ioctrl->AppendText(_T("\n"));
+            m_code = wxEmptyString;
+        }
+
         m_ioctrl->AppendText(wxString(sstdout.c_str(),wxConvUTF8));
-        //TODO: Color errors
+        //TODO: Col or errors
         m_ioctrl->AppendText(wxString(sstderr.c_str(),wxConvUTF8));
 
         if (input_request)
             m_ioctrl->ProcessEvent(event); //TODO: Need to set up the handler on the ioctrl
 
-        if (return_code == 1)
+        if (return_code == 1) // Eval was successful and is still running
+        {
+            m_codectrl->Clear();
             this->Continue();
+            return;
+        }
+        if (return_code == 0) //Eval has finished
+        {
+            m_codectrl->Clear();
+            //Now fall through to re-enable the control
+        }
+        //Otherwise it's an error (-1 syntax error, -2 statement incomplete, -3 code already running
+        m_codectrl->Enable();
+        m_codectrl->SetFocus();
     }
     //TODO: If not in error and more input available, need to call RunCode("cont")
 }

@@ -35,12 +35,9 @@
 				<Linker>
 					<Add library="wxmsw28u" />
 					<Add library="codeblocks" />
-					<Add library="XmlRpc" />
 					<Add library="XmlRpcEmbedder" />
 					<Add directory="$(#wx)/lib/gcc_dll" />
 					<Add directory="$(#cb)/devel" />
-					<Add directory="../XmlRpcEmbedder/XMLRPC" />
-					<Add directory="../XmlRpcEmbedder" />
 				</Linker>
 				<ExtraCommands>
 					<Add after="zip -j9 PythonCodeCompletion.zip manifest.xml" />

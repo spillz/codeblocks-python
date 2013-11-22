@@ -116,6 +116,22 @@ void PythonCodeCtrl::OnUserInput(wxKeyEvent& ke)
             return;
         }
     }
+    if(ke.GetModifiers()==wxMOD_NONE && ke.GetKeyCode()==WXK_RETURN)
+    {
+        wxString code = GetValue();
+        wxString lastline = code.AfterLast(_T('\n'));
+        if (!lastline.StartsWith(_T("\t")) && !lastline.StartsWith(_T("\t")) &&
+            !lastline.EndsWith(_T(":")))
+        {
+            long rs,re;
+            GetSelection(&rs,&re);
+            if(rs==re && this->GetLastPosition()==rs)
+            {
+                m_pyctrl->DispatchCode(code);
+                return;
+            }
+        }
+    }
     ke.Skip();
 }
 
@@ -261,6 +277,11 @@ void PythonInterpCtrl::OnPyNotify(XmlRpcResponseEvent& event)
             m_ioctrl->SetDefaultStyle(oldta);
             m_ioctrl->AppendText(_T("\n"));
             m_code = wxEmptyString;
+        }
+
+        if (return_code == -2)
+        {
+            m_codectrl->AppendText(_T("\n"));
         }
 
         m_ioctrl->AppendText(wxString(sstdout.c_str(),wxConvUTF8));

@@ -55,8 +55,6 @@
 				</Compiler>
 				<Linker>
 					<Add option="`wx-config --libs`" />
-					<Add library="XmlRpc" />
-					<Add directory="XMLRPC" />
 				</Linker>
 			</Target>
 		</Build>

@@ -151,16 +151,26 @@ public:
         }
         std::string msg;
         if(!generateRequest(method,params,msg))
-            return set_error("bad request value for method call "+std::string(method),result);
+            return set_error("Bad request value for method call "+std::string(method),result);
         uint32_t r_size=msg.size(); //TODO: Is it safer to use uint64_t (would need to use long long on the python side)
-        m_ostream->Write(&r_size,sizeof(uint32_t));
-        if(m_ostream->GetLastError()!=wxSTREAM_NO_ERROR)
-            return set_error("broken stream attempting to write request size to pipe",result);
+        char *cr_size = (char*)&r_size;
+        for(uint32_t i=0;i<sizeof(uint32_t);++i)
+        {
+            do
+            {
+                m_ostream->PutC(cr_size[i]);
+                if(m_ostream->GetLastError()!=wxSTREAM_NO_ERROR)
+                    return set_error("Broken stream attempting to write request size to pipe",result);
+            } while (m_ostream->LastWrite()!=sizeof(uint32_t));
+        }
         for(uint32_t i=0;i<msg.size();++i)
         {
-            m_ostream->PutC(msg[i]);
-            if(m_ostream->GetLastError()!=wxSTREAM_NO_ERROR)
-                return set_error("Broken stream attempting to write request to pipe",result);
+            do
+            {
+                m_ostream->PutC(msg[i]);
+                if(m_ostream->GetLastError()!=wxSTREAM_NO_ERROR)
+                    return set_error("Broken stream attempting to write request to pipe",result);
+            } while (m_ostream->LastWrite()!=sizeof(uint32_t));
         }
 
         //NOW WAIT FOR THE REPLY

@@ -26,7 +26,6 @@
 					<Add option="`pkg-config --libs codeblocks`" />
 					<Add option="`wx-config --libs`" />
 					<Add library="../XmlRpcEmbedder/libXmlRpcEmbedder.a" />
-					<Add library="../XmlRpcEmbedder/XMLRPC/libXmlRpc.a" />
 					<Add directory="../XmlRpcEmbedder" />
 				</Linker>
 				<ExtraCommands>

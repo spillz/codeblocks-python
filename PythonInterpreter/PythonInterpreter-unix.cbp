@@ -22,9 +22,7 @@
 				<Linker>
 					<Add option="-Wl,-z,defs" />
 					<Add library="codeblocks" />
-					<Add library="../XmlRpcEmbedder/XMLRPC/libXmlRpc.a" />
 					<Add library="XmlRpcEmbedder" />
-					<Add library="shelldock" />
 				</Linker>
 				<ExtraCommands>
 					<Add after="zip -j9 PythonInterpreter.zip manifest.xml" />
@@ -117,6 +115,12 @@
 		<Unit filename="PythonInterpreter.h" />
 		<Unit filename="Resources/dialogs.fbp">
 			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="ShellCtrlBase.cpp">
+			<Option target="default" />
+		</Unit>
+		<Unit filename="ShellCtrlBase.h">
+			<Option target="default" />
 		</Unit>
 		<Unit filename="manifest.xml" />
 		<Unit filename="python/interp.py" />

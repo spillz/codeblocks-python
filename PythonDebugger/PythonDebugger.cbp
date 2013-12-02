@@ -7,7 +7,7 @@
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="default">
-				<Option output="$(#cb)/devel/share/codeblocks/plugins/PyDebugger" prefix_auto="1" extension_auto="1" />
+				<Option output="$(#cb)/devel/share/codeblocks/plugins/PythonDebugger" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="$(#cb)/devel" />
 				<Option type="3" />
 				<Option compiler="gcc" />
@@ -42,12 +42,12 @@
 					<Add directory="$(#wx.lib)/gcc_dll" />
 				</Linker>
 				<ExtraCommands>
-					<Add after="zip -j9 $(#cb)\devel\share\codeblocks\PyDebugger.zip manifest.xml Resources\*.xrc" />
+					<Add after="zip -j9 $(#cb)\devel\share\codeblocks\PythonDebugger.zip manifest.xml Resources\*.xrc" />
 					<Mode after="always" />
 				</ExtraCommands>
 			</Target>
 			<Target title="cbplugin">
-				<Option output="PyDebugger" prefix_auto="1" extension_auto="1" />
+				<Option output="PythonDebugger" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="$(#cb)/devel" />
 				<Option type="3" />
 				<Option compiler="gcc" />
@@ -82,8 +82,8 @@
 					<Add directory="$(#wx.lib)/gcc_dll" />
 				</Linker>
 				<ExtraCommands>
-					<Add after="zip -j9 PyDebugger.zip manifest.xml Resources\*.xrc" />
-					<Add after="zip -j9 PyDebugger.cbplugin PyDebugger.dll PyDebugger.zip" />
+					<Add after="zip -j9 PythonDebugger.zip manifest.xml Resources\*.xrc" />
+					<Add after="zip -j9 PythonDebugger.cbplugin PythonDebugger.dll PythonDebugger.zip" />
 					<Mode after="always" />
 				</ExtraCommands>
 			</Target>
@@ -96,8 +96,8 @@
 			<Add option="-DCB_PRECOMP" />
 			<Add option="-DWX_PRECOMP" />
 		</Compiler>
-		<Unit filename="PyDebugger.cpp" />
-		<Unit filename="PyDebugger.h" />
+		<Unit filename="PythonDebugger.cpp" />
+		<Unit filename="PythonDebugger.h" />
 		<Unit filename="Resources/debugger_options_dlg.xrc" />
 		<Unit filename="debuggeroptionsdlg.cpp" />
 		<Unit filename="debuggeroptionsdlg.h" />

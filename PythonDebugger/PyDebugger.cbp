@@ -43,6 +43,8 @@
 				</Linker>
 				<ExtraCommands>
 					<Add after="zip -j9 $(#cb)\devel\share\codeblocks\PyDebugger.zip manifest.xml Resources\*.xrc" />
+					<Add after="zip -j9 PyDebugger.cbplugin $(#cb)\devel\share\codeblocks\plugins\PyDebugger.dll $(#cb)\devel\share\codeblocks\PyDebugger.zip" />
+					<Mode after="always" />
 				</ExtraCommands>
 			</Target>
 		</Build>

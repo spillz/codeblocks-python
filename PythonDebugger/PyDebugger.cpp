@@ -71,6 +71,7 @@ bool PyDebugger::SupportsFeature(cbDebuggerFeature::Flags f)
         default:
             return true;
     }
+    return true;
 }
 
 
@@ -120,13 +121,14 @@ wxString PyDebugger::AssembleBreakpointCommands()
     for(BPList::iterator itr=m_bplist.begin();itr!=m_bplist.end();itr++)
     {
         wxString sfile=(*itr)->GetLocation();
-        if(sfile.Contains(_T(" ")))
-        {
-            wxFileName f(sfile);
-            sfile=f.GetShortPath();
-        }
+//        if(sfile.Contains(_T(" ")))
+//        {
+//            wxFileName f(sfile);
+//            sfile=f.GetShortPath();
+//        }
         int line=(*itr)->GetLine();
         wxString cmd=_T("break ")+sfile+_T(":")+wxString::Format(_T("%i"),line)+_T("\n");
+        Manager::Get()->GetLogManager()->Log(cmd);
         commands+=cmd;
     }
     return commands;
@@ -151,7 +153,6 @@ wxString PyDebugger::AssembleAliasCommands()
 {
     wxString commands;
     //NB: \001 is the separator character used when parsing in OnTimer
-
     //Print variables associated with a child
     commands+=_T("alias pm for x in sorted(%1.__dict__): print '%s\\001%s\\001'%(x,type(%1.__dict__[x])),str(%1.__dict__[x])[:800],'\\001',\n");
     //Print variable name, type and value
@@ -466,6 +467,7 @@ bool PyDebugger::Debug(bool breakOnEntry)
     wxString commandln = cfg.GetCommandLine(cfg.GetState());
     commandln.Replace(wxT("$target"),target);
 
+    Manager::Get()->GetLogManager()->Log(_T("Running python debugger with command line\n")+commandln);
     m_pid=wxExecute(commandln,wxEXEC_ASYNC,m_pp);
     if(!m_pid)
     {
@@ -590,11 +592,11 @@ bool PyDebugger::RunToCursor(const wxString& filename, int line, const wxString&
     if(!m_DebuggerActive)
         return false;
     wxString sfile=filename;
-    if(sfile.Contains(_T(" ")))
-    {
-        wxFileName f(sfile);
-        sfile=f.GetShortPath();
-    }
+//    if(sfile.Contains(_T(" ")))
+//    {
+//        wxFileName f(sfile);
+//        sfile=f.GetShortPath();
+//    }
     DispatchCommands(_T("tbreak ")+sfile+wxString::Format(_T(":%i\n"),line),DBGCMDTYPE_FLOWCONTROL,false);
     DispatchCommands(wxString::Format(_T("c\n"),line),DBGCMDTYPE_FLOWCONTROL,false);
     wxString wcommands=AssembleWatchCommands();
@@ -642,11 +644,11 @@ cb::shared_ptr<cbBreakpoint>  PyDebugger::AddBreakpoint(const wxString& file, in
     if(m_DebuggerActive) // if the debugger is running already we need to send a message to the interpreter to add the new breakpoint
     {
         wxString sfile=file;
-        if(sfile.Contains(_T(" ")))
-        {
-            wxFileName f(sfile);
-            sfile=f.GetShortPath();
-        }
+//        if(sfile.Contains(_T(" ")))
+//        {
+//            wxFileName f(sfile);
+//            sfile=f.GetShortPath();
+//        }
         wxString cmd=_T("break ")+sfile+_T(":")+wxString::Format(_T("%i"),line)+_T("\n");
         DispatchCommands(cmd,DBGCMDTYPE_BREAKPOINT);
     }
@@ -668,11 +670,11 @@ void PyDebugger::DeleteBreakpoint(cb::shared_ptr<cbBreakpoint> bp)
         m_bplist.erase(m_bplist.begin()+i);
         if(m_DebuggerActive)
         {
-            if(sfile.Contains(_T(" ")))
-            {
-                wxFileName f(sfile);
-                sfile=f.GetShortPath();
-            }
+//            if(sfile.Contains(_T(" ")))
+//            {
+//                wxFileName f(sfile);
+//                sfile=f.GetShortPath();
+//            }
             wxString cmd=_T("clear ")+sfile+_T(":")+wxString::Format(_T("%i"),line)+_T("\n");
             DispatchCommands(cmd,DBGCMDTYPE_BREAKPOINT);
          }
@@ -692,11 +694,11 @@ void PyDebugger::DeleteAllBreakpoints()
         m_bplist.erase(m_bplist.begin()+i);
         if(m_DebuggerActive)
         {
-            if(sfile.Contains(_T(" ")))
-            {
-                wxFileName f(sfile);
-                sfile=f.GetShortPath();
-            }
+//            if(sfile.Contains(_T(" ")))
+//            {
+//                wxFileName f(sfile);
+//                sfile=f.GetShortPath();
+//            }
             wxString cmd=_T("clear ")+sfile+_T(":")+wxString::Format(_T("%i"),line)+_T("\n");
             DispatchCommands(cmd,DBGCMDTYPE_BREAKPOINT);
          }

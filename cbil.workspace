@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_workspace_file>
+	<Workspace title="Workspace">
+		<Project filename="XmlRpcEmbedder/XmlRpcEmbedder.cbp" />
+		<Project filename="PythonCodeCompletion/PythonCodeCompletion.cbp" />
+		<Project filename="PythonInterpreter/PythonInterpreter.cbp" />
+		<Project filename="PythonDebugger/PythonDebugger.cbp" />
+	</Workspace>
+</CodeBlocks_workspace_file>

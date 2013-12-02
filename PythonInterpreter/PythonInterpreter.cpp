@@ -33,32 +33,12 @@ bool WildCardListMatch(wxString list, wxString name)
 }
 
 
-int ID_LangMenu_Settings=wxNewId();
-int ID_LangMenu_Run=wxNewId();
-int ID_LangMenu_DebugSendCommand=wxNewId();
-int ID_LangMenu_ShowWatch=wxNewId();
-int ID_LangMenu_UpdateWatch=wxNewId();
-
-int ID_PipedProcess=wxNewId();
-int ID_TimerPollDebugger=wxNewId();
-
-//assign menu IDs to correspond with toolbar buttons
-int ID_LangMenu_RunPiped = wxNewId();//XRCID("idPyDebuggerMenuDebug");
+int ID_INTERP_WINDOW_TOGGLE=wxNewId();
 
 // events handling
-BEGIN_EVENT_TABLE(PythonInterpreter, cbToolPlugin)
+BEGIN_EVENT_TABLE(PythonInterpreter, cbPlugin)
 	// add any events you want to handle here
-//    EVT_MENU(ID_LangMenu_Run,PythonInterpreter::OnRun)
-//    EVT_MENU(ID_LangMenu_RunPiped,PythonInterpreter::OnDebugTarget)
-//    EVT_MENU(XRCID("idPyDebuggerMenuDebug"),PythonInterpreter::OnContinue)
-//    EVT_MENU(XRCID("idPyDebuggerMenuNext"),PythonInterpreter::OnNext)
-//    EVT_MENU(XRCID("idPyDebuggerMenuStep"),PythonInterpreter::OnStep)
-//    EVT_MENU(XRCID("idPyDebuggerMenuStop"),PythonInterpreter::OnStop)
-//    EVT_MENU(ID_LangMenu_DebugSendCommand,PythonInterpreter::OnSendCommand)
-//    EVT_MENU(ID_LangMenu_ShowWatch,PythonInterpreter::OnViewWatch)
-//    EVT_MENU(ID_LangMenu_UpdateWatch,PythonInterpreter::OnUpdateWatch)
-//    EVT_END_PROCESS(ID_PipedProcess, PythonInterpreter::OnTerminatePipedProcess)
-//    EVT_TIMER(ID_TimerPollDebugger, PythonInterpreter::OnTimer)
+    EVT_MENU(ID_INTERP_WINDOW_TOGGLE,PythonInterpreter::OnToggleInterpreterWindow)
 END_EVENT_TABLE()
 
 
@@ -103,14 +83,6 @@ void PythonInterpreter::OnAttach()
     evt.floatingSize.Set(400, 300);
     evt.minimumSize.Set(200, 150);
     Manager::Get()->ProcessEvent(evt);
-
-    CodeBlocksDockEvent evt2(cbEVT_SHOW_DOCK_WINDOW);
-    evt2.pWindow = m_shellmgr;
-    Manager::Get()->ProcessEvent(evt2);
-    wxArrayString as;
-    m_shellmgr->LaunchProcess(_T(""),_T("Python"),_("Python Interpreter"),as);
-    m_shellmgr->Enable();
-
 #endif
 }
 
@@ -126,6 +98,16 @@ void PythonInterpreter::OnRelease(bool appShutDown)
     }
     m_shellmgr = 0;
 #endif
+}
+
+void PythonInterpreter::OnToggleInterpreterWindow(wxCommandEvent &event)
+{
+#ifndef TOOLSPLUSLINK
+    CodeBlocksDockEvent evt(cbEVT_SHOW_DOCK_WINDOW);
+    evt.pWindow = m_shellmgr;
+    Manager::Get()->ProcessEvent(evt);
+#endif
+//    m_shellmgr->Enable();
 }
 
 int PythonInterpreter::Execute()
@@ -167,16 +149,23 @@ void PythonInterpreter::BuildMenu(wxMenuBar* menuBar)
 	//to add any menu items you want...
 	//Append any items you need in the menu...
 	//NOTE: Be careful in here... The application's menubar is at your disposal.
-//	LangMenu=new wxMenu;
-//	CreateMenu();
-//	int pos = menuBar->FindMenu(_T("Plugins"));
-//	if(pos!=wxNOT_FOUND)
-//        menuBar->Insert(pos, LangMenu, _T("P&yDebug"));
-//    else
-//    {
-//        delete LangMenu;
-//        LangMenu=0;
-//    }
+#ifndef TOOLSPLUSLINK
+    Manager::Get()->GetLogManager()->Log(_T("~~~~~~~~~~~~~~~~Building menu~~~~~~~~~~~~~~~~~"));
+	int pos = menuBar->FindMenu(_("View"));
+	if(pos==wxNOT_FOUND)
+    {
+        Manager::Get()->GetLogManager()->Log(_T("View menu not found"));
+        return;
+    }
+    wxMenu *m = menuBar->GetMenu(pos);
+    pos = m->FindItem(_("Start Page"));
+	if(pos==wxNOT_FOUND)
+    {
+        Manager::Get()->GetLogManager()->Log(_T("Start page not found"));
+        return;
+    }
+    m->InsertCheckItem(pos+1,ID_INTERP_WINDOW_TOGGLE,_("Python interpreters"),_("Show or hide the python interpreter window"));
+#endif
 }
 
 void PythonInterpreter::BuildModuleMenu(const ModuleType type, wxMenu* menu, const FileTreeData* data)
@@ -185,73 +174,11 @@ void PythonInterpreter::BuildModuleMenu(const ModuleType type, wxMenu* menu, con
 	//Check the parameter \"type\" and see which module it is
 	//and append any items you need in the menu...
 	//TIP: for consistency, add a separator as the first item...
-//	if(type==mtProjectManager)
-//	{
-//	    if(data)
-//	    {
-//            if(data->GetKind()==FileTreeData::ftdkFile)
-//            {
-//                ProjectFile *f=data->GetProjectFile();
-//                if(f)
-//                {
-//                    wxString name=f->file.GetFullPath();
-//                    wxString ext=f->file.GetExt();
-//                    if(IsPythonFile(name))
-//                    {
-//                        m_RunTarget=name;
-//                        m_RunTargetSelected=true;
-//                        menu->AppendSeparator();
-////                        menu->Append(ID_LangMenu_Run,_T("Python Run"),_T(""));
-//                        menu->Append(ID_LangMenu_RunPiped,_T("Python Debug"),_T(""));
-//                    }
-//                }
-//            }
-//	    }
-//	}
-//	if(type==mtEditorManager) // also type==mtOpenFilesList - not sure how to find out which file has been right clicked.
-//	{
-//        EditorManager* edMan = Manager::Get()->GetEditorManager();
-//        wxFileName activefile(edMan->GetActiveEditor()->GetFilename());
-//        wxString name=activefile.GetFullPath();
-//        if(IsPythonFile(name))
-//        {
-//            m_RunTarget=name;
-//            m_RunTargetSelected=true;
-//            menu->AppendSeparator();
-////            menu->Append(ID_LangMenu_Run,_T("Python Run"),_T(""));
-//            menu->Append(ID_LangMenu_RunPiped,_T("Python Debug"),_T(""));
-//
-//        }
-//	}
-//	if(type==mtUnknown) // also type==mtOpenFilesList - not sure how to find out which file has been right clicked.
-//	{
-//        if(data->GetKind()==FileTreeData::ftdkFile)  //right clicked on folder in file explorer
-//        {
-//            wxFileName f(data->GetFolder());
-//            wxString filename=f.GetFullPath();
-//            wxString name=f.GetFullName();
-////            cbMessageBox(filename+_T("  ")+name);
-//            if(IsPythonFile(name))
-//            {
-//                m_RunTarget=filename;
-//                m_RunTargetSelected=true;
-//                menu->AppendSeparator();
-////            menu->Append(ID_LangMenu_Run,_T("Python Run"),_T(""));
-//                menu->Append(ID_LangMenu_RunPiped,_T("Python Debug"),_T(""));
-//
-//            }
-//        }
-//	}
 }
 
 bool PythonInterpreter::BuildToolBar(wxToolBar* toolBar)
 {
-//    m_pTbar = toolBar;
-//    /* Loads toolbar using new Manager class functions */
 //    if (!IsAttached() || !toolBar)
 //        return false;
-//    wxString my_16x16=Manager::isToolBar16x16(toolBar) ? _T("_16x16") : _T("");
-//    Manager::AddonToolBar(toolBar,wxString(_T("py_debugger_toolbar"))+my_16x16);
-//    toolBar->Realize();
     return true;
 }

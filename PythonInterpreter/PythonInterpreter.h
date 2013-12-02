@@ -22,7 +22,7 @@
 
 #include "ShellCtrlBase.h"
 
-class PythonInterpreter : public cbToolPlugin
+class PythonInterpreter : public cbPlugin
 {
     public:
 		/** Constructor. */
@@ -48,6 +48,7 @@ class PythonInterpreter : public cbToolPlugin
     public:
 
     private:
+        void OnToggleInterpreterWindow(wxCommandEvent &event);
 #ifndef TOOLSPLUSLINK
         ShellManager *m_shellmgr;
 #endif

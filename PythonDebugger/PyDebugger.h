@@ -24,7 +24,6 @@
 
 #include <debuggermanager.h>
 #include "debuggeroptionsdlg.h"
-#include "dialogs.h"
 
 
 #define DBGCMDTYPE_FLOWCONTROL 1

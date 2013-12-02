@@ -102,7 +102,7 @@
 			</Target>
 		</Build>
 		<VirtualTargets>
-			<Add alias="All" targets="XMLRPC;wxEmbedder;" />
+			<Add alias="All" targets="wxEmbedder-MonoDLL;" />
 		</VirtualTargets>
 		<Unit filename="ExecHiddenMSW.cpp">
 			<Option target="wxEmbedder" />

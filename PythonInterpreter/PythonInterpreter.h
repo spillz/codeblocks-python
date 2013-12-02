@@ -7,8 +7,8 @@
  * License:   GPL
  **************************************************************/
 
-#ifndef PyPlugin_H_INCLUDED
-#define PyPlugin_H_INCLUDED
+#ifndef PYTHONPLUGIN_H_INCLUDED
+#define PYTHONPLUGIN_H_INCLUDED
 
 // For compilers that support precompilation, includes <wx/wx.h>
 #include <wx/wxprec.h>
@@ -22,13 +22,13 @@
 
 #include "ShellCtrlBase.h"
 
-class PyPlugin : public cbToolPlugin
+class PythonInterpreter : public cbToolPlugin
 {
     public:
 		/** Constructor. */
-        PyPlugin();
+        PythonInterpreter();
 		/** Destructor. */
-        virtual ~PyPlugin();
+        virtual ~PythonInterpreter();
 
 // Misc Plugin Virtuals
         virtual int Configure(); /** Invoke configuration dialog. */
@@ -55,4 +55,4 @@ class PyPlugin : public cbToolPlugin
         DECLARE_EVENT_TABLE();
 };
 
-#endif // PyPlugin_H_INCLUDED
+#endif // PYTHONPLUGIN_H_INCLUDED

@@ -12,7 +12,7 @@
 // We are using an anonymous namespace so we don't litter the global one.
 namespace
 {
-    PluginRegistrant<PyPlugin> reg(_T("PythonInterpreter"));
+    PluginRegistrant<PythonInterpreter> reg(_T("PythonInterpreter"));
 }
 
 
@@ -46,36 +46,36 @@ int ID_TimerPollDebugger=wxNewId();
 int ID_LangMenu_RunPiped = wxNewId();//XRCID("idPyDebuggerMenuDebug");
 
 // events handling
-BEGIN_EVENT_TABLE(PyPlugin, cbToolPlugin)
+BEGIN_EVENT_TABLE(PythonInterpreter, cbToolPlugin)
 	// add any events you want to handle here
-//    EVT_MENU(ID_LangMenu_Run,PyPlugin::OnRun)
-//    EVT_MENU(ID_LangMenu_RunPiped,PyPlugin::OnDebugTarget)
-//    EVT_MENU(XRCID("idPyDebuggerMenuDebug"),PyPlugin::OnContinue)
-//    EVT_MENU(XRCID("idPyDebuggerMenuNext"),PyPlugin::OnNext)
-//    EVT_MENU(XRCID("idPyDebuggerMenuStep"),PyPlugin::OnStep)
-//    EVT_MENU(XRCID("idPyDebuggerMenuStop"),PyPlugin::OnStop)
-//    EVT_MENU(ID_LangMenu_DebugSendCommand,PyPlugin::OnSendCommand)
-//    EVT_MENU(ID_LangMenu_ShowWatch,PyPlugin::OnViewWatch)
-//    EVT_MENU(ID_LangMenu_UpdateWatch,PyPlugin::OnUpdateWatch)
-//    EVT_END_PROCESS(ID_PipedProcess, PyPlugin::OnTerminatePipedProcess)
-//    EVT_TIMER(ID_TimerPollDebugger, PyPlugin::OnTimer)
+//    EVT_MENU(ID_LangMenu_Run,PythonInterpreter::OnRun)
+//    EVT_MENU(ID_LangMenu_RunPiped,PythonInterpreter::OnDebugTarget)
+//    EVT_MENU(XRCID("idPyDebuggerMenuDebug"),PythonInterpreter::OnContinue)
+//    EVT_MENU(XRCID("idPyDebuggerMenuNext"),PythonInterpreter::OnNext)
+//    EVT_MENU(XRCID("idPyDebuggerMenuStep"),PythonInterpreter::OnStep)
+//    EVT_MENU(XRCID("idPyDebuggerMenuStop"),PythonInterpreter::OnStop)
+//    EVT_MENU(ID_LangMenu_DebugSendCommand,PythonInterpreter::OnSendCommand)
+//    EVT_MENU(ID_LangMenu_ShowWatch,PythonInterpreter::OnViewWatch)
+//    EVT_MENU(ID_LangMenu_UpdateWatch,PythonInterpreter::OnUpdateWatch)
+//    EVT_END_PROCESS(ID_PipedProcess, PythonInterpreter::OnTerminatePipedProcess)
+//    EVT_TIMER(ID_TimerPollDebugger, PythonInterpreter::OnTimer)
 END_EVENT_TABLE()
 
 
 
 // constructor
-PyPlugin::PyPlugin()
+PythonInterpreter::PythonInterpreter()
 {
     // Make sure our resources are available.
     // In the generated boilerplate code we have no resources but when
     // we add some, it will be nice that this code is in place already ;)
-//    if(!Manager::LoadResource(_T("PyPlugin.zip")))
+//    if(!Manager::LoadResource(_T("PythonInterpreter.zip")))
 //    {
-//        NotifyMissingFile(_T("PyPlugin.zip"));
+//        NotifyMissingFile(_T("PythonInterpreter.zip"));
 //    }
 }
 
-cbConfigurationPanel* PyPlugin::GetConfigurationPanel(wxWindow* parent)
+cbConfigurationPanel* PythonInterpreter::GetConfigurationPanel(wxWindow* parent)
 {
 //    MyDialog* dlg = new MyDialog(this, *m_pKeyProfArr, parent,
 //        wxT("Keybindings"), mode);
@@ -84,12 +84,12 @@ cbConfigurationPanel* PyPlugin::GetConfigurationPanel(wxWindow* parent)
 }
 
 // destructor
-PyPlugin::~PyPlugin()
+PythonInterpreter::~PythonInterpreter()
 {
 
 }
 
-void PyPlugin::OnAttach()
+void PythonInterpreter::OnAttach()
 {
 #ifndef TOOLSPLUSLINK
     m_shellmgr = new ShellManager(Manager::Get()->GetAppWindow());
@@ -114,7 +114,7 @@ void PyPlugin::OnAttach()
 #endif
 }
 
-void PyPlugin::OnRelease(bool appShutDown)
+void PythonInterpreter::OnRelease(bool appShutDown)
 {
 #ifndef TOOLSPLUSLINK
     if (m_shellmgr) //remove the Shell Terminals Notebook from its dockable window and delete it
@@ -128,7 +128,7 @@ void PyPlugin::OnRelease(bool appShutDown)
 #endif
 }
 
-int PyPlugin::Execute()
+int PythonInterpreter::Execute()
 {
 #ifdef TOOLSPLUSLINK
     ToolsPlus *tp = dynamic_cast<ToolsPlus*>(Manager::Get()->GetPluginManager()->FindPluginByName(_T("ToolsPlus")));
@@ -146,7 +146,7 @@ int PyPlugin::Execute()
 #endif
 }
 
-int PyPlugin::Configure()
+int PythonInterpreter::Configure()
 {
 	//create and display the configuration dialog for the plugin
 	cbConfigurationDialog dlg(Manager::Get()->GetAppWindow(), wxID_ANY, _("Python Language Properties"));
@@ -161,7 +161,7 @@ int PyPlugin::Configure()
 }
 
 
-void PyPlugin::BuildMenu(wxMenuBar* menuBar)
+void PythonInterpreter::BuildMenu(wxMenuBar* menuBar)
 {
 	//The application is offering its menubar for your plugin,
 	//to add any menu items you want...
@@ -179,7 +179,7 @@ void PyPlugin::BuildMenu(wxMenuBar* menuBar)
 //    }
 }
 
-void PyPlugin::BuildModuleMenu(const ModuleType type, wxMenu* menu, const FileTreeData* data)
+void PythonInterpreter::BuildModuleMenu(const ModuleType type, wxMenu* menu, const FileTreeData* data)
 {
 	//Some library module is ready to display a pop-up menu.
 	//Check the parameter \"type\" and see which module it is
@@ -244,7 +244,7 @@ void PyPlugin::BuildModuleMenu(const ModuleType type, wxMenu* menu, const FileTr
 //	}
 }
 
-bool PyPlugin::BuildToolBar(wxToolBar* toolBar)
+bool PythonInterpreter::BuildToolBar(wxToolBar* toolBar)
 {
 //    m_pTbar = toolBar;
 //    /* Loads toolbar using new Manager class functions */

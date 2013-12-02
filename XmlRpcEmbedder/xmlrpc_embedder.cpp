@@ -159,18 +159,18 @@ public:
             do
             {
                 m_ostream->PutC(cr_size[i]);
-                if(m_ostream->GetLastError()!=wxSTREAM_NO_ERROR)
+                if(m_ostream->GetLastError()!=wxSTREAM_NO_ERROR && m_ostream->GetLastError()!=wxSTREAM_EOF)
                     return set_error("Broken stream attempting to write request size to pipe",result);
-            } while (m_ostream->LastWrite()!=sizeof(uint32_t));
+            } while (m_ostream->LastWrite()!=1);
         }
         for(uint32_t i=0;i<msg.size();++i)
         {
             do
             {
                 m_ostream->PutC(msg[i]);
-                if(m_ostream->GetLastError()!=wxSTREAM_NO_ERROR)
+                if(m_ostream->GetLastError()!=wxSTREAM_NO_ERROR && m_ostream->GetLastError()!=wxSTREAM_EOF)
                     return set_error("Broken stream attempting to write request to pipe",result);
-            } while (m_ostream->LastWrite()!=sizeof(uint32_t));
+            } while (m_ostream->LastWrite()!=1);
         }
 
         //NOW WAIT FOR THE REPLY

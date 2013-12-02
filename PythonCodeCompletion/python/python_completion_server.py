@@ -22,6 +22,13 @@ def type_suffix(d):
 
 isz=struct.calcsize('I')
 
+class Logger:
+    def __init__(self):
+        self.log = open(os.path.expanduser('~/cbpycc.log'),'wb')
+    def write(self,msg):
+        self.log.write(str(msg)+'\n')
+        self.log.flush()
+
 class XmlRpcPipeServer:
     '''
     A simple XMLRPC server implementation that uses the stdin, stdout
@@ -34,6 +41,8 @@ class XmlRpcPipeServer:
         self.outpipe=sys.stdout
         sys.stdout=open(os.devnull,'wb')
         sys.stderr=open(os.devnull,'wb')
+        self.req_count=0
+#        self.log = Logger()
 
     def register_function(self,fn,name):
         self.fn_dict[name]=fn
@@ -43,10 +52,17 @@ class XmlRpcPipeServer:
 
     def handle_request(self):
         ##TODO: Need more error handling!
+#        self.log.write('#'*80)
+#        self.log.write('#'*80)
+#        self.log.write('waiting for request %i'%(self.req_count))
         size_buf = self.inpipe.read(isz)
         size = struct.unpack('I',size_buf)[0]
+#        self.log.write('read size %i'%(size))
         call_xml = self.inpipe.read(size)
+#        self.log.write('read call\n%s'%(call_xml))
         self.outpipe.write(struct.pack('c','M'))
+#        self.log.write('#'*80)
+#        self.log.write('wrote "M"')
         name=''
         try:
             args,name = xmlrpclib.loads(call_xml)
@@ -63,9 +79,15 @@ class XmlRpcPipeServer:
         except:
             res_xml = bytes(xmlrpclib.dumps('Method result of length %i could not be converted to XML'%(len(res_xml)), methodresponse=True))
         size = len(res_xml)
+#        self.log.write('about to write mesage of length %i'%(size,))
+#        self.log.write('message\n%s'%(res_xml,))
         self.outpipe.write(struct.pack('I',size))
+#        self.log.write('wrote message size')
         self.outpipe.write(res_xml)
+#        self.log.write('wrote message')
         self.outpipe.flush()
+#        self.log.write('completed request %i'%(self.req_count))
+        self.req_count+=1
 
     def __call__(self,name,*args):
         return self.fn_dict[name](*args)

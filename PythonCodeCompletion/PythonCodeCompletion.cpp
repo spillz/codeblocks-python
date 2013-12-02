@@ -118,7 +118,7 @@ void PythonCodeCompletion::OnAttach()
     #endif
     Manager::Get()->GetLogManager()->DebugLog(_T("PYCC: Launching python on ")+script);
     Manager::Get()->GetLogManager()->DebugLog(_T("PYCC: with command ")+command);
-    py_server = new XmlRpcInstance(command,port);
+    py_server = new XmlRpcInstance(command,port,_T("localhost"),0);
     if(py_server->IsDead())
     {
         Manager::Get()->GetLogManager()->LogError(_("Error Starting Python Code Completion Server"));

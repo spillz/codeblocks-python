@@ -39,8 +39,22 @@ int ID_INTERP_WINDOW_TOGGLE=wxNewId();
 BEGIN_EVENT_TABLE(PythonInterpreter, cbPlugin)
 	// add any events you want to handle here
     EVT_MENU(ID_INTERP_WINDOW_TOGGLE,PythonInterpreter::OnToggleInterpreterWindow)
+    EVT_UPDATE_UI(ID_INTERP_WINDOW_TOGGLE, PythonInterpreter::OnUpdateUI)
 END_EVENT_TABLE()
 
+
+void PythonInterpreter::OnUpdateUI(wxUpdateUIEvent& event)
+{
+#ifndef TOOLSPLUSLINK
+    if(m_ViewMenu)
+    {
+        m_ViewMenu->Check(ID_INTERP_WINDOW_TOGGLE,IsWindowReallyShown(m_shellmgr));
+        // allow other UpdateUI handlers to process this event
+        // *very* important! don't forget it...
+        event.Skip();
+    }
+#endif // TOOLSPLUSLINK
+}
 
 
 // constructor
@@ -71,6 +85,7 @@ PythonInterpreter::~PythonInterpreter()
 
 void PythonInterpreter::OnAttach()
 {
+    m_ViewMenu = 0;
 #ifndef TOOLSPLUSLINK
     m_shellmgr = new ShellManager(Manager::Get()->GetAppWindow());
 
@@ -83,6 +98,10 @@ void PythonInterpreter::OnAttach()
     evt.floatingSize.Set(400, 300);
     evt.minimumSize.Set(200, 150);
     Manager::Get()->ProcessEvent(evt);
+
+    //TODO: Add UI to open a terminal instead of opening on attach
+    wxArrayString as;
+    m_shellmgr->LaunchProcess(_T(""),_T("Python"),_("Python Interpreter"),as);
 #endif
 }
 
@@ -103,7 +122,7 @@ void PythonInterpreter::OnRelease(bool appShutDown)
 void PythonInterpreter::OnToggleInterpreterWindow(wxCommandEvent &event)
 {
 #ifndef TOOLSPLUSLINK
-    CodeBlocksDockEvent evt(cbEVT_SHOW_DOCK_WINDOW);
+    CodeBlocksDockEvent evt(event.IsChecked()? cbEVT_SHOW_DOCK_WINDOW : cbEVT_HIDE_DOCK_WINDOW);
     evt.pWindow = m_shellmgr;
     Manager::Get()->ProcessEvent(evt);
 #endif
@@ -150,21 +169,20 @@ void PythonInterpreter::BuildMenu(wxMenuBar* menuBar)
 	//Append any items you need in the menu...
 	//NOTE: Be careful in here... The application's menubar is at your disposal.
 #ifndef TOOLSPLUSLINK
-    Manager::Get()->GetLogManager()->Log(_T("~~~~~~~~~~~~~~~~Building menu~~~~~~~~~~~~~~~~~"));
-	int pos = menuBar->FindMenu(_("View"));
+	int pos = menuBar->FindMenu(_("&View"));
 	if(pos==wxNOT_FOUND)
+        return;
+    Manager::Get()->GetLogManager()->Log(wxString::Format(_T("View menu found %i"),pos));
+    m_ViewMenu = menuBar->GetMenu(pos);
+    int id = m_ViewMenu->FindItem(_("S&cript console"));
+	if(id==wxNOT_FOUND)
     {
-        Manager::Get()->GetLogManager()->Log(_T("View menu not found"));
+        m_ViewMenu = 0;
         return;
     }
-    wxMenu *m = menuBar->GetMenu(pos);
-    pos = m->FindItem(_("Start Page"));
-	if(pos==wxNOT_FOUND)
-    {
-        Manager::Get()->GetLogManager()->Log(_T("Start page not found"));
-        return;
-    }
-    m->InsertCheckItem(pos+1,ID_INTERP_WINDOW_TOGGLE,_("Python interpreters"),_("Show or hide the python interpreter window"));
+    size_t ipos;
+    m_ViewMenu->FindChildItem(id,&ipos);
+    m_ViewMenu->InsertCheckItem(ipos+1,ID_INTERP_WINDOW_TOGGLE,_("Python &interpreters"),_("Show or hide the python interpreter window"));
 #endif
 }
 

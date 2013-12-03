@@ -49,6 +49,8 @@ class PythonInterpreter : public cbPlugin
 
     private:
         void OnToggleInterpreterWindow(wxCommandEvent &event);
+        void OnUpdateUI(wxUpdateUIEvent& event);
+        wxMenu *m_ViewMenu;
 #ifndef TOOLSPLUSLINK
         ShellManager *m_shellmgr;
 #endif

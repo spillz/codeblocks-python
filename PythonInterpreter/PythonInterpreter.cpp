@@ -180,5 +180,5 @@ bool PythonInterpreter::BuildToolBar(wxToolBar* toolBar)
 {
 //    if (!IsAttached() || !toolBar)
 //        return false;
-    return true;
+    return false;
 }

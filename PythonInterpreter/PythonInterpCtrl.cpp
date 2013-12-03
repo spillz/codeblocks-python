@@ -242,7 +242,6 @@ bool PythonInterpCtrl::DispatchCode(const wxString &code)
 {
     if(m_pyinterp->IsJobRunning())
         return false;
-    int status;
     m_code=code;
     if (RunCode(wxString(code.c_str())))
     {

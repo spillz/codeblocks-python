@@ -3,7 +3,7 @@
 	<Workspace title="Workspace">
 		<Project filename="XmlRpcEmbedder/XmlRpcEmbedder-unix.cbp" />
 		<Project filename="PythonCodeCompletion/PythonCodeCompletion-unix.cbp" />
-		<Project filename="PythonDebugger/PyDebugger-unix.cbp" />
 		<Project filename="PythonInterpreter/PythonInterpreter-unix.cbp" />
+		<Project filename="PythonDebugger/PythonDebugger-unix.cbp" />
 	</Workspace>
 </CodeBlocks_workspace_file>

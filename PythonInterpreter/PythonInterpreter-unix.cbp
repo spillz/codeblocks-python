@@ -7,6 +7,57 @@
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="default">
+				<Option output="$(#cb)/devel/share/codeblocks/plugins/libPythonInterpreter" prefix_auto="0" extension_auto="1" />
+				<Option working_dir="$(#cb)/devel" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Option parameters="--debug-log --multiple-instance -ns -ni -p debug" />
+				<Option host_application="$(#cb)/devel/codeblocks" />
+				<Option run_host_application_in_terminal="0" />
+				<Compiler>
+					<Add option="-g" />
+					<Add option="`wx-config --cflags`" />
+					<Add option="`pkg-config --cflags codeblocks`" />
+					<Add directory="$(#cb)/include" />
+				</Compiler>
+				<Linker>
+					<Add option="-Wl,-z,defs" />
+					<Add library="codeblocks" />
+					<Add library="XmlRpcEmbedder" />
+					<Add directory="$(#cb)/devel" />
+				</Linker>
+				<ExtraCommands>
+					<Add after="zip -j9 $(#cb)/devel/share/codeblocks/PythonInterpreter.zip manifest.xml" />
+					<Add after='bash -c &quot;cp --parents python/interp.py $(#cb)/devel/share/codeblocks&quot;' />
+				</ExtraCommands>
+			</Target>
+			<Target title="default-toolspluslink">
+				<Option output="PythonInterpreter" prefix_auto="0" extension_auto="1" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Option parameters="--debug-log --multiple-instance -ns -ni -p debug" />
+				<Option host_application="$(#cb)/devel/codeblocks" />
+				<Option run_host_application_in_terminal="0" />
+				<Compiler>
+					<Add option="-g" />
+					<Add option="`wx-config --cflags`" />
+					<Add option="-DTOOLSPLUSLINK" />
+					<Add directory="$(#cb)/plugins/contrib/ToolsPlus" />
+					<Add directory="$(#cb)/include" />
+				</Compiler>
+				<Linker>
+					<Add option="-Wl,-z,defs" />
+					<Add library="codeblocks" />
+					<Add library="XmlRpcEmbedder" />
+					<Add library="$(#cb)/devel/share/codeblocks/plugins/libToolsPlus.so" />
+					<Add directory="$(#cb)/devel" />
+				</Linker>
+				<ExtraCommands>
+					<Add after="zip -j9 PythonInterpreter.zip manifest.xml" />
+					<Add after="zip -r9 PythonInterpreter.cbplugin PythonInterpreter.so PythonInterpreter.zip python/interp.py" />
+				</ExtraCommands>
+			</Target>
+			<Target title="cbplugin">
 				<Option output="PythonInterpreter" prefix_auto="0" extension_auto="1" />
 				<Option working_dir="$(#cb)/devel" />
 				<Option type="3" />
@@ -21,56 +72,8 @@
 				</Compiler>
 				<Linker>
 					<Add option="-Wl,-z,defs" />
-					<Add library="codeblocks" />
+					<Add option="`pkg-config --libs codeblocks`" />
 					<Add library="XmlRpcEmbedder" />
-				</Linker>
-				<ExtraCommands>
-					<Add after="zip -j9 PythonInterpreter.zip manifest.xml" />
-					<Add after="zip -r9 PythonInterpreter.cbplugin PythonInterpreter.so PythonInterpreter.zip python/interp.py" />
-				</ExtraCommands>
-			</Target>
-			<Target title="toolspluslink">
-				<Option output="PythonInterpreter" prefix_auto="0" extension_auto="1" />
-				<Option type="3" />
-				<Option compiler="gcc" />
-				<Option parameters="--debug-log --multiple-instance -ns -ni -p debug" />
-				<Option host_application="$(#cb)/devel/codeblocks" />
-				<Option run_host_application_in_terminal="0" />
-				<Compiler>
-					<Add option="-g" />
-					<Add option="`wx-config --cflags`" />
-					<Add option="`pkg-config --cflags codeblocks`" />
-					<Add option="-DTOOLSPLUSLINK" />
-					<Add directory="$(#cb)/plugins/contrib/ToolsPlus" />
-				</Compiler>
-				<Linker>
-					<Add option="-Wl,-z,defs" />
-					<Add library="codeblocks" />
-					<Add library="XmlRpcEmbedder" />
-					<Add library="$(#cb)/devel/share/codeblocks/plugins/libToolsPlus.so" />
-				</Linker>
-				<ExtraCommands>
-					<Add after="zip -j9 PythonInterpreter.zip manifest.xml" />
-					<Add after="zip -r9 PythonInterpreter.cbplugin PythonInterpreter.so PythonInterpreter.zip python/interp.py" />
-				</ExtraCommands>
-			</Target>
-			<Target title="test_simple">
-				<Option output="PythonInterpreter" prefix_auto="0" extension_auto="1" />
-				<Option type="3" />
-				<Option compiler="gcc" />
-				<Option parameters="--debug-log --multiple-instance -ns -ni -p debug" />
-				<Option host_application="$(#cb)/devel/codeblocks" />
-				<Option run_host_application_in_terminal="0" />
-				<Compiler>
-					<Add option="-g" />
-					<Add option="`wx-config --cflags`" />
-					<Add option="`pkg-config --cflags codeblocks`" />
-				</Compiler>
-				<Linker>
-					<Add library="codeblocks" />
-					<Add library="../XmlRpcEmbedder/XMLRPC/libXmlRpc.a" />
-					<Add library="XmlRpcEmbedder" />
-					<Add library="$(#cb)/devel/share/codeblocks/plugins/libtodo.so" />
 				</Linker>
 				<ExtraCommands>
 					<Add after="zip -j9 PythonInterpreter.zip manifest.xml" />
@@ -82,6 +85,9 @@
 				<Variable name="wx=$wx_LINUX" value="" />
 			</Environment>
 		</Build>
+		<VirtualTargets>
+			<Add alias="All" targets="default;" />
+		</VirtualTargets>
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-ansi" />
@@ -95,22 +101,13 @@
 			<Add option="-DCB_PRECOMP" />
 			<Add directory="../XmlRpcEmbedder" />
 			<Add directory="../XmlRpcEmbedder/XMLRPC/include" />
-			<Add directory="$(#cb)/include" />
 		</Compiler>
 		<Linker>
 			<Add option="`wx-config --libs`" />
-			<Add directory="../XmlRpcEmbedder/XMLRPC" />
 			<Add directory="../XmlRpcEmbedder" />
-			<Add directory="$(#cb)/devel" />
 		</Linker>
-		<Unit filename="PythonInterpCtrl.cpp">
-			<Option target="default" />
-			<Option target="toolspluslink" />
-		</Unit>
-		<Unit filename="PythonInterpCtrl.h">
-			<Option target="default" />
-			<Option target="toolspluslink" />
-		</Unit>
+		<Unit filename="PythonInterpCtrl.cpp" />
+		<Unit filename="PythonInterpCtrl.h" />
 		<Unit filename="PythonInterpreter.cpp" />
 		<Unit filename="PythonInterpreter.h" />
 		<Unit filename="Resources/dialogs.fbp">
@@ -118,9 +115,11 @@
 		</Unit>
 		<Unit filename="ShellCtrlBase.cpp">
 			<Option target="default" />
+			<Option target="cbplugin" />
 		</Unit>
 		<Unit filename="ShellCtrlBase.h">
 			<Option target="default" />
+			<Option target="cbplugin" />
 		</Unit>
 		<Unit filename="manifest.xml" />
 		<Unit filename="python/interp.py" />

@@ -172,7 +172,6 @@ void PythonInterpreter::BuildMenu(wxMenuBar* menuBar)
 	int pos = menuBar->FindMenu(_("&View"));
 	if(pos==wxNOT_FOUND)
         return;
-    Manager::Get()->GetLogManager()->Log(wxString::Format(_T("View menu found %i"),pos));
     m_ViewMenu = menuBar->GetMenu(pos);
     int id = m_ViewMenu->FindItem(_("S&cript console"));
 	if(id==wxNOT_FOUND)

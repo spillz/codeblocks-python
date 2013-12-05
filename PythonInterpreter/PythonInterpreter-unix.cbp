@@ -110,9 +110,6 @@
 		<Unit filename="PythonInterpCtrl.h" />
 		<Unit filename="PythonInterpreter.cpp" />
 		<Unit filename="PythonInterpreter.h" />
-		<Unit filename="Resources/dialogs.fbp">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
 		<Unit filename="ShellCtrlBase.cpp">
 			<Option target="default" />
 			<Option target="cbplugin" />
@@ -130,6 +127,9 @@
 			<code_completion />
 			<envvars />
 			<debugger />
+			<wxsmith version="1">
+				<gui name="wxWidgets" src="" main="" init_handlers="necessary" language="CPP" />
+			</wxsmith>
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

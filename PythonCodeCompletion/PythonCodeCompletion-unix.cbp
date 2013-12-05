@@ -54,6 +54,7 @@
 					<Add option="`wx-config --libs`" />
 					<Add option="`pkg-config --libs codeblocks`" />
 					<Add library="XmlRpcEmbedder" />
+					<Add directory="../XmlRpcEmbedder" />
 				</Linker>
 				<ExtraCommands>
 					<Add after="zip -j9 PythonCodeCompletion.zip manifest.xml" />

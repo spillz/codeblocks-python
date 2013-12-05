@@ -44,7 +44,8 @@
 				</Linker>
 				<ExtraCommands>
 					<Add after="zip -j9 PythonDebugger.zip manifest.xml Resources/debugger_options_dlg.xrc" />
-					<Add after="zip -r9 PythonDebugger.cbplugin PythonDebugger.so PyDebugger.zip" />
+					<Add after="zip -r9 PythonDebugger.cbplugin PythonDebugger.so PythonDebugger.zip" />
+					<Mode after="always" />
 				</ExtraCommands>
 			</Target>
 			<Environment>

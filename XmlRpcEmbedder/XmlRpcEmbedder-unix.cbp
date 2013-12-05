@@ -57,6 +57,25 @@
 					<Add option="`wx-config --libs`" />
 				</Linker>
 			</Target>
+			<Target title="cbPlugin">
+				<Option output="XmlRpcEmbedder" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option type="2" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-ansi" />
+					<Add option="-g" />
+					<Add option="`wx-config --cflags`" />
+					<Add option="-fmessage-length=0" />
+					<Add option="-fexceptions" />
+					<Add option="-Winvalid-pch" />
+					<Add option="-fPIC" />
+					<Add directory="XMLRPC/include" />
+				</Compiler>
+				<Linker>
+					<Add option="`wx-config --libs`" />
+				</Linker>
+			</Target>
 		</Build>
 		<VirtualTargets>
 			<Add alias="All" targets="LibCommon;" />
@@ -64,110 +83,137 @@
 		<Unit filename="ExecHiddenMSW.cpp">
 			<Option target="wxEmbedder" />
 			<Option target="LibCommon" />
+			<Option target="cbPlugin" />
 		</Unit>
 		<Unit filename="ExecHiddenMSW.h">
 			<Option target="wxEmbedder" />
 			<Option target="LibCommon" />
+			<Option target="cbPlugin" />
 		</Unit>
 		<Unit filename="XMLRPC/include/XmlRpc.h">
 			<Option target="XMLRPC" />
 			<Option target="LibCommon" />
+			<Option target="cbPlugin" />
 		</Unit>
 		<Unit filename="XMLRPC/include/XmlRpcClient.h">
 			<Option target="XMLRPC" />
 			<Option target="LibCommon" />
+			<Option target="cbPlugin" />
 		</Unit>
 		<Unit filename="XMLRPC/include/XmlRpcDispatch.h">
 			<Option target="XMLRPC" />
 			<Option target="LibCommon" />
+			<Option target="cbPlugin" />
 		</Unit>
 		<Unit filename="XMLRPC/include/XmlRpcException.h">
 			<Option target="XMLRPC" />
 			<Option target="LibCommon" />
+			<Option target="cbPlugin" />
 		</Unit>
 		<Unit filename="XMLRPC/include/XmlRpcServer.h">
 			<Option target="XMLRPC" />
 			<Option target="LibCommon" />
+			<Option target="cbPlugin" />
 		</Unit>
 		<Unit filename="XMLRPC/include/XmlRpcServerConnection.h">
 			<Option target="XMLRPC" />
 			<Option target="LibCommon" />
+			<Option target="cbPlugin" />
 		</Unit>
 		<Unit filename="XMLRPC/include/XmlRpcServerMethod.h">
 			<Option target="XMLRPC" />
 			<Option target="LibCommon" />
+			<Option target="cbPlugin" />
 		</Unit>
 		<Unit filename="XMLRPC/include/XmlRpcSocket.h">
 			<Option target="XMLRPC" />
 			<Option target="LibCommon" />
+			<Option target="cbPlugin" />
 		</Unit>
 		<Unit filename="XMLRPC/include/XmlRpcSource.h">
 			<Option target="XMLRPC" />
 			<Option target="LibCommon" />
+			<Option target="cbPlugin" />
 		</Unit>
 		<Unit filename="XMLRPC/include/XmlRpcUtil.h">
 			<Option target="XMLRPC" />
 			<Option target="LibCommon" />
+			<Option target="cbPlugin" />
 		</Unit>
 		<Unit filename="XMLRPC/include/XmlRpcValue.h">
 			<Option target="XMLRPC" />
 			<Option target="LibCommon" />
+			<Option target="cbPlugin" />
 		</Unit>
 		<Unit filename="XMLRPC/include/base64.h">
 			<Option target="XMLRPC" />
 			<Option target="LibCommon" />
+			<Option target="cbPlugin" />
 		</Unit>
 		<Unit filename="XMLRPC/src/XmlRpcClient.cpp">
 			<Option target="XMLRPC" />
 			<Option target="LibCommon" />
+			<Option target="cbPlugin" />
 		</Unit>
 		<Unit filename="XMLRPC/src/XmlRpcDispatch.cpp">
 			<Option target="XMLRPC" />
 			<Option target="LibCommon" />
+			<Option target="cbPlugin" />
 		</Unit>
 		<Unit filename="XMLRPC/src/XmlRpcServer.cpp">
 			<Option target="XMLRPC" />
 			<Option target="LibCommon" />
+			<Option target="cbPlugin" />
 		</Unit>
 		<Unit filename="XMLRPC/src/XmlRpcServerConnection.cpp">
 			<Option target="XMLRPC" />
 			<Option target="LibCommon" />
+			<Option target="cbPlugin" />
 		</Unit>
 		<Unit filename="XMLRPC/src/XmlRpcServerMethod.cpp">
 			<Option target="XMLRPC" />
 			<Option target="LibCommon" />
+			<Option target="cbPlugin" />
 		</Unit>
 		<Unit filename="XMLRPC/src/XmlRpcSocket.cpp">
 			<Option target="XMLRPC" />
 			<Option target="LibCommon" />
+			<Option target="cbPlugin" />
 		</Unit>
 		<Unit filename="XMLRPC/src/XmlRpcSource.cpp">
 			<Option target="XMLRPC" />
 			<Option target="LibCommon" />
+			<Option target="cbPlugin" />
 		</Unit>
 		<Unit filename="XMLRPC/src/XmlRpcUtil.cpp">
 			<Option target="XMLRPC" />
 			<Option target="LibCommon" />
+			<Option target="cbPlugin" />
 		</Unit>
 		<Unit filename="XMLRPC/src/XmlRpcValue.cpp">
 			<Option target="XMLRPC" />
 			<Option target="LibCommon" />
+			<Option target="cbPlugin" />
 		</Unit>
 		<Unit filename="XmlRpcEvents.cpp">
 			<Option target="wxEmbedder" />
 			<Option target="LibCommon" />
+			<Option target="cbPlugin" />
 		</Unit>
 		<Unit filename="XmlRpcEvents.h">
 			<Option target="wxEmbedder" />
 			<Option target="LibCommon" />
+			<Option target="cbPlugin" />
 		</Unit>
 		<Unit filename="xmlrpc_embedder.cpp">
 			<Option target="wxEmbedder" />
 			<Option target="LibCommon" />
+			<Option target="cbPlugin" />
 		</Unit>
 		<Unit filename="xmlrpc_embedder.h">
 			<Option target="wxEmbedder" />
 			<Option target="LibCommon" />
+			<Option target="cbPlugin" />
 		</Unit>
 		<Extensions>
 			<code_completion />

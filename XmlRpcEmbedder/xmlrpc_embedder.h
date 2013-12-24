@@ -46,7 +46,7 @@ class XmlRpcPipeClient;
 
 /////////////////////////////////////////////////////////////////////////////////////
 // XmlRpcInstance: The interface to an instance of a runninng XMLRPC server
-// each instantance launches an external server process then
+// each instance launches an external server process then
 // connects to the server via XMLRPC
 // The interface maintains a queue of jobs for the interpreter,
 // which are run in sequence as worker threads. a job is a single/multiple

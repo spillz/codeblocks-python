@@ -136,7 +136,7 @@ class PythonInterpCtrl : public ShellCtrlBase
         void OnPyCode(wxCommandEvent& event);
         void OnPyJobDone(wxCommandEvent& event);
         void OnPyJobAbort(wxCommandEvent& event);
-        void OnEndProcess(wxCommandEvent &ce);
+        void OnEndProcess(wxCommandEvent& event);
 
         bool DispatchCode(const wxString &code);
 

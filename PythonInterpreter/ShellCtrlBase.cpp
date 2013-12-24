@@ -72,12 +72,15 @@ ShellCtrlBase::ShellCtrlBase(wxWindow* parent, int id, const wxString &name, She
 }
 
 
+DEFINE_EVENT_TYPE(wxEVT_SHELL_ADD_CLICKED)
+
 ////////////////////////////////////// ShellManager /////////////////////////////////////////////
 
 BEGIN_EVENT_TABLE(ShellManager, wxPanel)
     EVT_CHAR(ShellManager::OnUserInput)
     EVT_TIMER(ID_SHELLPOLLTIMER, ShellManager::OnPollandSyncOutput)
     EVT_AUINOTEBOOK_PAGE_CLOSE(ID_SHELLMGR, ShellManager::OnPageClosing)
+    EVT_AUINOTEBOOK_PAGE_CHANGING(ID_SHELLMGR, ShellManager::OnPageChanging)
 END_EVENT_TABLE()
 
 
@@ -87,8 +90,23 @@ void ShellManager::OnPageClosing(wxAuiNotebookEvent& event)
     //    LOGSTREAM << wxString::Format(_T("OnPageClosing(): ed=%p, title=%s\n"), eb, eb ? eb->GetTitle().c_str() : _T(""));
     if (!QueryClose(sh))
         event.Veto();
+    m_nb->SetSelection(0);
 //    event.Skip(); // allow others to process it too
 }
+
+
+void ShellManager::OnPageChanging(wxAuiNotebookEvent& event)
+{
+    if(event.GetSelection() == int(m_nb->GetPageCount()-1))
+    {
+        wxCommandEvent pe(wxEVT_SHELL_ADD_CLICKED,0);
+        AddPendingEvent(pe);
+        event.Veto();
+        return;
+    }
+    event.Skip();
+}
+
 
 
 bool ShellManager::QueryClose(ShellCtrlBase* sh)
@@ -134,10 +152,11 @@ long ShellManager::LaunchProcess(const wxString &processcmd, const wxString &nam
         delete shell; //TODO: GlobalShellRegistry.FreeControl() ???
         return -1;
     }
-    m_nb->AddPage(shell,name);
-    m_nb->SetSelection(m_nb->GetPageCount()-1);
+    m_nb->InsertPage(m_nb->GetPageCount()-1,shell,name);
+    m_nb->SetSelection(m_nb->GetPageCount()-2);
 //    shell->Show();
     return procid;
+
 }
 
 ShellCtrlBase *ShellManager::GetPage(size_t i)
@@ -147,7 +166,7 @@ ShellCtrlBase *ShellManager::GetPage(size_t i)
 
 ShellCtrlBase *ShellManager::GetPage(const wxString &name)
 {
-    for(unsigned int i=0;i<m_nb->GetPageCount();i++)
+    for(unsigned int i=0;i<m_nb->GetPageCount()-1;i++)
     {
         ShellCtrlBase *sh=GetPage(i);
         if(name==sh->GetName())
@@ -169,7 +188,7 @@ void ShellManager::KillWindow(int /*id*/)
 void ShellManager::RemoveDeadPages()
 {
     unsigned int i=0;
-    while(i<m_nb->GetPageCount())
+    while(i<m_nb->GetPageCount()-1)
     {
         ShellCtrlBase *shell=GetPage(i);
         if(shell->IsDead())
@@ -182,7 +201,7 @@ void ShellManager::RemoveDeadPages()
 
 size_t ShellManager::GetTermNum(ShellCtrlBase *term)
 {
-    for(unsigned int i=0;i<m_nb->GetPageCount();i++)
+    for(unsigned int i=0;i<m_nb->GetPageCount()-1;i++)
     {
         ShellCtrlBase *shell=GetPage(i);
         if(shell==term)
@@ -194,7 +213,7 @@ size_t ShellManager::GetTermNum(ShellCtrlBase *term)
 int ShellManager::NumAlive()
 {
     int count=0;
-    for(unsigned int i=0;i<m_nb->GetPageCount();i++)
+    for(unsigned int i=0;i<m_nb->GetPageCount()-1;i++)
         count+=!GetPage(i)->IsDead();
     return count;
 }
@@ -203,7 +222,8 @@ int ShellManager::NumAlive()
 void ShellManager::OnShellTerminate(ShellCtrlBase *term)
 {
     size_t i=GetTermNum(term);
-    m_nb->SetPageText(i,_("[DONE]")+m_nb->GetPageText(i));
+    if(i<m_nb->GetPageCount()-1)
+        m_nb->SetPageText(i,_("[DONE]")+m_nb->GetPageText(i));
     if(NumAlive()==0)
         m_synctimer.Stop();
 }
@@ -211,7 +231,7 @@ void ShellManager::OnShellTerminate(ShellCtrlBase *term)
 
 void ShellManager::OnPollandSyncOutput(wxTimerEvent& /*te*/)
 {
-    for(unsigned int i=0;i<m_nb->GetPageCount();i++)
+    for(unsigned int i=0;i<m_nb->GetPageCount()-1;i++)
     {
         GetPage(i)->SyncOutput();
     }
@@ -230,6 +250,9 @@ ShellManager::ShellManager(wxWindow* parent)
     wxBoxSizer* bs = new wxBoxSizer(wxVERTICAL);
     m_nb = new wxAuiNotebook(this, ID_SHELLMGR, wxDefaultPosition, wxDefaultSize, wxAUI_NB_SCROLL_BUTTONS|wxAUI_NB_CLOSE_ON_ACTIVE_TAB);
     bs->Add(m_nb, 1, wxEXPAND | wxALL);
+    wxBitmap bm = wxArtProvider::GetBitmap(wxART_NEW);
+    wxButton *wnd = new wxButton(this, wxID_ANY);
+    m_nb->AddPage(wnd,_(""),false,bm);
     SetAutoLayout(TRUE);
     SetSizer(bs);
 }

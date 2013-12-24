@@ -48,6 +48,7 @@ class PythonInterpreter : public cbPlugin
     public:
 
     private:
+        void AddNewInterpreter(wxCommandEvent &event);
         void OnToggleInterpreterWindow(wxCommandEvent &event);
         void OnUpdateUI(wxUpdateUIEvent& event);
         wxMenu *m_ViewMenu;

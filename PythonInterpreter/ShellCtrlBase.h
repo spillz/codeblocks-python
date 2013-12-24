@@ -114,6 +114,11 @@ class ShellCtrlBase : public wxPanel //TODO: make wxPanel a member, not a base??
 };
 
 
+BEGIN_DECLARE_EVENT_TYPES()
+DECLARE_LOCAL_EVENT_TYPE(wxEVT_SHELL_ADD_CLICKED, -1)
+END_DECLARE_EVENT_TYPES()
+
+
 class ShellManager : public wxPanel
 {
     friend class ShellCtrlBase;
@@ -133,6 +138,7 @@ class ShellManager : public wxPanel
         void OnUserInput(wxKeyEvent& ke);
         void OnPollandSyncOutput(wxTimerEvent& te);
         void OnPageClosing(wxAuiNotebookEvent& event);
+        void OnPageChanging(wxAuiNotebookEvent& event);
         bool QueryClose(ShellCtrlBase* sh);
         //Responders to friend class ShellCtrlBase
         size_t GetTermNum(ShellCtrlBase *term);

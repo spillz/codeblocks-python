@@ -179,7 +179,7 @@ BEGIN_EVENT_TABLE(PythonInterpCtrl, wxPanel)
     EVT_XMLRPC_RESPONSE(wxID_ANY, PythonInterpCtrl::OnPyNotify)
 //    EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_CODEOK, PythonInterpCtrl::OnPyCode)
 //    EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_INPUT, PythonInterpCtrl::OnLineInputRequest)
-    EVT_COMMAND(0, wxEVT_PY_PROC_END, PythonInterpCtrl::OnEndProcess)
+    EVT_COMMAND(0, wxEVT_XMLRPC_PROC_END, PythonInterpCtrl::OnEndProcess)
 
     EVT_SIZE    (PythonInterpCtrl::OnSize)
 END_EVENT_TABLE()
@@ -211,10 +211,10 @@ long PythonInterpCtrl::LaunchProcess(const wxString &processcmd, const wxArraySt
 {
     if(!IsDead())
         return -1;
+//TODO: Option to use XMLRPC over localhost or pipe, currently always use localhost
     m_port=m_portalloc.RequestPort();
     if(m_port<0)
         return -1;
-//TODO: XmlRpc over pipe doesn't work because of the way interp.py is implemented
 //    m_port = -1; //Use XmlRpc over pipe
     //TODO: get the command and working dir from config
 #ifdef __WXMSW__
@@ -243,7 +243,7 @@ long PythonInterpCtrl::LaunchProcess(const wxString &processcmd, const wxArraySt
     if(!global&&!local) //No interpreter script found, return failure.
         return -2; //TODO: Return meaningful messages (or at least use the codeblocks logger)
 
-    m_pyinterp = new XmlRpcInstance(cmd,m_port);
+    m_pyinterp = new XmlRpcInstance(cmd,m_port,_T("localhost"),this);
     if(m_pyinterp->IsDead())
     {
         Manager::Get()->GetLogManager()->Log(_("Error Starting Interpreter"));
@@ -373,7 +373,7 @@ void PythonInterpCtrl::OnPyJobAbort(wxCommandEvent& event)
     m_code=_T("");
 }
 
-void PythonInterpCtrl::OnEndProcess(wxCommandEvent &ce)
+void PythonInterpCtrl::OnEndProcess(wxCommandEvent& event)
 {
     m_portalloc.ReleasePort(m_port);
     if(m_shellmgr)

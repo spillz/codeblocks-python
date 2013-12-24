@@ -40,6 +40,7 @@ BEGIN_EVENT_TABLE(PythonInterpreter, cbPlugin)
 	// add any events you want to handle here
     EVT_MENU(ID_INTERP_WINDOW_TOGGLE,PythonInterpreter::OnToggleInterpreterWindow)
     EVT_UPDATE_UI(ID_INTERP_WINDOW_TOGGLE, PythonInterpreter::OnUpdateUI)
+    EVT_COMMAND(0,wxEVT_SHELL_ADD_CLICKED, PythonInterpreter::AddNewInterpreter)
 END_EVENT_TABLE()
 
 
@@ -100,10 +101,17 @@ void PythonInterpreter::OnAttach()
     Manager::Get()->ProcessEvent(evt);
 
     //TODO: Add UI to open a terminal instead of opening on attach
-    wxArrayString as;
-    m_shellmgr->LaunchProcess(_T(""),_T("Python"),_("Python Interpreter"),as);
+//    wxArrayString as;
+//    m_shellmgr->LaunchProcess(_T(""),_T("Python"),_("Python Interpreter"),as);
 #endif
 }
+
+void PythonInterpreter::AddNewInterpreter(wxCommandEvent &event)
+{
+    wxArrayString as;
+    m_shellmgr->LaunchProcess(_T(""),_T("Python"),_("Python Interpreter"),as);
+}
+
 
 void PythonInterpreter::OnRelease(bool appShutDown)
 {

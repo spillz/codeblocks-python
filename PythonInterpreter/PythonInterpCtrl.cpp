@@ -115,6 +115,37 @@ void PythonCodeCtrl::OnUserInput(wxKeyEvent& ke)
             m_pyctrl->DispatchCode(GetValue());
             return;
         }
+        if(ke.GetKeyCode()==WXK_UP) //TODO: If the text is ever changed, set m_history_position to -1
+        {
+            if (m_history_position < 0)
+                m_history_working = GetValue();
+            m_history_position--;
+            if (m_history_position < -1)
+                m_history_position = m_history_commands.GetCount()-1;
+            if (m_history_position >= 0)
+                SetValue(m_history_commands[m_history_position]);
+            else
+                SetValue(m_history_working);
+            int pos = GetLastPosition();
+            SetSelection(pos,pos);
+            return;
+        }
+        if(ke.GetKeyCode()==WXK_DOWN)
+        {
+            if (m_history_position < 0)
+                m_history_working = GetValue();
+            m_history_position++;
+            if (m_history_position >= int(m_history_commands.GetCount()))
+                m_history_position = -1;
+            if (m_history_position >= 0)
+                SetValue(m_history_commands[m_history_position]);
+            else
+                SetValue(m_history_working);
+            int pos = GetLastPosition();
+            SetSelection(pos,pos);
+            return;
+        }
+
     }
     if(ke.GetModifiers()==wxMOD_NONE && ke.GetKeyCode()==WXK_RETURN)
     {
@@ -244,6 +275,8 @@ bool PythonInterpCtrl::DispatchCode(const wxString &code)
     if(m_pyinterp->IsJobRunning())
         return false;
     m_code=code;
+    m_codectrl->m_history_commands.Add(code);
+    m_codectrl->m_history_position = -1;
     if (RunCode(wxString(code.c_str())))
     {
         m_codectrl->Enable(false);

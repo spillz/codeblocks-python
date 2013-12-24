@@ -38,6 +38,9 @@ public:
     PythonCodeCtrl(wxWindow *parent, PythonInterpCtrl *py);
     void OnUserInput(wxKeyEvent& ke);
     PythonInterpCtrl *m_pyctrl;
+    wxArrayString m_history_commands;
+    wxString m_history_working;
+    int m_history_position;
     DECLARE_EVENT_TABLE()
 };
 

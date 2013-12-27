@@ -211,11 +211,11 @@ long PythonInterpCtrl::LaunchProcess(const wxString &processcmd, const wxArraySt
 {
     if(!IsDead())
         return -1;
-//TODO: Option to use XMLRPC over localhost or pipe, currently always use localhost
-    m_port=m_portalloc.RequestPort();
-    if(m_port<0)
-        return -1;
-//    m_port = -1; //Use XmlRpc over pipe
+//TODO: Option to use XMLRPC over localhost or pipe, currently always use pipe
+//    m_port=m_portalloc.RequestPort(); //TODO: Request port limited to 3 ports
+//    if(m_port<0)
+//        return -1;
+    m_port = -1; //Use XmlRpc over pipe
     //TODO: get the command and working dir from config
 #ifdef __WXMSW__
 //    wxString cmd=_T("cmd /c interp.py ")+wxString::Format(_T(" %i"),m_port); //TODO: this could have process destruction issues on earlier version of wxWidgets (kills cmd, but not python)
@@ -338,6 +338,11 @@ void PythonInterpCtrl::OnPyNotify(XmlRpcResponseEvent& event)
         //Otherwise it's an error (-1 syntax error, -2 statement incomplete, -3 code already running
         m_codectrl->Enable();
         m_codectrl->SetFocus();
+    } else
+    {
+        if (event.GetState()==XMLRPC_STATE_REQUEST_FAILED)
+            Manager::Get()->GetLogManager()->LogError(_T("Error parsing response from python interpreter console\n")+wxString(event.GetResponse().toXml().c_str(),wxConvUTF8));
+        //Maybe show a popup?
     }
     //TODO: If not in error and more input available, need to call RunCode("cont")
 }

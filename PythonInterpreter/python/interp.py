@@ -13,6 +13,22 @@ o_stdout = sys.stdout
 
 isz=struct.calcsize('I')
 
+DEBUG=False
+
+if DEBUG:
+    f = open(os.path.join(os.path.expanduser("~"),'pyinterp.log'),'w')
+    def logmsg(msg,*kargs):
+        f.write(str(msg))
+        f.write('\n')
+        for x in kargs:
+            f.write('~~~'+str(kargs))
+            f.write('\n')
+        f.flush()
+else:
+    def logmsg(msg,*kargs):
+        return
+
+
 class XmlRpcPipeServer:
     '''
     A simple XMLRPC server implementation that uses the stdin, stdout
@@ -23,8 +39,6 @@ class XmlRpcPipeServer:
         self.fn_dict={}
         self.inpipe=o_stdin
         self.outpipe=o_stdout
-        sys.stdout=open(os.devnull,'wb')
-        sys.stderr=open(os.devnull,'wb')
 
     def register_function(self,fn,name):
         self.fn_dict[name]=fn
@@ -42,8 +56,7 @@ class XmlRpcPipeServer:
         try:
             args,name = xmlrpclib.loads(call_xml)
             result = self.__call__(name, *args)
-            if not isinstance(result,tuple):
-                result=(result,)
+            result=(result,) #response must always be a length 1 tuple
         except:
             import traceback
             result ='Error running call '+name+'\n'+call_xml+'\n'
@@ -52,6 +65,7 @@ class XmlRpcPipeServer:
         try:
             res_xml = bytes(xmlrpclib.dumps(result, methodresponse=True))
         except:
+            import traceback
             res_xml = bytes(xmlrpclib.dumps('Method result of length %i could not be converted to XML'%(len(res_xml)), methodresponse=True))
         size = len(res_xml)
         self.outpipe.write(struct.pack('I',size))
@@ -63,18 +77,6 @@ class XmlRpcPipeServer:
 
 
 
-DEBUG=False
-
-if DEBUG:
-    def logmsg(msg,*kargs):
-        print >>sys.__stdout__,msg,
-        for x in kargs:
-            print >>sys.__stdout__,x,
-        print >>sys.__stdout__,''
-else:
-    def logmsg(msg,*kargs):
-        return
-
 class datastore:
     def __init__(self):
         self.data=''
@@ -84,7 +86,7 @@ class datastore:
         self.lock.acquire()
         self.data=self.data+textstr
         self.lock.release()
-    def flush(self):
+    def flush(self): ##TODO: Probably don't really want to do this!! (Clears out the data in the stream)
         self.lock.acquire()
         self.data=''
         self.lock.release()
@@ -94,18 +96,6 @@ class datastore:
         self.data=''
         self.lock.release()
         return data
-        if size:
-            self.lock.acquire()
-            while 1:
-                if(len(self.data)>=size):
-                    line=self.data[:size]
-                    self.data=self.data[size:]
-                    self.lock.release()
-                    logmsg('received',size,' chars of text:',line)
-                    return line
-                self.inputrequest=True
-                self.lock.wait()
-                self.inputrequest=False
     def readline(self):
         #check data for a full line (terminated by \n or EOF(?))
         #if the line is there, extract it and return
@@ -120,7 +110,7 @@ class datastore:
                 line=self.data[:ind+1]
                 self.data=self.data[ind+1:]
                 self.lock.release()
-                logmsg('received line of text:',line)
+                logmsg('stdin: received line of text:',line)
                 return line
             self.inputrequest=True
             self.lock.wait()
@@ -156,14 +146,16 @@ class PyInterp (code.InteractiveInterpreter):
             return True
         else:
             return False
+    def write(self, data):
+        self._stderr.write(data)
     def main_loop(self):
         while self._running: #runs the eval_str queued by the server, then waits for the next eval_str. the loop ends when the server requests exit
             try:
                 if self.eval_str!='':
-                    logmsg('running code ',self.eval_str)
+                    logmsg('interp: running code ',self.eval_str)
                     try:
                         self.runsource(self.eval_str+'\n')
-                        logmsg('ran code')
+                        logmsg('interp: ran code')
                     except KeyboardInterrupt:
                         print 'Keyboard Interrupt'
                     except:
@@ -215,7 +207,7 @@ class AsyncServer(threading.Thread):
         self.lock.release()
         return self.cont(None)
     def run_code(self,eval_str,stdin):
-        logmsg("compiling code")
+        logmsg("compiling code",eval_str,stdin)
         try:
             cobj=code.compile_command(eval_str)
         except:
@@ -242,7 +234,6 @@ class AsyncServer(threading.Thread):
         result=(int(self.interp._runningeval),self.interp._stdout.read(),self.interp._stderr.read(),self.interp._stdin.HasInputRequest())
         logmsg('returning result ',result)
         return result
-        #return status, stdout, stderr
     def break_code(self):
         if self.interp._runningeval:
             raise KeyboardInterrupt

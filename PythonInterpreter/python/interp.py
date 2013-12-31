@@ -4,17 +4,78 @@ import threading
 import time
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 
+import os
+import struct
+import xmlrpclib
+
+o_stdin = sys.stdin
+o_stdout = sys.stdout
+
+isz=struct.calcsize('I')
+
 DEBUG=False
 
 if DEBUG:
+    f = open(os.path.join(os.path.expanduser("~"),'pyinterp.log'),'w')
     def logmsg(msg,*kargs):
-        print >>sys.__stdout__,msg,
+        f.write(str(msg))
+        f.write('\n')
         for x in kargs:
-            print >>sys.__stdout__,x,
-        print >>sys.__stdout__,''
+            f.write('~~~'+str(kargs))
+            f.write('\n')
+        f.flush()
 else:
     def logmsg(msg,*kargs):
         return
+
+
+class XmlRpcPipeServer:
+    '''
+    A simple XMLRPC server implementation that uses the stdin, stdout
+    pipes to communicate with the owner of the process. Implements
+    most of the features of SimpleXMLRPCServer
+    '''
+    def __init__(self):
+        self.fn_dict={}
+        self.inpipe=o_stdin
+        self.outpipe=o_stdout
+
+    def register_function(self,fn,name):
+        self.fn_dict[name]=fn
+
+    def register_introspection_functions(self):
+        pass
+
+    def handle_request(self):
+        ##TODO: Need more error handling!
+        size_buf = self.inpipe.read(isz)
+        size = struct.unpack('I',size_buf)[0]
+        call_xml = self.inpipe.read(size)
+        self.outpipe.write(struct.pack('c','M'))
+        name=''
+        try:
+            args,name = xmlrpclib.loads(call_xml)
+            result = self.__call__(name, *args)
+            result=(result,) #response must always be a length 1 tuple
+        except:
+            import traceback
+            result ='Error running call '+name+'\n'+call_xml+'\n'
+            result += '\n'.join(traceback.format_exception(*sys.exc_info()))
+            result = (result,)
+        try:
+            res_xml = bytes(xmlrpclib.dumps(result, methodresponse=True))
+        except:
+            import traceback
+            res_xml = bytes(xmlrpclib.dumps('Method result of length %i could not be converted to XML'%(len(res_xml)), methodresponse=True))
+        size = len(res_xml)
+        self.outpipe.write(struct.pack('I',size))
+        self.outpipe.write(res_xml)
+        self.outpipe.flush()
+
+    def __call__(self,name,*args):
+        return self.fn_dict[name](*args)
+
+
 
 class datastore:
     def __init__(self):
@@ -25,7 +86,7 @@ class datastore:
         self.lock.acquire()
         self.data=self.data+textstr
         self.lock.release()
-    def flush(self):
+    def flush(self): ##TODO: Probably don't really want to do this!! (Clears out the data in the stream)
         self.lock.acquire()
         self.data=''
         self.lock.release()
@@ -35,18 +96,6 @@ class datastore:
         self.data=''
         self.lock.release()
         return data
-        if size:
-            self.lock.acquire()
-            while 1:
-                if(len(self.data)>=size):
-                    line=self.data[:size]
-                    self.data=self.data[size:]
-                    self.lock.release()
-                    logmsg('received',size,' chars of text:',line)
-                    return line
-                self.inputrequest=True
-                self.lock.wait()
-                self.inputrequest=False
     def readline(self):
         #check data for a full line (terminated by \n or EOF(?))
         #if the line is there, extract it and return
@@ -61,7 +110,7 @@ class datastore:
                 line=self.data[:ind+1]
                 self.data=self.data[ind+1:]
                 self.lock.release()
-                logmsg('received line of text:',line)
+                logmsg('stdin: received line of text:',line)
                 return line
             self.inputrequest=True
             self.lock.wait()
@@ -97,14 +146,16 @@ class PyInterp (code.InteractiveInterpreter):
             return True
         else:
             return False
+    def write(self, data):
+        self._stderr.write(data)
     def main_loop(self):
         while self._running: #runs the eval_str queued by the server, then waits for the next eval_str. the loop ends when the server requests exit
             try:
                 if self.eval_str!='':
-                    logmsg('running code '+self.eval_str)
+                    logmsg('interp: running code ',self.eval_str)
                     try:
                         self.runsource(self.eval_str+'\n')
-                        logmsg('ran code')
+                        logmsg('interp: ran code')
                     except KeyboardInterrupt:
                         print 'Keyboard Interrupt'
                     except:
@@ -134,7 +185,10 @@ class AsyncServer(threading.Thread):
     def start_interp(self):
         self.interp.main_loop()
     def run(self):
-        self.server = SimpleXMLRPCServer(("localhost", self.port))
+        if self.port==-1:
+            self.server = XmlRpcPipeServer()
+        else:
+            self.server = SimpleXMLRPCServer(("localhost", self.port))
         self.server.logRequests=0
         self.server.register_introspection_functions()
         #self.server.socket.settimeout(self.timeout) ##timeouts cause probs
@@ -151,9 +205,9 @@ class AsyncServer(threading.Thread):
         self._quit=True
         self.lock.notify()
         self.lock.release()
-        return "Session Terminated"
+        return self.cont(None)
     def run_code(self,eval_str,stdin):
-        logmsg("compiling code")
+        logmsg("compiling code",eval_str,stdin)
         try:
             cobj=code.compile_command(eval_str)
         except:
@@ -162,14 +216,15 @@ class AsyncServer(threading.Thread):
         if cobj==None:
             logmsg("statement incomplete")
             return -2,'','',False
-        logmsg("running code "+eval_str)
+        logmsg("running code ",eval_str)
         if self.interp.queue_code(eval_str):
             return self.cont(stdin)
         else:
             return -3,self.interp._stdout.read(),self.interp._stderr.read(),self.interp._stdin.HasInputRequest()
     def cont(self,stdin):
-        logmsg('continuing with stdin: '+stdin)
-        self.interp._stdin.write(stdin)
+        logmsg('continuing with stdin: ',stdin)
+        if stdin is not None:
+            self.interp._stdin.write(stdin)
         if self.interp._stdin.HasInputRequest():
             self.interp._stdin.InputRequestNotify()
         self.lock.acquire()
@@ -179,11 +234,14 @@ class AsyncServer(threading.Thread):
         result=(int(self.interp._runningeval),self.interp._stdout.read(),self.interp._stderr.read(),self.interp._stdin.HasInputRequest())
         logmsg('returning result ',result)
         return result
-        #return status, stdout, stderr
+    def break_code(self):
+        if self.interp._runningeval:
+            raise KeyboardInterrupt
+        return self.cont(None)
 
 def cmd_err():
     print 'Correct usage: pyinterp.py <port>'
-    print '<port> must be a positive integer'
+    print '<port> must be a port number or -1 for a pipe'
     exit()
 
 
@@ -194,7 +252,7 @@ if __name__ == '__main__':
         port = int(sys.argv[1])
     except:
         cmd_err()
-    if port<=0:
+    if port<-1:
         cmd_err()
 
     logmsg('starting server on port', port)

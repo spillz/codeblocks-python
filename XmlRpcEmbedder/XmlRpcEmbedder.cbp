@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="XmlRpcEmbedder" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="XMLRPC">
+				<Option output="XMLRPC/XmlRpc" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option type="2" />
+				<Option compiler="gcc" />
+				<Option createDefFile="1" />
+				<Compiler>
+					<Add option="-D_WINDOWS" />
+					<Add directory="XMLRPC/include" />
+				</Compiler>
+				<Linker>
+					<Add library="Ws2_32" />
+				</Linker>
+			</Target>
+			<Target title="wxEmbedder">
+				<Option output="$(#cb)/devel/XmlRpcEmbedder" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="$(#cb)/devel" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+					<Add option="-pipe" />
+					<Add option="-mthreads" />
+					<Add option="-fmessage-length=0" />
+					<Add option="-fexceptions" />
+					<Add option="-Winvalid-pch" />
+					<Add option="-D__GNUWIN32__" />
+					<Add option="-D__WXMSW__" />
+					<Add option="-DWXUSINGDLL" />
+					<Add option="-DwxUSE_UNICODE" />
+					<Add option="-D_WINDOWS" />
+					<Add directory="$(#wx)/include" />
+					<Add directory="$(#wx)/lib/gcc_dll/mswu" />
+					<Add directory="XMLRPC/include" />
+				</Compiler>
+				<Linker>
+					<Add library="wxmsw28u" />
+					<Add library="Ws2_32" />
+					<Add library="XmlRpc" />
+					<Add directory="$(#wx)/lib/gcc_dll" />
+					<Add directory="XMLRPC" />
+				</Linker>
+			</Target>
+			<Target title="wxEmbedder-MonoDLL">
+				<Option output="$(#cb)/devel/XmlRpcEmbedder" prefix_auto="1" extension_auto="1" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-pipe" />
+					<Add option="-mthreads" />
+					<Add option="-fmessage-length=0" />
+					<Add option="-fexceptions" />
+					<Add option="-Winvalid-pch" />
+					<Add option="-D__GNUWIN32__" />
+					<Add option="-D__WXMSW__" />
+					<Add option="-DWXUSINGDLL" />
+					<Add option="-DwxUSE_UNICODE" />
+					<Add option="-D_WINDOWS" />
+					<Add directory="$(#wx)/lib/gcc_dll/mswu" />
+					<Add directory="$(#wx)/include" />
+					<Add directory="XMLRPC/include" />
+				</Compiler>
+				<Linker>
+					<Add library="Ws2_32" />
+					<Add library="libwxmsw28u.a" />
+					<Add directory="$(#wx)/lib/gcc_dll" />
+				</Linker>
+			</Target>
+			<Target title="wxEmbedder-Mono">
+				<Option output="XmlRpcEmbedder" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option type="2" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-pipe" />
+					<Add option="-mthreads" />
+					<Add option="-fmessage-length=0" />
+					<Add option="-fexceptions" />
+					<Add option="-Winvalid-pch" />
+					<Add option="-D__GNUWIN32__" />
+					<Add option="-D__WXMSW__" />
+					<Add option="-DWXUSINGDLL" />
+					<Add option="-DwxUSE_UNICODE" />
+					<Add option="-D_WINDOWS" />
+					<Add directory="$(#wx)/lib/gcc_dll/mswu" />
+					<Add directory="$(#wx)/include" />
+					<Add directory="XMLRPC/include" />
+				</Compiler>
+				<Linker>
+					<Add library="Ws2_32" />
+					<Add library="libwxmsw28u.a" />
+					<Add directory="$(#wx)/lib/gcc_dll" />
+				</Linker>
+			</Target>
+		</Build>
+		<VirtualTargets>
+			<Add alias="All" targets="wxEmbedder-MonoDLL;" />
+		</VirtualTargets>
+		<Unit filename="ExecHiddenMSW.cpp">
+			<Option target="wxEmbedder" />
+			<Option target="wxEmbedder-MonoDLL" />
+			<Option target="wxEmbedder-Mono" />
+		</Unit>
+		<Unit filename="ExecHiddenMSW.h">
+			<Option target="wxEmbedder" />
+			<Option target="wxEmbedder-MonoDLL" />
+			<Option target="wxEmbedder-Mono" />
+		</Unit>
+		<Unit filename="XMLRPC/include/XmlRpc.h">
+			<Option target="XMLRPC" />
+			<Option target="wxEmbedder-MonoDLL" />
+			<Option target="wxEmbedder-Mono" />
+		</Unit>
+		<Unit filename="XMLRPC/include/XmlRpcClient.h">
+			<Option target="XMLRPC" />
+			<Option target="wxEmbedder-MonoDLL" />
+			<Option target="wxEmbedder-Mono" />
+		</Unit>
+		<Unit filename="XMLRPC/include/XmlRpcDispatch.h">
+			<Option target="XMLRPC" />
+			<Option target="wxEmbedder-MonoDLL" />
+			<Option target="wxEmbedder-Mono" />
+		</Unit>
+		<Unit filename="XMLRPC/include/XmlRpcException.h">
+			<Option target="XMLRPC" />
+			<Option target="wxEmbedder-MonoDLL" />
+			<Option target="wxEmbedder-Mono" />
+		</Unit>
+		<Unit filename="XMLRPC/include/XmlRpcServer.h">
+			<Option target="XMLRPC" />
+			<Option target="wxEmbedder-MonoDLL" />
+			<Option target="wxEmbedder-Mono" />
+		</Unit>
+		<Unit filename="XMLRPC/include/XmlRpcServerConnection.h">
+			<Option target="XMLRPC" />
+			<Option target="wxEmbedder-MonoDLL" />
+			<Option target="wxEmbedder-Mono" />
+		</Unit>
+		<Unit filename="XMLRPC/include/XmlRpcServerMethod.h">
+			<Option target="XMLRPC" />
+			<Option target="wxEmbedder-MonoDLL" />
+			<Option target="wxEmbedder-Mono" />
+		</Unit>
+		<Unit filename="XMLRPC/include/XmlRpcSocket.h">
+			<Option target="XMLRPC" />
+			<Option target="wxEmbedder-MonoDLL" />
+			<Option target="wxEmbedder-Mono" />
+		</Unit>
+		<Unit filename="XMLRPC/include/XmlRpcSource.h">
+			<Option target="XMLRPC" />
+			<Option target="wxEmbedder-MonoDLL" />
+			<Option target="wxEmbedder-Mono" />
+		</Unit>
+		<Unit filename="XMLRPC/include/XmlRpcUtil.h">
+			<Option target="XMLRPC" />
+			<Option target="wxEmbedder-MonoDLL" />
+			<Option target="wxEmbedder-Mono" />
+		</Unit>
+		<Unit filename="XMLRPC/include/XmlRpcValue.h">
+			<Option target="XMLRPC" />
+			<Option target="wxEmbedder-MonoDLL" />
+			<Option target="wxEmbedder-Mono" />
+		</Unit>
+		<Unit filename="XMLRPC/include/base64.h">
+			<Option target="XMLRPC" />
+			<Option target="wxEmbedder-MonoDLL" />
+			<Option target="wxEmbedder-Mono" />
+		</Unit>
+		<Unit filename="XMLRPC/src/XmlRpcClient.cpp">
+			<Option target="XMLRPC" />
+			<Option target="wxEmbedder-MonoDLL" />
+			<Option target="wxEmbedder-Mono" />
+		</Unit>
+		<Unit filename="XMLRPC/src/XmlRpcDispatch.cpp">
+			<Option target="XMLRPC" />
+			<Option target="wxEmbedder-MonoDLL" />
+			<Option target="wxEmbedder-Mono" />
+		</Unit>
+		<Unit filename="XMLRPC/src/XmlRpcServer.cpp">
+			<Option target="XMLRPC" />
+			<Option target="wxEmbedder-MonoDLL" />
+			<Option target="wxEmbedder-Mono" />
+		</Unit>
+		<Unit filename="XMLRPC/src/XmlRpcServerConnection.cpp">
+			<Option target="XMLRPC" />
+			<Option target="wxEmbedder-MonoDLL" />
+			<Option target="wxEmbedder-Mono" />
+		</Unit>
+		<Unit filename="XMLRPC/src/XmlRpcServerMethod.cpp">
+			<Option target="XMLRPC" />
+			<Option target="wxEmbedder-MonoDLL" />
+			<Option target="wxEmbedder-Mono" />
+		</Unit>
+		<Unit filename="XMLRPC/src/XmlRpcSocket.cpp">
+			<Option target="XMLRPC" />
+			<Option target="wxEmbedder-MonoDLL" />
+			<Option target="wxEmbedder-Mono" />
+		</Unit>
+		<Unit filename="XMLRPC/src/XmlRpcSource.cpp">
+			<Option target="XMLRPC" />
+			<Option target="wxEmbedder-MonoDLL" />
+			<Option target="wxEmbedder-Mono" />
+		</Unit>
+		<Unit filename="XMLRPC/src/XmlRpcUtil.cpp">
+			<Option target="XMLRPC" />
+			<Option target="wxEmbedder-MonoDLL" />
+			<Option target="wxEmbedder-Mono" />
+		</Unit>
+		<Unit filename="XMLRPC/src/XmlRpcValue.cpp">
+			<Option target="XMLRPC" />
+			<Option target="wxEmbedder-MonoDLL" />
+			<Option target="wxEmbedder-Mono" />
+		</Unit>
+		<Unit filename="XmlRpcEvents.cpp">
+			<Option target="wxEmbedder" />
+			<Option target="wxEmbedder-MonoDLL" />
+			<Option target="wxEmbedder-Mono" />
+		</Unit>
+		<Unit filename="XmlRpcEvents.h">
+			<Option target="wxEmbedder" />
+			<Option target="wxEmbedder-MonoDLL" />
+			<Option target="wxEmbedder-Mono" />
+		</Unit>
+		<Unit filename="xmlrpc_embedder.cpp">
+			<Option target="wxEmbedder" />
+			<Option target="wxEmbedder-MonoDLL" />
+			<Option target="wxEmbedder-Mono" />
+		</Unit>
+		<Unit filename="xmlrpc_embedder.h">
+			<Option target="wxEmbedder" />
+			<Option target="wxEmbedder-MonoDLL" />
+			<Option target="wxEmbedder-Mono" />
+		</Unit>
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

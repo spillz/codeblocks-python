@@ -7,8 +7,8 @@
  * License:   GPL
  **************************************************************/
 
-#ifndef PyDebugger_H_INCLUDED
-#define PyDebugger_H_INCLUDED
+#ifndef PYTHONDEBUGGER_H_INCLUDED
+#define PYTHONDEBUGGER_H_INCLUDED
 
 // For compilers that support precompilation, includes <wx/wx.h>
 #include <wx/wxprec.h>
@@ -24,7 +24,6 @@
 
 #include <debuggermanager.h>
 #include "debuggeroptionsdlg.h"
-#include "dialogs.h"
 
 
 #define DBGCMDTYPE_FLOWCONTROL 1
@@ -41,19 +40,6 @@
 typedef std::set<int> BPLtype;
 
 typedef std::vector<cb::shared_ptr<cbStackFrame> > StackList;
-
-//class PyDebuggerConfiguration:public cbDebuggerConfiguration
-//{
-//    public:
-//        PyDebuggerConfiguration(const ConfigManagerWrapper &config):cbDebuggerConfiguration(config) {}
-//        virtual ~PyDebuggerConfiguration() {}
-//
-//        virtual cbDebuggerConfiguration* Clone() const {return new PyDebuggerConfiguration(*this);}
-//
-//        virtual wxPanel* MakePanel(wxWindow *parent) {return new wxPanel();}
-//        virtual bool SaveChanges(wxPanel *panel) {return true;}
-//
-//};
 
 class PyBreakpoint:public cbBreakpoint
 {
@@ -147,13 +133,13 @@ struct PythonCmdDispatchData
     wxString cmdtext;
 };
 
-class PyDebugger : public cbDebuggerPlugin
+class PythonDebugger : public cbDebuggerPlugin
 {
     public:
 		/** Constructor. */
-        PyDebugger();
+        PythonDebugger();
 		/** Destructor. */
-        virtual ~PyDebugger();
+        virtual ~PythonDebugger();
 
         virtual void OnAttachReal();
         virtual void OnReleaseReal(bool appShutDown);
@@ -319,4 +305,4 @@ class PyDebugger : public cbDebuggerPlugin
         DECLARE_EVENT_TABLE();
 };
 
-#endif // PyDebugger_H_INCLUDED
+#endif // PYTHONDEBUGGER_H_INCLUDED

@@ -4,7 +4,7 @@
 #include <wx/listimpl.cpp>
 #include <wx/arrimpl.cpp>
 #include "ExecHiddenMSW.h"
-WX_DEFINE_OBJARRAY(XmlRpcInstanceCollection);
+//WX_DEFINE_OBJARRAY(XmlRpcInstanceCollection);
 WX_DEFINE_LIST(XmlRpcJobQueue);
 
 using namespace std;
@@ -126,72 +126,83 @@ public:
     XmlRpcPipeClient(wxProcess *proc)
     {
         m_proc=proc;
+        m_error_lock=false;
         m_istream=proc->GetInputStream();
         m_ostream=proc->GetOutputStream();
         m_estream=proc->GetErrorStream();
     }
+    bool set_error(const std::string &s,XmlRpc::XmlRpcValue& result)
+    {
+        result.setSize(1);
+        result[0] = s;
+        m_error_lock=true;
+        return false;
+    }
+    bool clear_error()
+    {
+        m_error_lock=false;
+    }
     bool execute(const char* method, XmlRpc::XmlRpcValue const& params, XmlRpc::XmlRpcValue& result)
     {
-//        std::cout<<"PyCC Execute start";
+        if(m_error_lock)
+        {
+            result[0] = "XmlRpc pipe client is in an error state. Clear the error or reset the server.";
+            return false;
+        }
         std::string msg;
         if(!generateRequest(method,params,msg))
-        {
-//            std::cout<<"bad request value"<<std::endl;
-            result.setSize(1);
-            result[0] = "bad request value";
-            return false;
-        }
+            return set_error("Bad request value for method call "+std::string(method),result);
         uint32_t r_size=msg.size(); //TODO: Is it safer to use uint64_t (would need to use long long on the python side)
-        m_ostream->Write(&r_size,sizeof(uint32_t));
-        if(m_ostream->GetLastError()!=wxSTREAM_NO_ERROR)
-            return false;
+        char *cr_size = (char*)&r_size;
+        for(uint32_t i=0;i<sizeof(uint32_t);++i)
+        {
+            do
+            {
+                m_ostream->PutC(cr_size[i]);
+                if(m_ostream->GetLastError()!=wxSTREAM_NO_ERROR && m_ostream->GetLastError()!=wxSTREAM_EOF)
+                    return set_error("Broken stream attempting to write request size to pipe",result);
+            } while (m_ostream->LastWrite()!=1);
+        }
         for(uint32_t i=0;i<msg.size();++i)
         {
-            m_ostream->PutC(msg[i]);
-            if(m_ostream->GetLastError()!=wxSTREAM_NO_ERROR)
+            do
             {
-                result.setSize(1);
-                result[0] = "broken stream attempting to write size of buffer";
-                return false;
-            }
+                m_ostream->PutC(msg[i]);
+                if(m_ostream->GetLastError()!=wxSTREAM_NO_ERROR && m_ostream->GetLastError()!=wxSTREAM_EOF)
+                    return set_error("Broken stream attempting to write request to pipe",result);
+            } while (m_ostream->LastWrite()!=1);
         }
-//        m_ostream->Write(msg.c_str(),msg.size()); //On windows, this will frequently result in an incomplete write becasue the buffer gets full so better to use the blocking PutC instead
-//        std::cout<<"wrote "<<msg<<std::endl;
-//        std::cout<<"with size "<<r_size<<std::endl;
+
+        //NOW WAIT FOR THE REPLY
+        //FIRST RETRIEVE A SINGLE CHARACTER "M" THAT DENOTES THE START OF THE REPLY
+        //TODO: CHANGE 'M' TO 0 AND ACTUALLY CHECK IT!!!
         char ch;
+        bool eof;
         do
         {
             ch=m_istream->GetC();
-        } while(m_istream->GetLastError()==wxSTREAM_EOF);
-//        if(m_istream->GetLastError()==wxSTREAM_EOF)
-//            std::cout<<"read eof error"<<ch<<std::endl;
-//        if(m_istream->GetLastError()==wxSTREAM_READ_ERROR)
-//            std::cout<<"read error"<<ch<<std::endl;
+            eof = m_istream->GetLastError()==wxSTREAM_EOF;
+            if(eof)
+                wxMilliSleep(10); //Delay might be necessary to avoid a freeze on MS windows
+        } while(eof);
         if(m_istream->GetLastError()!=wxSTREAM_NO_ERROR && m_istream->GetLastError()!=wxSTREAM_EOF)
-        {
-            result.setSize(1);
-            result[0] = "broken stream attempting to write buffer";
-            return false;
-        }
-//        std::cout<<"read ch "<<ch<<std::endl;
+            return set_error("Broken stream attempting to read message char 'M' from pipe",result);
+
+        // THEN GET THE SIZE OF THE MESSAGE AS UNSIGNED 32 BIT INT
         for(uint32_t i=0;i<sizeof(uint32_t);i++)
         {
             do
             {
                 ((char*)(&r_size))[i]=m_istream->GetC();
-            } while(m_istream->GetLastError()==wxSTREAM_EOF);// while(m_istream->GetLastError()==wxSTREAM_EOF);
-//            if(m_istream->GetLastError()==wxSTREAM_EOF)
-//                std::cout<<"read eof error"<<ch<<std::endl;
-//            if(m_istream->GetLastError()==wxSTREAM_READ_ERROR)
-//                std::cout<<"read error"<<ch<<std::endl;
+                eof = m_istream->GetLastError()==wxSTREAM_EOF;
+                if(eof)
+                    wxMilliSleep(10); //Delay might be necessary to avoid a freeze on MS windows
+            } while(eof);
             if(m_istream->GetLastError()!=wxSTREAM_NO_ERROR && m_istream->GetLastError()!=wxSTREAM_EOF)
-            {
-                result.setSize(1);
-                result[0] = "broken stream attempting to read size of buffer";
-                return false; //potentially return to early if reading faster than the python server fills the pipe??
-            }
+                return set_error("broken stream attempting to read size of buffer",result);
         }
-//        std::cout<<"response size is "<<r_size<<std::endl;
+
+        // FINALLY RETRIEVE THE ACTUAL MESSAGE
         std::string buf;
         buf.resize(r_size+1);
         for(uint32_t i=0;i<r_size;i++)
@@ -199,33 +210,26 @@ public:
             do
             {
                 buf[i]=m_istream->GetC();
-                if(m_istream->GetLastError()==wxSTREAM_EOF)
-                    wxMicroSleep(10);
-            } while(m_istream->GetLastError()==wxSTREAM_EOF);
-//            if(m_istream->GetLastError()!=wxSTREAM_EOF)
-//                std::cout<<"read eof error"<<ch<<std::endl;
-//            if(m_istream->GetLastError()!=wxSTREAM_READ_ERROR)
-//                std::cout<<"read error"<<ch<<std::endl;
+                eof = m_istream->GetLastError()==wxSTREAM_EOF;
+                if(eof)
+                    wxMilliSleep(10); //Delay might be necessary to avoid a freeze on MS windows
+            } while(eof);
             if(m_istream->GetLastError()!=wxSTREAM_NO_ERROR && m_istream->GetLastError()!=wxSTREAM_EOF)
-            {
-                result.setSize(1);
-                wxString s = wxString::Format(_T("broken stream attempting to read buffer - chars read %i"),i);
-                result[0] = std::string(s.utf8_str());
-                return false;
-            }
+                return set_error(std::string(wxString::Format(_T("broken stream attempting to read buffer - chars read %i of %i"),i,r_size).utf8_str()),result);
         }
         buf[r_size]=0;
-//        std::cout<<"response was "<<buf<<std::endl;
+
+        // NOW CONVERT THE XML INTO AN XMLRPCVALUE
         if(parseResponse(buf, result))
         {
             return true;
         }
-//        std::cout<<"bad xml response"<<std::endl;
         wxString s = wxString::Format(_T("error parsing read buffer - chars read %i\n"),r_size);
-        result[0] = std::string(s.utf8_str()) + std::string(buf);
-        return false;
+        std::string out = std::string(s.utf8_str()) + std::string(buf);
+        return set_error(out,result);
     }
-    // Convert the response xml into a result value
+
+    // Converts the response xml into a result value
     bool parseResponse(std::string _response, XmlRpcValue& result)
     {
       // Parse response xml into result
@@ -292,9 +296,8 @@ public:
       return true;
     }
 
-
-
 private:
+    bool m_error_lock;
     wxProcess *m_proc;
     wxInputStream *m_istream;
     wxOutputStream *m_ostream;
@@ -348,7 +351,7 @@ XmlRpcInstance::~XmlRpcInstance()
     m_pipeclient=NULL;
 }
 
-XmlRpcInstance::XmlRpcInstance(const wxString &processcmd, const wxString &hostaddress, int port, wxWindow *parent)
+XmlRpcInstance::XmlRpcInstance(const wxString &processcmd, int port, const wxString &hostaddress, wxWindow *parent)
 {
     m_parent=parent;
     m_port=port;
@@ -361,12 +364,8 @@ XmlRpcInstance::XmlRpcInstance(const wxString &processcmd, const wxString &hosta
     m_proc_killlevel=0;
     m_jobrunning=false;
     // Launch process
-    LaunchProcess(processcmd); //TODO: The command for the interpreter process should come from the manager (and be stored in a config file)
-    // Setup XMLRPC client and use introspection API to look up the supported methods
-    if(port==-1)
-        m_pipeclient = new XmlRpcPipeClient(m_proc);
-    else
-        m_client = new XmlRpc::XmlRpcClient(hostaddress.char_str(), port);
+    if (processcmd!=wxEmptyString)
+        LaunchProcess(processcmd); //TODO: The command for the interpreter process should come from the manager (and be stored in a config file)
 }
 
 long XmlRpcInstance::LaunchProcess(const wxString &processcmd)
@@ -385,8 +384,8 @@ long XmlRpcInstance::LaunchProcess(const wxString &processcmd)
     if(m_port==-1)
         m_proc_id=wxExecute(processcmd,wxEXEC_ASYNC/*|wxEXEC_MAKE_GROUP_LEADER*/,m_proc);
     else
-        m_proc_id=wxExecute(processcmd,wxEXEC_ASYNC/*|wxEXEC_MAKE_GROUP_LEADER*/,m_proc);
-//        m_proc_id=wxExecuteHidden(processcmd,wxEXEC_ASYNC|wxEXEC_MAKE_GROUP_LEADER,m_proc);
+        m_proc_id=wxExecuteHidden(processcmd,wxEXEC_ASYNC|wxEXEC_MAKE_GROUP_LEADER,m_proc);
+//        m_proc_id=wxExecute(processcmd,wxEXEC_ASYNC/*|wxEXEC_MAKE_GROUP_LEADER*/,m_proc);
 #else
     m_proc_id=wxExecute(processcmd,wxEXEC_ASYNC|wxEXEC_MAKE_GROUP_LEADER,m_proc);
 #endif /*__WXMSW__*/
@@ -395,6 +394,12 @@ long XmlRpcInstance::LaunchProcess(const wxString &processcmd)
 //        std::cout<<"PyCC: LAUNCHING PROCESS SUCCEEDED"<<std::endl;
         m_proc_dead=false;
         m_proc_killlevel=0;
+
+        // Setup XMLRPC client and use introspection API to look up the supported methods
+        if(m_port==-1)
+            m_pipeclient = new XmlRpcPipeClient(m_proc);
+        else
+            m_client = new XmlRpc::XmlRpcClient(m_hostaddress.char_str(), m_port);
     }
     return m_proc_id;
 }
@@ -419,6 +424,8 @@ bool XmlRpcInstance::Exec(const wxString &method, const XmlRpc::XmlRpcValue &ina
         return m_client->execute(method.utf8_str(), inarg, result);
     else if(m_pipeclient)
         return m_pipeclient->execute(method.utf8_str(), inarg, result);
+    result.setSize(1);
+    result[0] = "XmlRpc server is not connected.";
     return false;
 }
 
@@ -439,6 +446,7 @@ void XmlRpcInstance::OnEndProcess(wxProcessEvent &event)
     wxCommandEvent ce(wxEVT_XMLRPC_PROC_END,0);
     if(m_parent)
         m_parent->AddPendingEvent(ce);
+//    XmlRpcMgr::Get().Remove(this);
 }
 
 void XmlRpcInstance::Break()
@@ -549,29 +557,42 @@ void XmlRpcInstance::OnJobNotify(wxCommandEvent &event)
     NextJob();
 }
 
-XmlRpcMgr::XmlRpcMgr()
-{
-}
-
-XmlRpcMgr::~XmlRpcMgr()
-{
-    m_Interpreters.Empty();
-}
-
-XmlRpcInstance *XmlRpcMgr::LaunchProcess(const wxString &cmd,int port,const wxString &address)
-{
-    XmlRpcInstance *p=new XmlRpcInstance(cmd,address,port);
-    if(p)
-        m_Interpreters.Add(p);
-    return p;
-}
-
-XmlRpcMgr &XmlRpcMgr::Get()
-{
-    if (theSingleInstance.get() == 0)
-      theSingleInstance.reset(new XmlRpcMgr);
-    return *theSingleInstance;
-}
-
-std::auto_ptr<XmlRpcMgr> XmlRpcMgr::theSingleInstance;
-
+//XmlRpcMgr::XmlRpcMgr()
+//{
+//}
+//
+//XmlRpcMgr::~XmlRpcMgr()
+//{
+//    m_Interpreters.Clear();
+//}
+//
+//XmlRpcInstance *XmlRpcMgr::LaunchProcess(const wxString &cmd,int port,const wxString &address)
+//{
+//    XmlRpcInstance *p=new XmlRpcInstance(cmd,address,port);
+//    if(p)
+//        m_Interpreters.Add(p);
+//    return p;
+//}
+//
+//void XmlRpcMgr::Remove(XmlRpcInstance *p)
+//{
+////    m_Interpreters.Remove(*p);
+////    for (size_t i=0; i<m_Interpreters.GetCount(); ++i)
+////    {
+////        if (m_Interpreters.Item(i) == *p)
+////        {
+////            m_Interpreters.RemoveAt(i);
+////            return;
+////        }
+////    }
+//}
+//
+//XmlRpcMgr &XmlRpcMgr::Get()
+//{
+//    if (theSingleInstance.get() == 0)
+//      theSingleInstance.reset(new XmlRpcMgr);
+//    return *theSingleInstance;
+//}
+//
+//std::auto_ptr<XmlRpcMgr> XmlRpcMgr::theSingleInstance;
+//

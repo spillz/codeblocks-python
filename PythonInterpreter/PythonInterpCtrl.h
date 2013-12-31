@@ -7,37 +7,40 @@
     #include <wx/wx.h>
 #endif
 
-#include "py_embedder.h"
+#include "xmlrpc_embedder.h"
 #include "ShellCtrlBase.h"
 
 #include <sdk.h>
 
+//
+//class PyInterpJob: public XmlRpcJob
+//{
+//public:
+//    PyInterpJob(wxString code, XmlRpcInstance *pyinst, PythonInterpCtrl *pctl, wxWindow *w, int id=wxID_ANY, bool selfdestroy=true) : XmlRpcJob(pyinst, w, id, selfdestroy)
+//    {
+//        m_code=code;
+//        this->pctl=pctl;
+//        m_break_job=false;
+//        return;
+//    }
+//    PythonInterpCtrl *pctl;
+//    bool operator()(); // main thread loop
+//    void Break(); // called outside of thread to send break signal to the running interpreter
+//    wxString m_code;
+//    wxMutex m_break_mutex;
+//    bool m_break_job;
+//};
 class PythonInterpCtrl;
-
-class PyInterpJob: public PyJob
-{
-public:
-    PyInterpJob(wxString code, PyInstance *pyinst, PythonInterpCtrl *pctl, wxWindow *w, int id=wxID_ANY, bool selfdestroy=true) : PyJob(pyinst, w, id, selfdestroy)
-    {
-        m_code=code;
-        this->pctl=pctl;
-        m_break_job=false;
-        return;
-    }
-    PythonInterpCtrl *pctl;
-    bool operator()(); // main thread loop
-    void Break(); // called outside of thread to send break signal to the running interpreter
-    wxString m_code;
-    wxMutex m_break_mutex;
-    bool m_break_job;
-};
 
 class PythonCodeCtrl: public wxTextCtrl
 {
 public:
-    PythonCodeCtrl(wxWindow *parent, PythonInterpCtrl *py) : wxTextCtrl(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, /*wxTE_RICH|*/ wxTE_MULTILINE|wxTE_PROCESS_ENTER|wxTE_PROCESS_TAB|wxEXPAND) {m_pyctrl = py;}
+    PythonCodeCtrl(wxWindow *parent, PythonInterpCtrl *py);
     void OnUserInput(wxKeyEvent& ke);
     PythonInterpCtrl *m_pyctrl;
+    wxArrayString m_history_commands;
+    wxString m_history_working;
+    int m_history_position;
     DECLARE_EVENT_TABLE()
 };
 
@@ -48,7 +51,7 @@ public:
         : wxTextCtrl(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_RICH|wxTE_MULTILINE|wxTE_READONLY|wxTE_PROCESS_ENTER|wxTE_PROCESS_TAB|wxEXPAND)
         {m_pyctrl = py; m_line_entry_mode=false;}
     void OnUserInput(wxKeyEvent& ke);
-    void OnLineInputRequest(wxCommandEvent& e);
+    void LineInputRequest();
     void OnTextChange(wxCommandEvent& e);
     PythonInterpCtrl *m_pyctrl;
     long m_line_entry_point;
@@ -115,9 +118,9 @@ ShellCtrlRegistrant<PythonInterpCtrl> reg(_T("Python Interpreter"));
 class PythonInterpCtrl : public ShellCtrlBase
 {
     public:
-        PythonInterpCtrl() { m_pyinterp=NULL; m_input_cond=new wxCondition(m_input_mutex); }
+        PythonInterpCtrl() { m_pyinterp=NULL; }
         PythonInterpCtrl(wxWindow* parent, int id, const wxString &name, ShellManager *shellmgr=NULL);
-        virtual ~PythonInterpCtrl() { if (m_pyinterp) delete m_pyinterp; delete m_input_cond;}
+        virtual ~PythonInterpCtrl() { if (m_pyinterp) delete m_pyinterp; }
 
         virtual long LaunchProcess(const wxString &processcmd, const wxArrayString &options);
         virtual void KillProcess();
@@ -128,12 +131,12 @@ class PythonInterpCtrl : public ShellCtrlBase
 
         void OnUserInput(wxKeyEvent& ke);
         void OnSize(wxSizeEvent& event);
-        void OnPyNotify(wxCommandEvent& event);
+        void OnPyNotify(XmlRpcResponseEvent& event);
         void OnLineInputRequest(wxCommandEvent& event);
         void OnPyCode(wxCommandEvent& event);
         void OnPyJobDone(wxCommandEvent& event);
         void OnPyJobAbort(wxCommandEvent& event);
-        void OnEndProcess(wxCommandEvent &ce);
+        void OnEndProcess(wxCommandEvent& event);
 
         bool DispatchCode(const wxString &code);
 
@@ -142,28 +145,19 @@ class PythonInterpCtrl : public ShellCtrlBase
         static PortAllocator m_portalloc;
 
         void stdin_append(const wxString &data);
-        void stdout_append(const wxString &data);
-        void stderr_append(const wxString &data);
         wxString stdin_retrieve();
-        wxString stdout_retrieve();
-        wxString stderr_retrieve();
-
-        wxMutex m_input_mutex;
-        wxCondition *m_input_cond;
 
     protected:
-        friend class PyInterpJob;
-        bool RunCode(const wxString &codestr, int &unfinished);
-        bool Continue(int &unfinished, bool &line_input_request);
+        bool RunCode(const wxString &codestr);
+        bool Continue();
         bool SendKill();
 
     private:
-        wxString stdin_data, stdout_data, stderr_data;
-        wxMutex io_mutex;
+        wxString stdin_data;
         PythonIOCtrl *m_ioctrl;
         PythonCodeCtrl *m_codectrl;
         wxSplitterWindow *m_sw;
-        PyInstance *m_pyinterp;
+        XmlRpcInstance *m_pyinterp;
         wxString m_code; //currently running code
         int m_killlevel;
         int m_port;

@@ -4,82 +4,21 @@
 #include "PythonInterpCtrl.h"
 #include <globals.h>
 
-DECLARE_LOCAL_EVENT_TYPE(wxEVT_PY_NOTIFY_UI_CODEOK, -1)
+//DECLARE_LOCAL_EVENT_TYPE(wxEVT_PY_NOTIFY_UI_CODEOK, -1)
 DEFINE_EVENT_TYPE( wxEVT_PY_NOTIFY_UI_CODEOK )
 
-DECLARE_LOCAL_EVENT_TYPE(wxEVT_PY_NOTIFY_UI_INPUT, -1)
+//DECLARE_LOCAL_EVENT_TYPE(wxEVT_PY_NOTIFY_UI_INPUT, -1)
 DEFINE_EVENT_TYPE( wxEVT_PY_NOTIFY_UI_INPUT )
 
-////////////////////////////////////// PythonInterpJob /////////////////////////////////////////////
-
-bool PyInterpJob::operator()()
-{
-    // talk to m_client
-//    wxMessageBox(_("entered operator..."));
-    int status=0;
-    if(!pctl->RunCode(m_code,status))
-        return false; //TODO: maybe retry before failing out completely
-    if(status>=0)
-    {
-        wxCommandEvent pe(wxEVT_PY_NOTIFY_UI_CODEOK,0);
-        ::wxPostEvent(parent,pe);
-    }
-    wxCommandEvent pe(wxEVT_PY_NOTIFY_UI_NOTIFY,0);
-    ::wxPostEvent(parent,pe);
-    bool break_called=false;
-    while(status>0)
-    {
-        m_break_mutex.Lock();
-        if(m_break_job && !break_called)
-        {
-            m_break_mutex.Unlock();
-            if(pctl->BreakCode())
-                break_called=true;
-        } else
-            m_break_mutex.Unlock();
-        bool line_input_request;
-        if(!pctl->Continue(status,line_input_request))
-            return false; //TODO: maybe retry before failing out completely
-//        PyNotifyUIEvent pe(id,pyinst,parent,PYSTATE_NOTIFY);
-        ::wxPostEvent(parent,pe);
-        if(line_input_request)
-        {
-            pctl->m_input_mutex.Lock();
-            wxCommandEvent ie(wxEVT_PY_NOTIFY_UI_INPUT,0);
-            ::wxPostEvent(parent,ie);
-            pctl->m_input_cond->Wait();
-            pctl->m_input_mutex.Unlock();
-        }
-        // sleep for some period of time
-        else
-            if(status>0)
-                Sleep(50); //TODO: Make the sleep period user-defined
-    }
-    if(status==0)
-    {
-        wxCommandEvent pef(wxEVT_PY_NOTIFY_UI_FINISHED,0);
-        ::wxPostEvent(parent,pef);
-    } else
-    {
-        wxCommandEvent pef(wxEVT_PY_NOTIFY_UI_ABORTED,0);
-        ::wxPostEvent(parent,pef);
-    }
-    return true;
-}
-
-void PyInterpJob::Break()
-{
-    m_break_mutex.Lock();
-    m_break_job=true;
-    m_break_mutex.Unlock();
-}
+//DECLARE_LOCAL_EVENT_TYPE(wxEVT_PY_PROC_END, -1)
+DEFINE_EVENT_TYPE( wxEVT_PY_PROC_END )
 
 ////////////////////////////////////// PythonIOCtrl //////////////////////////////////////////////
 
 BEGIN_EVENT_TABLE(PythonIOCtrl, wxTextCtrl)
     EVT_CHAR(PythonIOCtrl::OnUserInput)
 //    EVT_TEXT(wxID_ANY, PythonIOCtrl::OnTextChange)
-    EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_INPUT, PythonIOCtrl::OnLineInputRequest)
+//    EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_INPUT, PythonIOCtrl::OnLineInputRequest)
 END_EVENT_TABLE()
 
 void PythonIOCtrl::OnUserInput(wxKeyEvent& ke)
@@ -101,28 +40,22 @@ void PythonIOCtrl::OnUserInput(wxKeyEvent& ke)
             return;
         }
     }
-    if(!ke.HasModifiers())
+    if(ke.GetKeyCode()==WXK_RETURN)
     {
-        if(ke.GetKeyCode()==WXK_RETURN)
+        if(!ke.ShiftDown() && !ke.ControlDown())
         {
-            if(!ke.ShiftDown())
+            if(m_line_entry_mode)
             {
-                if(m_line_entry_mode)
-                {
-                    m_line_entry_mode=false;
-                    this->SetEditable(false);
-                    wxString line;
-                    if(m_line_entry_point<GetLastPosition())
-                        line=GetRange(m_line_entry_point,GetLastPosition());
-                    line.Replace(_T("\n"),_T("")); //will cause major problems if there is more than one line feed returned here, so we remove them (TODO: fix on server side?? server should treat buffered lines as new input without errors)
-                    line.Append(_T("\n"));
-                    m_pyctrl->stdin_append(line);
-                    m_pyctrl->m_input_cond->Signal();
-                    m_pyctrl->m_input_mutex.Unlock();
-                    return;
-                }
+                m_line_entry_mode=false;
+                this->SetEditable(false);
+                wxString line;
+                if(m_line_entry_point<GetLastPosition())
+                    line=GetRange(m_line_entry_point,GetLastPosition());
+                line.Replace(_T("\n"),_T("")); //will cause major problems if there is more than one line feed returned here, so we remove them (TODO: fix on server side?? server should treat buffered lines as new input without errors)
+                line.Append(_T("\n"));
+                m_pyctrl->stdin_append(line);
+                return;
             }
-            return;
         }
     }
     ke.Skip();
@@ -135,11 +68,10 @@ void PythonIOCtrl::OnTextChange(wxCommandEvent &e)
     e.Skip(true);
 }
 
-void PythonIOCtrl::OnLineInputRequest(wxCommandEvent &e)
+void PythonIOCtrl::LineInputRequest()
 {
     if(!m_line_entry_mode)
     {
-        m_pyctrl->m_input_mutex.Lock();
         m_line_entry_mode=true;
         m_line_entry_point=this->GetLastPosition();
         this->SetSelection(m_line_entry_point,m_line_entry_point);
@@ -149,42 +81,87 @@ void PythonIOCtrl::OnLineInputRequest(wxCommandEvent &e)
 ////////////////////////////////////// PythonCodeCtrl //////////////////////////////////////////////
 
 BEGIN_EVENT_TABLE(PythonCodeCtrl, wxTextCtrl)
-    EVT_CHAR(PythonCodeCtrl::OnUserInput)
+    EVT_KEY_DOWN(PythonCodeCtrl::OnUserInput)
 END_EVENT_TABLE()
+
+PythonCodeCtrl::PythonCodeCtrl(wxWindow *parent, PythonInterpCtrl *py)
+    : wxTextCtrl(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, /*wxTE_RICH|*/ wxTE_MULTILINE|wxTE_PROCESS_ENTER|wxTE_PROCESS_TAB|wxEXPAND)
+{
+    m_pyctrl = py;
+//    Connect(wxEVT_KEY_DOWN, wxKeyEventHandler(PythonCodeCtrl::OnUserInput));
+}
 
 void PythonCodeCtrl::OnUserInput(wxKeyEvent& ke)
 {
+    Manager::Get()->GetLogManager()->Log(_T("Key event"));
     if(ke.GetModifiers()==wxMOD_CONTROL)
     {
 //        wxMessageBox(_T("control pressed"));
 //        wxMessageBox(wxString::Format(_("Key: %i"),ke.GetKeyCode()));
-        if(ke.GetKeyCode()==4)
+        if(ke.GetKeyCode()=='D')
         {
             m_pyctrl->DispatchCode(GetValue());
 //            if(m_pyctrl->DispatchCode(GetValue()))
 //                ChangeValue(_T(""));
             return;
         }
-        if(ke.GetKeyCode()==5)
+        if(ke.GetKeyCode()=='K')
         {
             m_pyctrl->BreakCode();
             return;
         }
-    }
-    if(!ke.HasModifiers())
-    {
         if(ke.GetKeyCode()==WXK_RETURN)
         {
-            if(!ke.ShiftDown())
-            {
-                m_pyctrl->DispatchCode(GetValue());
-                return;
-            } else
-            {
-                ke.Skip();
-            }
+            m_pyctrl->DispatchCode(GetValue());
+            return;
+        }
+        if(ke.GetKeyCode()==WXK_UP) //TODO: If the text is ever changed, set m_history_position to -1
+        {
+            if (m_history_position < 0)
+                m_history_working = GetValue();
+            m_history_position--;
+            if (m_history_position < -1)
+                m_history_position = m_history_commands.GetCount()-1;
+            if (m_history_position >= 0)
+                SetValue(m_history_commands[m_history_position]);
+            else
+                SetValue(m_history_working);
+            int pos = GetLastPosition();
+            SetSelection(pos,pos);
+            return;
+        }
+        if(ke.GetKeyCode()==WXK_DOWN)
+        {
+            if (m_history_position < 0)
+                m_history_working = GetValue();
+            m_history_position++;
+            if (m_history_position >= int(m_history_commands.GetCount()))
+                m_history_position = -1;
+            if (m_history_position >= 0)
+                SetValue(m_history_commands[m_history_position]);
+            else
+                SetValue(m_history_working);
+            int pos = GetLastPosition();
+            SetSelection(pos,pos);
+            return;
         }
 
+    }
+    if(ke.GetModifiers()==wxMOD_NONE && ke.GetKeyCode()==WXK_RETURN)
+    {
+        wxString code = GetValue();
+        wxString lastline = code.AfterLast(_T('\n'));
+        if (!lastline.StartsWith(_T("\t")) && !lastline.StartsWith(_T("\t")) &&
+            !lastline.EndsWith(_T(":")))
+        {
+            long rs,re;
+            GetSelection(&rs,&re);
+            if(rs==re && this->GetLastPosition()==rs)
+            {
+                m_pyctrl->DispatchCode(code);
+                return;
+            }
+        }
     }
     ke.Skip();
 }
@@ -199,13 +176,10 @@ BEGIN_EVENT_TABLE(PythonInterpCtrl, wxPanel)
 //    EVT_PY_NOTIFY_UI(PythonInterpCtrl::OnPyNotify)
 //    EVT_END_PROCESS(ID_PROC, PythonInterpCtrl::OnEndProcess)
 //    EVT_LEFT_DCLICK(PythonInterpCtrl::OnDClick)
-    EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_NOTIFY, PythonInterpCtrl::OnPyNotify)
-    EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_CODEOK, PythonInterpCtrl::OnPyCode)
-    EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_INPUT, PythonInterpCtrl::OnLineInputRequest)
-    EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_STARTED, PythonInterpCtrl::OnPyNotify)
-    EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_FINISHED, PythonInterpCtrl::OnPyJobDone)
-    EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_ABORTED, PythonInterpCtrl::OnPyJobAbort)
-    EVT_COMMAND(0, wxEVT_PY_PROC_END, PythonInterpCtrl::OnEndProcess)
+    EVT_XMLRPC_RESPONSE(wxID_ANY, PythonInterpCtrl::OnPyNotify)
+//    EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_CODEOK, PythonInterpCtrl::OnPyCode)
+//    EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_INPUT, PythonInterpCtrl::OnLineInputRequest)
+    EVT_COMMAND(0, wxEVT_XMLRPC_PROC_END, PythonInterpCtrl::OnEndProcess)
 
     EVT_SIZE    (PythonInterpCtrl::OnSize)
 END_EVENT_TABLE()
@@ -215,16 +189,16 @@ PythonInterpCtrl::PythonInterpCtrl(wxWindow* parent, int id, const wxString &nam
     m_killlevel=0;
     m_port=0;
     m_pyinterp=NULL;
-    m_input_cond=new wxCondition(m_input_mutex);
     m_sw=new wxSplitterWindow(this, wxID_ANY);
     m_ioctrl=new PythonIOCtrl(m_sw, this);//new wxTextCtrl(m_sw, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_RICH|wxTE_MULTILINE|wxTE_READONLY|wxTE_PROCESS_ENTER|wxTE_PROCESS_TAB|wxEXPAND);
     m_codectrl=new PythonCodeCtrl(m_sw, this);
     m_codectrl->AppendText(_("print 'Python'"));
+    m_sw->SetMinimumPaneSize(20);
+    m_sw->SetSashGravity(0.3);
     int sash_pos=parent->GetClientSize().GetHeight()/5;
     if(sash_pos<20)
         sash_pos=0;
     m_sw->SplitHorizontally(m_codectrl, m_ioctrl, sash_pos);
-    m_sw->SetMinimumPaneSize(20);
     wxBoxSizer* bs = new wxBoxSizer(wxVERTICAL);
     bs->Add(m_sw, 1, wxEXPAND | wxALL);
     SetAutoLayout(TRUE);
@@ -237,17 +211,19 @@ long PythonInterpCtrl::LaunchProcess(const wxString &processcmd, const wxArraySt
 {
     if(!IsDead())
         return -1;
-    //wxMessageBox(m_portalloc.GetPorts());
-    m_port=m_portalloc.RequestPort();
-    if(m_port<0)
-        return -1;
-    //TODO: get the command and working dir from the
+//TODO: Option to use XMLRPC over localhost or pipe, currently always use pipe
+//    m_port=m_portalloc.RequestPort(); //TODO: Request port limited to 3 ports
+//    if(m_port<0)
+//        return -1;
+    m_port = -1; //Use XmlRpc over pipe
+    //TODO: get the command and working dir from config
 #ifdef __WXMSW__
-    wxString cmd=_T("cmd /c interp.py ")+wxString::Format(_T(" %i"),m_port); //TODO: this could have process destruction issues on earlier version of wxWidgets (kills cmd, but not python)
+//    wxString cmd=_T("cmd /c interp.py ")+wxString::Format(_T(" %i"),m_port); //TODO: this could have process destruction issues on earlier version of wxWidgets (kills cmd, but not python)
+    wxString cmd=_T("python -u interp.py ")+wxString::Format(_T(" %i"),m_port); //TODO: this could have process destruction issues on earlier version of wxWidgets (kills cmd, but not python)
     wxString python=_T("\\python");
     wxString interp=_T("\\interp.py");
 #else
-    wxString cmd=_T("python interp.py ")+wxString::Format(_T(" %i"),m_port);
+    wxString cmd=_T("python -u interp.py ")+wxString::Format(_T(" %i"),m_port);
     wxString python=_T("/python");
     wxString interp=_T("/interp.py");
 #endif
@@ -266,7 +242,13 @@ long PythonInterpCtrl::LaunchProcess(const wxString &processcmd, const wxArraySt
     }
     if(!global&&!local) //No interpreter script found, return failure.
         return -2; //TODO: Return meaningful messages (or at least use the codeblocks logger)
-    m_pyinterp=new PyInstance(cmd,_T("localhost"),m_port,this);
+
+    m_pyinterp = new XmlRpcInstance(cmd,m_port,_T("localhost"),this);
+    if(m_pyinterp->IsDead())
+    {
+        Manager::Get()->GetLogManager()->Log(_("Error Starting Interpreter"));
+        return -1;
+    }
     //TODO: Perform any initial communication with the running python process...
     return 1;
 }
@@ -292,17 +274,77 @@ bool PythonInterpCtrl::DispatchCode(const wxString &code)
 {
     if(m_pyinterp->IsJobRunning())
         return false;
-    m_pyinterp->AddJob(new PyInterpJob(wxString(code.c_str()),m_pyinterp,this,m_ioctrl));
     m_code=code;
+    m_codectrl->m_history_commands.Add(code);
+    m_codectrl->m_history_position = -1;
+    if (RunCode(wxString(code.c_str())))
+    {
+        m_codectrl->Enable(false);
+//        wxCommandEvent pe(wxEVT_PY_NOTIFY_UI_CODEOK,0);
+//        ::wxPostEvent(this,pe);
+    }
     return true;
 }
 
-void PythonInterpCtrl::OnPyNotify(wxCommandEvent& event)
+void PythonInterpCtrl::OnPyNotify(XmlRpcResponseEvent& event)
 {
-    if(m_ioctrl->m_line_entry_mode)
-        return;
-    m_ioctrl->AppendText(stdout_retrieve());
-    m_ioctrl->AppendText(stderr_retrieve());
+//    if(m_ioctrl->m_line_entry_mode)
+//        return;
+    if (event.GetState()==XMLRPC_STATE_RESPONSE)
+    {
+        XmlRpc::XmlRpcValue val = event.GetResponse();
+        int return_code = val[0];
+        std::string sstdout(val[1]);
+        std::string sstderr(val[2]);
+        bool input_request = val[3];
+
+        if (return_code>=0 && m_code!=wxEmptyString)
+        {
+            wxTextAttr oldta=m_ioctrl->GetDefaultStyle();
+            wxTextAttr ta=oldta;
+            wxFont f=ta.GetFont();
+            f.SetWeight(wxFONTWEIGHT_BOLD);
+            ta.SetFont(f);
+            m_ioctrl->SetDefaultStyle(ta);
+            m_ioctrl->AppendText(m_code);
+            m_ioctrl->SetDefaultStyle(oldta);
+            m_ioctrl->AppendText(_T("\n"));
+            m_code = wxEmptyString;
+        }
+
+        if (return_code == -2)
+        {
+            m_codectrl->AppendText(_T("\n"));
+        }
+
+        m_ioctrl->AppendText(wxString(sstdout.c_str(),wxConvUTF8));
+        //TODO: Col or errors
+        m_ioctrl->AppendText(wxString(sstderr.c_str(),wxConvUTF8));
+
+        if (input_request)
+            m_ioctrl->ProcessEvent(event); //TODO: Need to set up the handler on the ioctrl
+
+        if (return_code == 1) // Eval was successful and is still running
+        {
+            m_codectrl->Clear();
+            this->Continue();
+            return;
+        }
+        if (return_code == 0) //Eval has finished
+        {
+            m_codectrl->Clear();
+            //Now fall through to re-enable the control
+        }
+        //Otherwise it's an error (-1 syntax error, -2 statement incomplete, -3 code already running
+        m_codectrl->Enable();
+        m_codectrl->SetFocus();
+    } else
+    {
+        if (event.GetState()==XMLRPC_STATE_REQUEST_FAILED)
+            Manager::Get()->GetLogManager()->LogError(_T("Error parsing response from python interpreter console\n")+wxString(event.GetResponse().toXml().c_str(),wxConvUTF8));
+        //Maybe show a popup?
+    }
+    //TODO: If not in error and more input available, need to call RunCode("cont")
 }
 
 void PythonInterpCtrl::OnLineInputRequest(wxCommandEvent& event)
@@ -336,13 +378,23 @@ void PythonInterpCtrl::OnPyJobAbort(wxCommandEvent& event)
     m_code=_T("");
 }
 
-void PythonInterpCtrl::OnEndProcess(wxCommandEvent &ce)
+void PythonInterpCtrl::OnEndProcess(wxCommandEvent& event)
 {
-    m_ioctrl->AppendText(stdout_retrieve());
-    m_ioctrl->AppendText(stderr_retrieve());
     m_portalloc.ReleasePort(m_port);
     if(m_shellmgr)
         m_shellmgr->OnShellTerminate(this);
+}
+
+void PythonInterpCtrl::stdin_append(const wxString &data)
+{ //asynchronously dispatch data to python interpreter's stdin
+    stdin_data+=data;
+}
+
+wxString PythonInterpCtrl::stdin_retrieve()
+ {
+    wxString s(stdin_data);
+    stdin_data=_T("");
+    return s;
 }
 
 void PythonInterpCtrl::SyncOutput(int maxchars)
@@ -426,106 +478,34 @@ void PythonInterpCtrl::OnUserInput(wxKeyEvent& ke)
 //    m_ioctrl->SetInsertionPointEnd();
 }
 
-void PythonInterpCtrl::stdin_append(const wxString &data)
-{ //asynchronously dispatch data to python interpreter's stdin
-    wxMutexLocker ml(io_mutex);
-    stdin_data+=data;
-}
 
-void PythonInterpCtrl::stdout_append(const wxString &data)
-{ //asynchronously dispatch data to python interpreter's stdin
-    wxMutexLocker ml(io_mutex);
-    stdout_data+=data;
-}
-
-void PythonInterpCtrl::stderr_append(const wxString &data)
-{ //asynchronously dispatch data to python interpreter's stdin
-    wxMutexLocker ml(io_mutex);
-    stderr_data+=data;
-}
-
-wxString PythonInterpCtrl::stdin_retrieve()
+bool PythonInterpCtrl::RunCode(const wxString &codestr)
 {
-    wxMutexLocker ml(io_mutex);
-    wxString s(stdin_data);
-    stdin_data=_T("");
-    return s;
-}
-
-wxString PythonInterpCtrl::stdout_retrieve()
-{
-    wxMutexLocker ml(io_mutex);
-    wxString s(stdout_data);
-    stdout_data=_T("");
-    return s;
-}
-
-wxString PythonInterpCtrl::stderr_retrieve()
-{
-    wxMutexLocker ml(io_mutex);
-    wxString s(stderr_data);
-    stderr_data=_T("");
-    return s;
-}
-
-bool PythonInterpCtrl::RunCode(const wxString &codestr, int &status)
-{
-    XmlRpc::XmlRpcValue args, result;
+//TODO: Should use a common ID for this and cont
+    XmlRpc::XmlRpcValue args;
     args[0]=codestr.utf8_str();
     args[1]=stdin_retrieve().utf8_str();
-    if(m_pyinterp->Exec(_("run_code"), args, result))
-    {
-        status=result[0];
-        std::string r1=result[1];
-        stdout_append(wxString::FromUTF8(r1.c_str()));
-        std::string r2=result[2];
-        stderr_append(wxString::FromUTF8(r2.c_str()));
-        return true;
-    }
-    status=-4;
-    return false;
+    return m_pyinterp->ExecAsync(_T("run_code"), args, this);
 }
 
-bool PythonInterpCtrl::Continue(int &status, bool &line_input_request)
+bool PythonInterpCtrl::Continue()
 {
-    XmlRpc::XmlRpcValue args, result;
+    XmlRpc::XmlRpcValue args;
     args[0]=stdin_retrieve().utf8_str();
-    if(m_pyinterp->Exec(_("cont"), args, result))
-    {
-        status=result[0];
-        std::string r1=result[1];
-        stdout_append(wxString::FromUTF8(r1.c_str()));
-        std::string r2=result[2];
-        stderr_append(wxString::FromUTF8(r2.c_str()));
-        line_input_request=result[3];
-        return true;
-    }
-    status=-4;
-    return false;
+    return m_pyinterp->ExecAsync(_T("cont"), args, this);
 }
 
 bool PythonInterpCtrl::BreakCode()
 {
-    m_pyinterp->Break();
-    return true;
-    XmlRpc::XmlRpcValue args, result;
-    if(m_pyinterp->Exec(_("break_code"), args, result))
-    {
-        //TODO: evaluate result -- if it not true, there was no code running
-        wxMessageBox(_("break sent"));
-        return true;
-    }
-    wxMessageBox(_("break not sent"));
-    return false;
+//TODO: Need to use a separate ID for this
+    XmlRpc::XmlRpcValue args;
+    return m_pyinterp->ExecAsync(_T("break_code"), args, this);
 }
 
 bool PythonInterpCtrl::SendKill()
 {
-    XmlRpc::XmlRpcValue args, result;
-    if(m_pyinterp->Exec(_("end"), args, result))
-    {
-        return true;
-    }
-    return false;
+//TODO: Need to use a separate ID for this
+    XmlRpc::XmlRpcValue args;
+    return m_pyinterp->ExecAsync(_T("end"), args, this);
 }
 

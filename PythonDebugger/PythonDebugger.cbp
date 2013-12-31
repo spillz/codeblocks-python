@@ -7,7 +7,7 @@
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="default">
-				<Option output="$(#cb)/devel/share/codeblocks/plugins/PyDebugger" prefix_auto="1" extension_auto="1" />
+				<Option output="$(#cb)/devel/share/codeblocks/plugins/PythonDebugger" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="$(#cb)/devel" />
 				<Option type="3" />
 				<Option compiler="gcc" />
@@ -42,32 +42,65 @@
 					<Add directory="$(#wx.lib)/gcc_dll" />
 				</Linker>
 				<ExtraCommands>
-					<Add after="zip -j9 $(#cb)\devel\share\codeblocks\PyDebugger.zip manifest.xml Resources\*.xrc" />
+					<Add after="zip -j9 $(#cb)\devel\share\codeblocks\PythonDebugger.zip manifest.xml Resources\*.xrc" />
+					<Mode after="always" />
+				</ExtraCommands>
+			</Target>
+			<Target title="cbplugin">
+				<Option output="PythonDebugger" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="$(#cb)/devel" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Option parameters="--debug-log --no-dde --no-check-associations --multiple-instance --no-splash-screen --verbose" />
+				<Option host_application="$(#cb)/devel/codeblocks.exe" />
+				<Option run_host_application_in_terminal="0" />
+				<Compiler>
+					<Add option="-Wall" />
+					<Add option="-g" />
+					<Add option="-pipe" />
+					<Add option="-mthreads" />
+					<Add option="-fmessage-length=0" />
+					<Add option="-fexceptions" />
+					<Add option="-Winvalid-pch" />
+					<Add option="-DBUILDING_PLUGIN" />
+					<Add option="-DHAVE_W32API_H" />
+					<Add option="-D__WXMSW__" />
+					<Add option="-DWXUSINGDLL" />
+					<Add option="-DcbDEBUG" />
+					<Add option="-DCB_PRECOMP" />
+					<Add option="-DWX_PRECOMP" />
+					<Add option="-DwxUSE_UNICODE" />
+					<Add directory="$(#cb)/include" />
+					<Add directory="$(#cb)/sdk/wxscintilla/include" />
+					<Add directory="$(#wx.include)" />
+					<Add directory="$(#wx.lib)/gcc_dll/mswu" />
+				</Compiler>
+				<Linker>
+					<Add library="codeblocks" />
+					<Add library="wxmsw28u" />
+					<Add directory="$(#cb)/devel" />
+					<Add directory="$(#wx.lib)/gcc_dll" />
+				</Linker>
+				<ExtraCommands>
+					<Add after="zip -j9 PythonDebugger.zip manifest.xml Resources\*.xrc" />
+					<Add after="zip -j9 PythonDebugger.cbplugin PythonDebugger.dll PythonDebugger.zip" />
+					<Mode after="always" />
 				</ExtraCommands>
 			</Target>
 		</Build>
+		<VirtualTargets>
+			<Add alias="All" targets="default;" />
+		</VirtualTargets>
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-DCB_PRECOMP" />
 			<Add option="-DWX_PRECOMP" />
 		</Compiler>
-		<Unit filename="ConfigDialog.cpp" />
-		<Unit filename="ConfigDialog.h" />
-		<Unit filename="ExecHiddenMSW.cpp">
-			<Option target="experimental" />
-			<Option target="experimental-binary" />
-		</Unit>
-		<Unit filename="ExecHiddenMSW.h">
-			<Option target="experimental" />
-			<Option target="experimental-binary" />
-		</Unit>
-		<Unit filename="PyDebugger.cpp" />
-		<Unit filename="PyDebugger.h" />
+		<Unit filename="PythonDebugger.cpp" />
+		<Unit filename="PythonDebugger.h" />
 		<Unit filename="Resources/debugger_options_dlg.xrc" />
 		<Unit filename="debuggeroptionsdlg.cpp" />
 		<Unit filename="debuggeroptionsdlg.h" />
-		<Unit filename="dialogs.cpp" />
-		<Unit filename="dialogs.h" />
 		<Unit filename="manifest.xml">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>

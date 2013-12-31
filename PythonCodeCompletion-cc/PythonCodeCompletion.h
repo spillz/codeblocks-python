@@ -150,15 +150,15 @@ class PythonCodeCompletion : public cbCodeCompletionPlugin
         void OnCompletePhrase(XmlRpcResponseEvent &event);
         void OnClickedGotoDefinition(wxCommandEvent& event);
         void OnGotoDefinition(XmlRpcResponseEvent &event);
+        void HandleError(XmlRpcResponseEvent &event, wxString message);
 
         // Additional implementation details
         // Helper for figuring out the position of calltips
         void GetCalltipPositions(cbEditor* editor, int pos, int &argsStartPos, int &argNumber);
+        // Functions to make the XmlRpc server request
         void RequestCompletion(cbStyledTextCtrl *control, int pos, const wxString &filename);
         void RequestCallTip(cbStyledTextCtrl *control, int pos, const wxString &filename);
         wxString RequestDocString(int id);
-//        void CompleteCodeEvt(CodeBlocksEvent& event);
-//        void ShowCallTipEvt(CodeBlocksEvent& event);
 
     private:
         int m_state; // takes one of the values of the StateType enum (used to report current state of the engine)

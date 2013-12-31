@@ -2,44 +2,50 @@
 <CodeBlocks_project_file>
 	<FileVersion major="1" minor="6" />
 	<Project>
-		<Option title="PyDebugger-Unix" />
+		<Option title="PythonDebugger-Unix" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="default">
-				<Option output="PyDebugger.so" prefix_auto="0" extension_auto="0" />
+				<Option output="$(#cb)/devel/share/codeblocks/plugins/libPythonDebugger.so" prefix_auto="0" extension_auto="0" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option parameters="--personality=debug --multiple-instance -ns -ni" />
+				<Option parameters="--debug-log --multiple-instance -ns -ni -p debug" />
 				<Option host_application="$(#cb)/devel/codeblocks" />
 				<Option run_host_application_in_terminal="0" />
 				<Compiler>
+					<Add option="-ansi" />
 					<Add option="-g" />
+					<Add directory="$(#cb)/include" />
+					<Add directory="$(#cb)/sdk/wxscintilla/include" />
 				</Compiler>
 				<Linker>
 					<Add library="codeblocks" />
+					<Add directory="$(#cb)/devel" />
 				</Linker>
 				<ExtraCommands>
-					<Add after="zip -j9 PyDebugger.zip manifest.xml Resources/debugger_options_dlg.xrc" />
-					<Add after="zip -r9 PyDebugger.cbplugin PyDebugger.so PyDebugger.zip" />
+					<Add after="zip -j9 $(#cb)/devel/share/codeblocks/PythonDebugger.zip manifest.xml Resources/debugger_options_dlg.xrc" />
 				</ExtraCommands>
 			</Target>
-			<Target title="test">
-				<Option output="$(#cb)/devel/share/codeblocks/plugins/libPyDebugger.so" prefix_auto="0" extension_auto="0" />
-				<Option working_dir="$(#cb)/devel" />
+			<Target title="cbplugin">
+				<Option output="PythonDebugger.so" prefix_auto="0" extension_auto="0" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option parameters="--personality=debug --multiple-instance -ns -ni" />
+				<Option parameters="--debug-log --multiple-instance -ns -ni -p debug --prefix $(#cb)/devel/debug-data" />
 				<Option host_application="$(#cb)/devel/codeblocks" />
 				<Option run_host_application_in_terminal="0" />
 				<Compiler>
+					<Add option="-ansi" />
 					<Add option="-g" />
+					<Add option="`pkg-config --cflags codeblocks`" />
 				</Compiler>
 				<Linker>
-					<Add library="codeblocks" />
+					<Add option="`pkg-config --libs codeblocks`" />
 				</Linker>
 				<ExtraCommands>
-					<Add after="zip -j9 $(#cb)/devel/share/codeblocks/PyDebugger.zip manifest.xml" />
+					<Add after="zip -j9 PythonDebugger.zip manifest.xml Resources/debugger_options_dlg.xrc" />
+					<Add after="zip -r9 PythonDebugger.cbplugin PythonDebugger.so PythonDebugger.zip" />
+					<Mode after="always" />
 				</ExtraCommands>
 			</Target>
 			<Environment>
@@ -47,11 +53,13 @@
 				<Variable name="wx=$wx_LINUX" value="" />
 			</Environment>
 		</Build>
+		<VirtualTargets>
+			<Add alias="All" targets="default;" />
+		</VirtualTargets>
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-g" />
 			<Add option="`wx-config --cflags`" />
-			<Add option="`pkg-config --cflags codeblocks`" />
 			<Add option="-fmessage-length=0" />
 			<Add option="-fexceptions" />
 			<Add option="-Winvalid-pch" />
@@ -63,21 +71,12 @@
 		</Compiler>
 		<Linker>
 			<Add option="`wx-config --libs`" />
-			<Add option="`pkg-config --libs codeblocks`" />
-			<Add directory="$(#cb)/devel" />
 		</Linker>
-		<Unit filename="PyDebugger.cpp">
-			<Option target="default" />
-		</Unit>
-		<Unit filename="PyDebugger.h">
-			<Option target="default" />
-		</Unit>
+		<Unit filename="PythonDebugger.cpp" />
+		<Unit filename="PythonDebugger.h" />
 		<Unit filename="Resources/debugger_options_dlg.xrc" />
-		<Unit filename="Resources/dialogs.fbp" />
 		<Unit filename="debuggeroptionsdlg.cpp" />
 		<Unit filename="debuggeroptionsdlg.h" />
-		<Unit filename="dialogs.cpp" />
-		<Unit filename="dialogs.h" />
 		<Unit filename="manifest.xml" />
 		<Extensions>
 			<code_completion />

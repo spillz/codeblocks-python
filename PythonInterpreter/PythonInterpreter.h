@@ -7,8 +7,8 @@
  * License:   GPL
  **************************************************************/
 
-#ifndef PyPlugin_H_INCLUDED
-#define PyPlugin_H_INCLUDED
+#ifndef PYTHONPLUGIN_H_INCLUDED
+#define PYTHONPLUGIN_H_INCLUDED
 
 // For compilers that support precompilation, includes <wx/wx.h>
 #include <wx/wxprec.h>
@@ -19,21 +19,16 @@
 
 #include <sdk.h>
 #include <cbplugin.h> // for "class cbPlugin"
-//#include "ConfigDialog.h"
-//#include "dialogs.h"
 
-//class ConfigDialog;
+#include "ShellCtrlBase.h"
 
-//class InterpreterCollection;
-
-
-class PyPlugin : public cbToolPlugin
+class PythonInterpreter : public cbPlugin
 {
     public:
 		/** Constructor. */
-        PyPlugin();
+        PythonInterpreter();
 		/** Destructor. */
-        virtual ~PyPlugin();
+        virtual ~PythonInterpreter();
 
 // Misc Plugin Virtuals
         virtual int Configure(); /** Invoke configuration dialog. */
@@ -53,8 +48,15 @@ class PyPlugin : public cbToolPlugin
     public:
 
     private:
+        void AddNewInterpreter(wxCommandEvent &event);
+        void OnToggleInterpreterWindow(wxCommandEvent &event);
+        void OnUpdateUI(wxUpdateUIEvent& event);
+        wxMenu *m_ViewMenu;
+#ifndef TOOLSPLUSLINK
+        ShellManager *m_shellmgr;
+#endif
 
         DECLARE_EVENT_TABLE();
 };
 
-#endif // PyPlugin_H_INCLUDED
+#endif // PYTHONPLUGIN_H_INCLUDED

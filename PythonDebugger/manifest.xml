@@ -2,8 +2,8 @@
 <CodeBlocks_plugin_manifest_file>
     <SdkVersion major="1" minor="11"  release="13" />
     <Plugin name="PythonDebugger">
-        <Value title="PythonDebugger" />
-        <Value version="0.2.0" />
+        <Value title="Python Debugger" />
+        <Value version="0.2" />
         <Value description="An interactive debugger for python scripts using pdb as a backend" />
         <Value author="Damien Moore" />
         <Value authorEmail="" />

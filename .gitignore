@@ -1,0 +1,8 @@
+*.dll
+*.so
+*.obj
+*.depend
+*.cbplugin
+*.layout
+*.zip
+.objs

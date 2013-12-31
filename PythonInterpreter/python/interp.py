@@ -82,20 +82,24 @@ class datastore:
         self.data=''
         self.lock=threading.Condition(threading.Lock())
         self.inputrequest=False
+
     def write(self,textstr):
         self.lock.acquire()
         self.data=self.data+textstr
         self.lock.release()
+
     def flush(self): ##TODO: Probably don't really want to do this!! (Clears out the data in the stream)
         self.lock.acquire()
         self.data=''
         self.lock.release()
+
     def read(self,size=None):
         self.lock.acquire()
         data=self.data ##TODO: should this be before the lock?
         self.data=''
         self.lock.release()
         return data
+
     def readline(self):
         #check data for a full line (terminated by \n or EOF(?))
         #if the line is there, extract it and return
@@ -115,11 +119,13 @@ class datastore:
             self.inputrequest=True
             self.lock.wait()
             self.inputrequest=False
+
     def HasInputRequest(self):
         self.lock.acquire()
         a=self.inputrequest
         self.lock.release()
         return a
+
     def InputRequestNotify(self):
         self.lock.acquire()
         self.lock.notify()
@@ -136,6 +142,7 @@ class PyInterp (code.InteractiveInterpreter):
         self._runningeval=False
         self.lock=lock
         self.eval_str=''
+
     def queue_code(self,eval_str):
         if not self._runningeval:
             self.lock.acquire()
@@ -146,8 +153,10 @@ class PyInterp (code.InteractiveInterpreter):
             return True
         else:
             return False
+
     def write(self, data):
         self._stderr.write(data)
+
     def main_loop(self):
         while self._running: #runs the eval_str queued by the server, then waits for the next eval_str. the loop ends when the server requests exit
             try:
@@ -184,6 +193,7 @@ class AsyncServer(threading.Thread):
         sys.stderr=self.interp._stderr
     def start_interp(self):
         self.interp.main_loop()
+
     def run(self):
         if self.port==-1:
             self.server = XmlRpcPipeServer()
@@ -197,6 +207,7 @@ class AsyncServer(threading.Thread):
         self.server.register_function(self.cont,'cont')
         while not self._quit:
             self.server.handle_request()
+
     def end(self):
         if self.interp._runningeval:
             raise KeyboardInterrupt
@@ -206,6 +217,7 @@ class AsyncServer(threading.Thread):
         self.lock.notify()
         self.lock.release()
         return self.cont(None)
+
     def run_code(self,eval_str,stdin):
         logmsg("compiling code",eval_str,stdin)
         try:
@@ -221,6 +233,7 @@ class AsyncServer(threading.Thread):
             return self.cont(stdin)
         else:
             return -3,self.interp._stdout.read(),self.interp._stderr.read(),self.interp._stdin.HasInputRequest()
+
     def cont(self,stdin):
         logmsg('continuing with stdin: ',stdin)
         if stdin is not None:
@@ -234,6 +247,7 @@ class AsyncServer(threading.Thread):
         result=(int(self.interp._runningeval),self.interp._stdout.read(),self.interp._stderr.read(),self.interp._stdin.HasInputRequest())
         logmsg('returning result ',result)
         return result
+
     def break_code(self):
         if self.interp._runningeval:
             raise KeyboardInterrupt

@@ -7,7 +7,7 @@ A variety of plugins for the Code::Blocks IDE that will be useful for python pro
 * Visual debugger
 * Python interpreter console
 
-All plugins assume that python is installed and in the default path.
+All plugins assume that python is installed and in the system path.
 
 Code Completion
 ---------------
@@ -24,7 +24,7 @@ Visual Debugger
 * Uses pdb (installed by default in any python)
 * TODO: add support for rpdb2
 
-To use it, make the python debugger that active debugger from the debugger menu
+To use it, make the python debugger the active debugger from the debugger menu
 
 .. image:: screenshots/debugger1.png
 
@@ -38,7 +38,7 @@ Python Interpreter Console
 * Run multiple python interpreters sessions inside a dockable pane in Code::Blocks
 * TODO: Handling stdin, font choice & styling, syntax highlighting, code completion hints
 
-Show the interpreters pane using the View menu:
+Show the interpreters panel using the View menu:
 
 .. image:: screenshots/interpreters1.png
 
@@ -60,7 +60,7 @@ Coming soon ...
 Building from Source
 --------------------
 
-There a Code::Blocks projects for each of the plugins (one for each of Windows and Unix) and the
+There are two Code::Blocks projects for each of the plugins (one for Windows and obe for Linux) and the
 XmlRpcEmbedder library that is used to control remote python processes from Code::Blocks. There
 is also a workspace file for Windows and Linux containing all of the projects.
 

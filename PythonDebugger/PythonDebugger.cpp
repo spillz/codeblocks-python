@@ -63,13 +63,16 @@ bool PythonDebugger::SupportsFeature(cbDebuggerFeature::Flags f)
 {
     switch(f)
     {
-        case Disassembly:
-        case ExamineMemory:
-        case CPURegisters:
-        case Threads: //Will be true with rpdb
-            return false;
-        default:
+        case cbDebuggerFeature::Breakpoints:
+        case cbDebuggerFeature::Callstack:
+        case cbDebuggerFeature::Watches:
+        case cbDebuggerFeature::ValueTooltips:
+//        case cbDebuggerFeature::Threads: //enable for rpdb2
+        case cbDebuggerFeature::RunToCursor:
+        case cbDebuggerFeature::SetNextStatement:
             return true;
+        default:
+            return false;
     }
     return true;
 }

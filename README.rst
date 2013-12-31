@@ -79,4 +79,4 @@ lib if you want to be able to install the  plugins as cbplugin packages.
 Get Help
 --------
 
-Use the issues to report problems or get support at forums.codeblocks.org
+Use the issues to report problems or get support at the `Code::Blocks Forums <http://forums.codeblocks.org>`_

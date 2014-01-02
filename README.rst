@@ -36,20 +36,21 @@ Python Interpreter Console
 --------------------------
 
 * Run multiple python interpreters sessions inside a dockable pane in Code::Blocks
-* TODO: Handling stdin, font choice & styling, syntax highlighting, code completion hints
+* TODO: Handling stdin, automatic indentation, font choice & styling, syntax highlighting, code completion hints, syntax error hints
 
 Show the interpreters panel using the View menu:
 
 .. image:: screenshots/interpreters1.png
 
-Each interpreter has 2 panes, one for editing and submitting code (press enter
-at the end of your line of code), the other for displaying the history of submitted
+Each interpreter has 2 panes, one for editing and submitting blocks of code, the other for displaying the history of submitted
 statements and any output
 
 .. image:: screenshots/interpreters2.png
 
-Press Ctrl-Up and Ctrl-Down when the Code control is focused to browse through the history
-of previously submitted statements.
+When the code control has the keyboard focus, press
+
+* 'Enter' with the keyboard positioned at the end of your block of code to submit it to the interpreter
+* 'Ctrl-Up' and 'Ctrl-Down' to browse through the history of previously submitted statements.
 
 
 Ready Built Binaries

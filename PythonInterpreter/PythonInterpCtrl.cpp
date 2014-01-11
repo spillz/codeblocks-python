@@ -4,6 +4,8 @@
 #include "PythonInterpCtrl.h"
 #include <globals.h>
 
+#include <cbcolourmanager.h>
+
 //DECLARE_LOCAL_EVENT_TYPE(wxEVT_PY_NOTIFY_UI_CODEOK, -1)
 DEFINE_EVENT_TYPE( wxEVT_PY_NOTIFY_UI_CODEOK )
 
@@ -80,20 +82,136 @@ void PythonIOCtrl::LineInputRequest()
 }
 ////////////////////////////////////// PythonCodeCtrl //////////////////////////////////////////////
 
-BEGIN_EVENT_TABLE(PythonCodeCtrl, wxTextCtrl)
+BEGIN_EVENT_TABLE(PythonCodeCtrl, cbStyledTextCtrl)
     EVT_KEY_DOWN(PythonCodeCtrl::OnUserInput)
 END_EVENT_TABLE()
 
 PythonCodeCtrl::PythonCodeCtrl(wxWindow *parent, PythonInterpCtrl *py)
-    : wxTextCtrl(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, /*wxTE_RICH|*/ wxTE_MULTILINE|wxTE_PROCESS_ENTER|wxTE_PROCESS_TAB|wxEXPAND)
+    : cbStyledTextCtrl(parent, wxID_ANY)
 {
     m_pyctrl = py;
+    EditorManager *em = Manager::Get()->GetEditorManager();
 //    Connect(wxEVT_KEY_DOWN, wxKeyEventHandler(PythonCodeCtrl::OnUserInput));
+
+
+    ConfigManager* mgr = Manager::Get()->GetConfigManager(_T("editor"));
+
+    // setting the default editor font size to 10 point
+    wxFont font(10, wxMODERN, wxNORMAL, wxNORMAL);
+
+    wxString fontstring = mgr->Read(_T("/font"), wxEmptyString);
+
+    if (!fontstring.IsEmpty())
+    {
+        wxNativeFontInfo nfi;
+        nfi.FromString(fontstring);
+        font.SetNativeFontInfo(nfi);
+    }
+
+    SetMouseDwellTime(1000);
+
+    int caretStyle = mgr->ReadInt(_T("/caret/style"), wxSCI_CARETSTYLE_LINE);
+    SetCaretStyle(caretStyle);
+    if (caretStyle == wxSCI_CARETSTYLE_LINE)
+        SetCaretWidth(mgr->ReadInt(_T("/caret/width"), 1));
+    else
+        SetCaretWidth(1);
+
+    ColourManager *colours = Manager::Get()->GetColourManager();
+
+    SetCaretForeground(colours->GetColour(wxT("editor_caret")));
+    SetCaretPeriod(mgr->ReadInt(_T("/caret/period"), 500));
+    SetCaretLineVisible(mgr->ReadBool(_T("/highlight_caret_line"), false));
+    SetCaretLineBackground(
+        Manager::Get()->GetConfigManager(_T("editor"))->ReadColour(_T("/highlight_caret_line_colour"), wxColour(0xFF, 0xFF, 0x00)));
+
+    SetFoldMarginColour(true, colours->GetColour(wxT("editor_margin_chrome")));
+    SetFoldMarginHiColour(true, colours->GetColour(wxT("editor_margin_chrome_highlight")));
+
+    // setup for "CamelCase selection"
+    if (mgr->ReadBool(_T("/camel_case"), false))
+    {
+        // consider CamelCase for both: cursor movement with CTRL and selection with CTRL+SHIFT:
+        CmdKeyAssign(wxSCI_KEY_LEFT,  wxSCI_SCMOD_CTRL,                   wxSCI_CMD_WORDPARTLEFT);
+        CmdKeyAssign(wxSCI_KEY_RIGHT, wxSCI_SCMOD_CTRL,                   wxSCI_CMD_WORDPARTRIGHT);
+        CmdKeyAssign(wxSCI_KEY_LEFT,  wxSCI_SCMOD_CTRL|wxSCI_SCMOD_SHIFT, wxSCI_CMD_WORDPARTLEFTEXTEND);
+        CmdKeyAssign(wxSCI_KEY_RIGHT, wxSCI_SCMOD_CTRL|wxSCI_SCMOD_SHIFT, wxSCI_CMD_WORDPARTRIGHTEXTEND);
+    }
+    else // else set default "none CamelCase" key behavior (also default scintilla behaviour, see scintilla docs)
+    {
+        CmdKeyAssign(wxSCI_KEY_LEFT,  wxSCI_SCMOD_CTRL,                   wxSCI_CMD_WORDLEFT);
+        CmdKeyAssign(wxSCI_KEY_RIGHT, wxSCI_SCMOD_CTRL,                   wxSCI_CMD_WORDRIGHT);
+        CmdKeyAssign(wxSCI_KEY_LEFT,  wxSCI_SCMOD_CTRL|wxSCI_SCMOD_SHIFT, wxSCI_CMD_WORDLEFTEXTEND);
+        CmdKeyAssign(wxSCI_KEY_RIGHT, wxSCI_SCMOD_CTRL|wxSCI_SCMOD_SHIFT, wxSCI_CMD_WORDRIGHTEXTEND);
+    }
+
+    SetUseTabs(mgr->ReadBool(_T("/use_tab"), false));
+    SetIndentationGuides(mgr->ReadBool(_T("/show_indent_guides"), false)?wxSCI_IV_LOOKBOTH:wxSCI_IV_NONE);
+    SetTabIndents(mgr->ReadBool(_T("/tab_indents"), true));
+    SetBackSpaceUnIndents(mgr->ReadBool(_T("/backspace_unindents"), true));
+    SetWrapMode(mgr->ReadBool(_T("/word_wrap"), false));
+    if (mgr->ReadBool(_T("/word_wrap_style_home_end"), true))
+    {
+        // in word wrap mode, home/end keys goto the wrap point if not already there,
+        // otherwise to the start/end of the entire line.
+        // alt+home/end go to start/end of the entire line.
+        // in unwrapped mode, there is no difference between home/end and alt+home/end
+        CmdKeyAssign(wxSCI_KEY_END,  wxSCI_SCMOD_NORM,                  wxSCI_CMD_LINEENDWRAP);
+        CmdKeyAssign(wxSCI_KEY_END,  wxSCI_SCMOD_ALT,                   wxSCI_CMD_LINEEND);
+        CmdKeyAssign(wxSCI_KEY_END,  wxSCI_SCMOD_SHIFT,                 wxSCI_CMD_LINEENDWRAPEXTEND);
+        CmdKeyAssign(wxSCI_KEY_END,  wxSCI_SCMOD_SHIFT|wxSCI_SCMOD_ALT, wxSCI_CMD_LINEENDEXTEND);
+
+        // if user wants "Home" key to set cursor to the very beginning of line
+        if (mgr->ReadBool(_T("/simplified_home"), false))
+        {
+            CmdKeyAssign(wxSCI_KEY_HOME,wxSCI_SCMOD_NORM,wxSCI_CMD_HOMEWRAP);
+            CmdKeyAssign(wxSCI_KEY_HOME,wxSCI_SCMOD_ALT,wxSCI_CMD_HOME);
+            CmdKeyAssign(wxSCI_KEY_HOME,wxSCI_SCMOD_SHIFT,wxSCI_CMD_HOMEWRAPEXTEND);
+            CmdKeyAssign(wxSCI_KEY_HOME,wxSCI_SCMOD_SHIFT|wxSCI_SCMOD_ALT,wxSCI_CMD_HOMEEXTEND);
+        }
+        else // else set default "Home" key behavior
+        {
+            CmdKeyAssign(wxSCI_KEY_HOME,wxSCI_SCMOD_NORM,wxSCI_CMD_VCHOMEWRAP);
+            CmdKeyAssign(wxSCI_KEY_HOME,wxSCI_SCMOD_ALT,wxSCI_CMD_VCHOME);
+            CmdKeyAssign(wxSCI_KEY_HOME,wxSCI_SCMOD_SHIFT,wxSCI_CMD_VCHOMEWRAPEXTEND);
+            CmdKeyAssign(wxSCI_KEY_HOME,wxSCI_SCMOD_SHIFT|wxSCI_SCMOD_ALT,wxSCI_CMD_VCHOMEEXTEND);
+        }
+    }
+    else
+    {   // in word wrap mode, home/end keys goto start/end of the entire line. alt+home/end goes to wrap points
+        CmdKeyAssign(wxSCI_KEY_END,  wxSCI_SCMOD_ALT,                   wxSCI_CMD_LINEENDWRAP);
+        CmdKeyAssign(wxSCI_KEY_END,  wxSCI_SCMOD_SHIFT|wxSCI_SCMOD_ALT, wxSCI_CMD_LINEENDWRAPEXTEND);
+
+        // if user wants "Home" key to set cursor to the very beginning of line
+        if (mgr->ReadBool(_T("/simplified_home"), false))
+        {
+            CmdKeyAssign(wxSCI_KEY_HOME,wxSCI_SCMOD_ALT,wxSCI_CMD_HOMEWRAP);
+            CmdKeyAssign(wxSCI_KEY_HOME,wxSCI_SCMOD_SHIFT|wxSCI_SCMOD_ALT,wxSCI_CMD_HOMEWRAPEXTEND);
+        }
+        else // else set default "Home" key behavior
+        {
+            CmdKeyAssign(wxSCI_KEY_HOME,wxSCI_SCMOD_ALT,wxSCI_CMD_VCHOMEWRAP);
+            CmdKeyAssign(wxSCI_KEY_HOME,wxSCI_SCMOD_SHIFT|wxSCI_SCMOD_ALT,wxSCI_CMD_VCHOMEWRAPEXTEND);
+        }
+    }
+    SetViewEOL(mgr->ReadBool(_T("/show_eol"), false));
+    SetViewWhiteSpace(mgr->ReadInt(_T("/view_whitespace"), 0));
+    // gutter
+    SetEdgeMode(mgr->ReadInt(_T("/gutter/mode"), 0));
+    SetEdgeColour(Manager::Get()->GetColourManager()->GetColour(wxT("editor_gutter")));
+    SetEdgeColumn(mgr->ReadInt(_T("/gutter/column"), 80));
+
+    StyleSetFont(wxSCI_STYLE_DEFAULT, font);
+    StyleClearAll();
+
+    SetTabWidth(mgr->ReadInt(_T("/tab_size"), 4));
+
+    em->GetColourSet()->Apply(_("Python"),this);
+
 }
 
 void PythonCodeCtrl::OnUserInput(wxKeyEvent& ke)
 {
-    Manager::Get()->GetLogManager()->Log(_T("Key event"));
     if(ke.GetModifiers()==wxMOD_CONTROL)
     {
 //        wxMessageBox(_T("control pressed"));
@@ -126,8 +244,9 @@ void PythonCodeCtrl::OnUserInput(wxKeyEvent& ke)
                 SetValue(m_history_commands[m_history_position]);
             else
                 SetValue(m_history_working);
-            int pos = GetLastPosition();
-            SetSelection(pos,pos);
+            int pos = GetLength(); //was GetLastPosition();
+            SetSelectionStart(pos);//was SetSelection(pos,pos);
+            SetSelectionEnd(pos);
             return;
         }
         if(ke.GetKeyCode()==WXK_DOWN)
@@ -141,8 +260,9 @@ void PythonCodeCtrl::OnUserInput(wxKeyEvent& ke)
                 SetValue(m_history_commands[m_history_position]);
             else
                 SetValue(m_history_working);
-            int pos = GetLastPosition();
-            SetSelection(pos,pos);
+            int pos = GetLength(); //was LastPosition();
+            SetSelectionStart(pos); //was SetSelection(pos,pos);
+            SetSelectionEnd(pos);
             return;
         }
 
@@ -156,7 +276,8 @@ void PythonCodeCtrl::OnUserInput(wxKeyEvent& ke)
         {
             long rs,re;
             GetSelection(&rs,&re);
-            if(rs==re && this->GetLastPosition()==rs)
+            //if(rs==re && GetLastPosition()==rs)
+            if(rs==re && GetLength()==rs)
             {
                 m_pyctrl->DispatchCode(code);
                 return;
@@ -315,6 +436,8 @@ void PythonInterpCtrl::OnPyNotify(XmlRpcResponseEvent& event)
         if (return_code == -2)
         {
             m_codectrl->AppendText(_T("\n"));
+            m_codectrl->SetCurrentPos(m_codectrl->GetLength());
+            m_codectrl->SetAnchor(m_codectrl->GetLength());
         }
 
         m_ioctrl->AppendText(wxString(sstdout.c_str(),wxConvUTF8));
@@ -326,13 +449,13 @@ void PythonInterpCtrl::OnPyNotify(XmlRpcResponseEvent& event)
 
         if (return_code == 1) // Eval was successful and is still running
         {
-            m_codectrl->Clear();
+            m_codectrl->ClearAll();
             this->Continue();
             return;
         }
         if (return_code == 0) //Eval has finished
         {
-            m_codectrl->Clear();
+            m_codectrl->ClearAll();
             //Now fall through to re-enable the control
         }
         //Otherwise it's an error (-1 syntax error, -2 statement incomplete, -3 code already running
@@ -364,18 +487,6 @@ void PythonInterpCtrl::OnPyCode(wxCommandEvent& event)
     m_ioctrl->AppendText(m_code);
     m_ioctrl->SetDefaultStyle(oldta);
     m_ioctrl->AppendText(_T("\n"));
-}
-
-void PythonInterpCtrl::OnPyJobDone(wxCommandEvent& event)
-{
-    m_codectrl->ChangeValue(_T(""));
-    m_code=_T("");
-}
-
-void PythonInterpCtrl::OnPyJobAbort(wxCommandEvent& event)
-{
-    m_codectrl->AppendText(_T("\n"));
-    m_code=_T("");
 }
 
 void PythonInterpCtrl::OnEndProcess(wxCommandEvent& event)

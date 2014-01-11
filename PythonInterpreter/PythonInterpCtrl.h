@@ -9,30 +9,14 @@
 
 #include "xmlrpc_embedder.h"
 #include "ShellCtrlBase.h"
+#include "editormanager.h"
+#include "cbstyledtextctrl.h"
 
 #include <sdk.h>
 
-//
-//class PyInterpJob: public XmlRpcJob
-//{
-//public:
-//    PyInterpJob(wxString code, XmlRpcInstance *pyinst, PythonInterpCtrl *pctl, wxWindow *w, int id=wxID_ANY, bool selfdestroy=true) : XmlRpcJob(pyinst, w, id, selfdestroy)
-//    {
-//        m_code=code;
-//        this->pctl=pctl;
-//        m_break_job=false;
-//        return;
-//    }
-//    PythonInterpCtrl *pctl;
-//    bool operator()(); // main thread loop
-//    void Break(); // called outside of thread to send break signal to the running interpreter
-//    wxString m_code;
-//    wxMutex m_break_mutex;
-//    bool m_break_job;
-//};
 class PythonInterpCtrl;
 
-class PythonCodeCtrl: public wxTextCtrl
+class PythonCodeCtrl: public cbStyledTextCtrl
 {
 public:
     PythonCodeCtrl(wxWindow *parent, PythonInterpCtrl *py);
@@ -134,8 +118,6 @@ class PythonInterpCtrl : public ShellCtrlBase
         void OnPyNotify(XmlRpcResponseEvent& event);
         void OnLineInputRequest(wxCommandEvent& event);
         void OnPyCode(wxCommandEvent& event);
-        void OnPyJobDone(wxCommandEvent& event);
-        void OnPyJobAbort(wxCommandEvent& event);
         void OnEndProcess(wxCommandEvent& event);
 
         bool DispatchCode(const wxString &code);

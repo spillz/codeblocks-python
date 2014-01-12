@@ -23,6 +23,30 @@ BEGIN_EVENT_TABLE(PythonIOCtrl, wxTextCtrl)
 //    EVT_COMMAND(0, wxEVT_PY_NOTIFY_UI_INPUT, PythonIOCtrl::OnLineInputRequest)
 END_EVENT_TABLE()
 
+PythonIOCtrl::PythonIOCtrl(wxWindow *parent, PythonInterpCtrl *py)
+        : wxTextCtrl(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_RICH|wxTE_MULTILINE|wxTE_READONLY|wxTE_PROCESS_ENTER|wxTE_PROCESS_TAB|wxEXPAND)
+{
+    m_pyctrl = py;
+    m_line_entry_mode=false;
+    // setting the default editor font size to 10 point
+    wxFont font(10, wxMODERN, wxNORMAL, wxNORMAL);
+
+    ConfigManager* mgr = Manager::Get()->GetConfigManager(_T("editor"));
+    wxString fontstring = mgr->Read(_T("/font"), wxEmptyString);
+
+    if (!fontstring.IsEmpty())
+    {
+        wxNativeFontInfo nfi;
+        nfi.FromString(fontstring);
+        font.SetNativeFontInfo(nfi);
+    }
+
+    wxTextAttr ta;
+    ta.SetFont(font);
+    SetDefaultStyle(ta);
+}
+
+
 void PythonIOCtrl::OnUserInput(wxKeyEvent& ke)
 {
     if(ke.GetModifiers()==wxMOD_CONTROL)

@@ -31,9 +31,7 @@ public:
 class PythonIOCtrl: public wxTextCtrl
 {
 public:
-    PythonIOCtrl(wxWindow *parent, PythonInterpCtrl *py)
-        : wxTextCtrl(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_RICH|wxTE_MULTILINE|wxTE_READONLY|wxTE_PROCESS_ENTER|wxTE_PROCESS_TAB|wxEXPAND)
-        {m_pyctrl = py; m_line_entry_mode=false;}
+    PythonIOCtrl(wxWindow *parent, PythonInterpCtrl *py);
     void OnUserInput(wxKeyEvent& ke);
     void LineInputRequest();
     void OnTextChange(wxCommandEvent& e);

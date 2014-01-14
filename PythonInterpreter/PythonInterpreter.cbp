@@ -43,8 +43,8 @@
 				</Linker>
 				<ExtraCommands>
 					<Add after="zip -j9 PythonInterpreter.zip manifest.xml" />
-					<Add after="cmd /c copy PythonInterpreter.zip $(#cb)\devel\share\codeblocks" />
-					<Add after="cmd /c copy python\interp.py $(#cb)\devel\share\codeblocks" />
+					<Add after="cmd /c xcopy PythonInterpreter.zip $(#cb)\devel\share\codeblocks" />
+					<Add after="cmd /c xcopy python\interp.py $(#cb)\devel\share\codeblocks\python" />
 					<Mode after="always" />
 				</ExtraCommands>
 			</Target>

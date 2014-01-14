@@ -73,7 +73,7 @@ void PythonIOCtrl::OnUserInput(wxKeyEvent& ke)
             if(m_line_entry_mode)
             {
                 m_line_entry_mode=false;
-                this->SetEditable(false);
+                SetEditable(false);
                 wxString line;
                 if(m_line_entry_point<GetLastPosition())
                     line=GetRange(m_line_entry_point,GetLastPosition());
@@ -99,15 +99,16 @@ void PythonIOCtrl::LineInputRequest()
     if(!m_line_entry_mode)
     {
         m_line_entry_mode=true;
-        m_line_entry_point=this->GetLastPosition();
-        this->SetSelection(m_line_entry_point,m_line_entry_point);
-        this->SetEditable(true);
+        m_line_entry_point=GetLastPosition();
+        SetSelection(m_line_entry_point,m_line_entry_point);
+        SetEditable(true);
     }
 }
 ////////////////////////////////////// PythonCodeCtrl //////////////////////////////////////////////
 
 BEGIN_EVENT_TABLE(PythonCodeCtrl, cbStyledTextCtrl)
     EVT_KEY_DOWN(PythonCodeCtrl::OnUserInput)
+    EVT_SCI_CHARADDED(-1,PythonCodeCtrl::OnCharAdded)
 END_EVENT_TABLE()
 
 PythonCodeCtrl::PythonCodeCtrl(wxWindow *parent, PythonInterpCtrl *py)
@@ -117,10 +118,9 @@ PythonCodeCtrl::PythonCodeCtrl(wxWindow *parent, PythonInterpCtrl *py)
     EditorManager *em = Manager::Get()->GetEditorManager();
 //    Connect(wxEVT_KEY_DOWN, wxKeyEventHandler(PythonCodeCtrl::OnUserInput));
 
-
     ConfigManager* mgr = Manager::Get()->GetConfigManager(_T("editor"));
 
-    // setting the default editor font size to 10 point
+    //MOST OF THIS STUFF IS TAKEN FROM CB EDITOR
     wxFont font(10, wxMODERN, wxNORMAL, wxNORMAL);
 
     wxString fontstring = mgr->Read(_T("/font"), wxEmptyString);
@@ -229,9 +229,55 @@ PythonCodeCtrl::PythonCodeCtrl(wxWindow *parent, PythonInterpCtrl *py)
     StyleClearAll();
 
     SetTabWidth(mgr->ReadInt(_T("/tab_size"), 4));
+    SetIndent(mgr->ReadInt(_T("/tab_size"), 4)); //NEEDED FOR AUTO INDENTATION (NOT IN CB EDITOR)
 
     em->GetColourSet()->Apply(_("Python"),this);
 
+}
+
+void PythonCodeCtrl::OnCharAdded(wxScintillaEvent& ke)
+{
+    //User has pressed enter
+    //if the cursor is at the end of a completed statement, submit the statement to the interpreter
+    //otherwise, do auto-indentation
+    if (ke.GetKey() == _T('\n'))
+    {
+        //int pos = GetCurrentPos();
+        int line = LineFromPosition(GetCurrentPos());
+
+        if(line>0)
+        {
+            wxString prevlinetext = GetLine(line-1).Trim();
+            int indentation = GetLineIndentation(line-1);
+
+            if((indentation==0) //submit a return pressed on an unindented line
+                || (indentation>0 && prevlinetext==wxEmptyString)) // or an indented block where the previous line was empty
+            {
+                long rs,re;
+                GetSelection(&rs,&re);
+                //if(rs==re && GetLastPosition()==rs)
+                if(rs==re && GetLength()==rs) // only submit if the cursor is at the end of the control (and there is no selection)
+                {
+                    m_pyctrl->DispatchCode(GetValue());
+                    ke.Skip();
+                }
+            }
+
+            // Otherwise indent the code if necessary
+            if (GetLine(line-1).Trim().EndsWith(_T(":")))
+            {
+                if(GetStyleAt(GetLineEndPosition(line-1)-1) == wxSCI_P_OPERATOR)
+                    indentation+=GetIndent();
+            }
+            if (indentation>0)
+            {
+                SetLineIndentation(line,indentation);
+                SetCurrentPos(PositionFromLine(line)+indentation);
+                SetAnchor(PositionFromLine(line)+indentation);
+            }
+        }
+    }
+    ke.Skip();
 }
 
 void PythonCodeCtrl::OnUserInput(wxKeyEvent& ke)
@@ -290,23 +336,6 @@ void PythonCodeCtrl::OnUserInput(wxKeyEvent& ke)
             return;
         }
 
-    }
-    if(ke.GetModifiers()==wxMOD_NONE && ke.GetKeyCode()==WXK_RETURN)
-    {
-        wxString code = GetValue();
-        wxString lastline = code.AfterLast(_T('\n'));
-        if (!lastline.StartsWith(_T("\t")) && !lastline.StartsWith(_T("\t")) &&
-            !lastline.EndsWith(_T(":")))
-        {
-            long rs,re;
-            GetSelection(&rs,&re);
-            //if(rs==re && GetLastPosition()==rs)
-            if(rs==re && GetLength()==rs)
-            {
-                m_pyctrl->DispatchCode(code);
-                return;
-            }
-        }
     }
     ke.Skip();
 }
@@ -422,7 +451,8 @@ bool PythonInterpCtrl::DispatchCode(const wxString &code)
     m_code=code;
     m_codectrl->m_history_commands.Add(code);
     m_codectrl->m_history_position = -1;
-    if (RunCode(wxString(code.c_str())))
+//    if (RunCode(wxString(code.c_str())))
+    if (RunCode(wxString(code)))
     {
         m_codectrl->Enable(false);
 //        wxCommandEvent pe(wxEVT_PY_NOTIFY_UI_CODEOK,0);
@@ -453,15 +483,15 @@ void PythonInterpCtrl::OnPyNotify(XmlRpcResponseEvent& event)
             m_ioctrl->SetDefaultStyle(ta);
             m_ioctrl->AppendText(m_code);
             m_ioctrl->SetDefaultStyle(oldta);
-            m_ioctrl->AppendText(_T("\n"));
+//            m_ioctrl->AppendText(_T("\n"));
             m_code = wxEmptyString;
         }
 
         if (return_code == -2)
         {
-            m_codectrl->AppendText(_T("\n"));
-            m_codectrl->SetCurrentPos(m_codectrl->GetLength());
-            m_codectrl->SetAnchor(m_codectrl->GetLength());
+//            m_codectrl->AppendText(_T("\n"));
+//            m_codectrl->SetCurrentPos(m_codectrl->GetLength());
+//            m_codectrl->SetAnchor(m_codectrl->GetLength());
         }
 
         m_ioctrl->AppendText(wxString(sstdout.c_str(),wxConvUTF8));

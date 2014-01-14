@@ -20,11 +20,13 @@ class PythonCodeCtrl: public cbStyledTextCtrl
 {
 public:
     PythonCodeCtrl(wxWindow *parent, PythonInterpCtrl *py);
-    void OnUserInput(wxKeyEvent& ke);
-    PythonInterpCtrl *m_pyctrl;
     wxArrayString m_history_commands;
     wxString m_history_working;
     int m_history_position;
+private:
+    void OnUserInput(wxKeyEvent& ke);
+    void OnCharAdded(wxScintillaEvent& ke);
+    PythonInterpCtrl *m_pyctrl;
     DECLARE_EVENT_TABLE()
 };
 

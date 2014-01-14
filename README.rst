@@ -36,14 +36,18 @@ Python Interpreter Console
 --------------------------
 
 * Run multiple python interpreters sessions inside a dockable pane in Code::Blocks
-* TODO: Handling stdin, automatic indentation, font choice & styling, syntax highlighting, code completion hints, syntax error hints
+* Features syntax highlighting and automatic indentation in the code input control
+* TODO: Handling stdin (e.g. raw_input), code completion hints, syntax error hints,
+  extracting code/output from the I/O control, numbering instructions and output(?)
+
+**Usage**
 
 Show the interpreters panel using the View menu:
 
 .. image:: screenshots/interpreters1.png
 
-Each interpreter has 2 panes, one for editing and submitting blocks of code, the other for displaying the history of submitted
-statements and any output
+Each interpreter has 2 panes, one for editing and submitting blocks of code, the other
+for displaying the history of submitted statements and any output
 
 .. image:: screenshots/interpreters2.png
 

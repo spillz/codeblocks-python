@@ -41,8 +41,8 @@
 				</Linker>
 				<ExtraCommands>
 					<Add after="zip -j9 PythonCodeCompletion.zip manifest.xml" />
-					<Add after="cmd /c copy PythonCodeCompletion.zip $(#cb)\devel\share\codeblocks\" />
-					<Add after="cmd /c copy python\python_completion_server.py $(#cb)\devel\share\codeblocks\python" />
+					<Add after="cmd /c xcopy PythonCodeCompletion.zip $(#cb)\devel\share\codeblocks\" />
+					<Add after="cmd /c xcopy python\python_completion_server.py $(#cb)\devel\share\codeblocks\python" />
 					<Mode after="always" />
 				</ExtraCommands>
 			</Target>

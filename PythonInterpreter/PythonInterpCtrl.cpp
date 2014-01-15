@@ -449,8 +449,6 @@ bool PythonInterpCtrl::DispatchCode(const wxString &code)
     if(m_pyinterp->IsJobRunning())
         return false;
     m_code=code;
-    m_codectrl->m_history_commands.Add(code);
-    m_codectrl->m_history_position = -1;
 //    if (RunCode(wxString(code.c_str())))
     if (RunCode(wxString(code)))
     {
@@ -484,6 +482,8 @@ void PythonInterpCtrl::OnPyNotify(XmlRpcResponseEvent& event)
             m_ioctrl->AppendText(m_code);
             m_ioctrl->SetDefaultStyle(oldta);
 //            m_ioctrl->AppendText(_T("\n"));
+            m_codectrl->m_history_commands.Add(m_code.BeforeLast(_T('\n')));
+            m_codectrl->m_history_position = -1;
             m_code = wxEmptyString;
         }
 

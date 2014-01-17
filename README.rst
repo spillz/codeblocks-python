@@ -65,7 +65,7 @@ Coming soon ...
 Building from Source
 --------------------
 
-There are two Code::Blocks projects for each of the plugins (one for Windows and obe for Linux) and the
+There are two Code::Blocks projects for each of the plugins (one for Windows and one for Linux) and the
 XmlRpcEmbedder library that is used to control remote python processes from Code::Blocks. There
 is also a workspace file for Windows and Linux containing all of the projects.
 

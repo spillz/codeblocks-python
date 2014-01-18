@@ -585,7 +585,11 @@ wxString PythonCodeCompletion::RequestDocString(int id)
             return wxString();
         }
     } else
-        HandleError(event,_T("PYCC: Bad response for get_doc"));
+    {
+        Manager::Get()->GetLogManager()->LogError(_T("PYCC: Bad response for get_doc"));
+        Manager::Get()->GetLogManager()->LogError(wxString(result.toXml().c_str(),wxConvUTF8));
+
+    }
     return wxString();
 }
 

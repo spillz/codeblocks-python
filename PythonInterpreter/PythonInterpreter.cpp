@@ -39,7 +39,7 @@ int ID_INTERP_WINDOW_TOGGLE=wxNewId();
 BEGIN_EVENT_TABLE(PythonInterpreter, cbPlugin)
 	// add any events you want to handle here
     EVT_MENU(ID_INTERP_WINDOW_TOGGLE,PythonInterpreter::OnToggleInterpreterWindow)
-    EVT_UPDATE_UI(ID_INTERP_WINDOW_TOGGLE, PythonInterpreter::OnUpdateUI)
+    EVT_UPDATE_UI(wxID_ANY/*ID_INTERP_WINDOW_TOGGLE*/, PythonInterpreter::OnUpdateUI)
     EVT_COMMAND(0,wxEVT_SHELL_ADD_CLICKED, PythonInterpreter::AddNewInterpreter)
 END_EVENT_TABLE()
 
@@ -57,6 +57,14 @@ void PythonInterpreter::OnUpdateUI(wxUpdateUIEvent& event)
 #endif // TOOLSPLUSLINK
 }
 
+void PythonInterpreter::OnToggleInterpreterWindow(wxCommandEvent &event)
+{
+#ifndef TOOLSPLUSLINK
+    CodeBlocksDockEvent evt(event.IsChecked()? cbEVT_SHOW_DOCK_WINDOW : cbEVT_HIDE_DOCK_WINDOW);
+    evt.pWindow = m_shellmgr;
+    Manager::Get()->ProcessEvent(evt);
+#endif // TOOLSPLUSLINK
+}
 
 // constructor
 PythonInterpreter::PythonInterpreter()
@@ -125,16 +133,6 @@ void PythonInterpreter::OnRelease(bool appShutDown)
     }
     m_shellmgr = 0;
 #endif
-}
-
-void PythonInterpreter::OnToggleInterpreterWindow(wxCommandEvent &event)
-{
-#ifndef TOOLSPLUSLINK
-    CodeBlocksDockEvent evt(event.IsChecked()? cbEVT_SHOW_DOCK_WINDOW : cbEVT_HIDE_DOCK_WINDOW);
-    evt.pWindow = m_shellmgr;
-    Manager::Get()->ProcessEvent(evt);
-#endif
-//    m_shellmgr->Enable();
 }
 
 int PythonInterpreter::Execute()

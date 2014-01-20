@@ -130,13 +130,13 @@ class PythonCodeCompletion : public cbCodeCompletionPlugin
         virtual void OnRelease(bool appShutDown);
 
         void OnClickedGotoDefinition(wxCommandEvent& event);
+        void HandleError(XmlRpcResponseEvent &event, wxString message);
 
         // Handlers for responses from XMLRPC server
         void OnStdLibLoaded(XmlRpcResponseEvent &event);
         void OnCalltip(XmlRpcResponseEvent &event);
         void OnCompletePhrase(XmlRpcResponseEvent &event);
         void OnGotoDefinition(XmlRpcResponseEvent &event);
-        void HandleError(XmlRpcResponseEvent &event, wxString message);
 
         // Generate the XMLRPC server requests
         void RequestCompletion(cbStyledTextCtrl *control, int pos, const wxString &filename);

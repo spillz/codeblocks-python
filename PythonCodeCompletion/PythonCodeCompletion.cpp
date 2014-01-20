@@ -116,8 +116,8 @@ void PythonCodeCompletion::OnAttach()
 //    wxString command = wxString::Format(_T("python -u -m memory_profiler %s %i"),script.c_str(),port);
 //    wxString command = wxString::Format(_T("gnome-terminal -e \"python -u %s %i\""),script.c_str(),port);
     #endif
-    Manager::Get()->GetLogManager()->DebugLog(_T("PYCC: Launching python on ")+script);
-    Manager::Get()->GetLogManager()->DebugLog(_T("PYCC: with command ")+command);
+    Manager::Get()->GetLogManager()->DebugLog(_T("PyCC: Launching python on ")+script);
+    Manager::Get()->GetLogManager()->DebugLog(_T("PyCC: with command ")+command);
     py_server = new XmlRpcInstance(command,port,_T("localhost"),0);
     if(py_server->IsDead())
     {
@@ -255,9 +255,19 @@ void PythonCodeCompletion::OnRelease(bool appShutDown)
 void PythonCodeCompletion::HandleError(XmlRpcResponseEvent &event, wxString message)
 {
     //TODO: Should probably kill/restart the XmlRpc server here
+    if (m_libs_loaded && py_server->IsDead())
+    {
+        wxString msg = _("The python code completion server has terminated unexpectedly. Python code completion has been disabled.\n\nDo you have python and jedi installed?");
+        cbMessageBox(msg+_("\nCheck the log for additional details"));
+        Manager::Get()->GetLogManager()->LogError(msg);
+        Manager::Get()->GetLogManager()->LogError(_("If everything is installed correctly, try restarting Code::Blocks or disable and re-enable the plugin in Settings -> Manage Plugins."));
+        Manager::Get()->GetLogManager()->LogError(_("You can get support at forums.codeblocks.org"));
+        m_libs_loaded = false;
+    }
     if(event.GetState()==XMLRPC_STATE_REQUEST_FAILED)
     {
-        wxMessageBox(_("ERROR PROCESSING PYCC REQUEST: Check the log for details"));
+        if(m_libs_loaded)
+            cbMessageBox(_("Error processing python code completion result\nCheck the log for details"));
         Manager::Get()->GetLogManager()->LogError(message);
         Manager::Get()->GetLogManager()->LogError(wxString(event.GetResponse().toXml().c_str(),wxConvUTF8));
     }
@@ -272,7 +282,7 @@ void PythonCodeCompletion::OnStdLibLoaded(XmlRpcResponseEvent &event)
         Manager::Get()->GetLogManager()->DebugLog(_("PyCC: Completion Library is Initialized"));
     }
     else
-        HandleError(event,_T("PYCC: Error loading completion library"));
+        HandleError(event,_T("PyCC: Error loading completion library"));
 }
 
 void PythonCodeCompletion::OnCalltip(XmlRpcResponseEvent &event)
@@ -285,12 +295,12 @@ void PythonCodeCompletion::OnCalltip(XmlRpcResponseEvent &event)
         if(val.getType()==val.TypeString)
         {
             m_ActiveCalltipDef=wxString(std::string(val).c_str(),wxConvUTF8);
-            Manager::Get()->GetLogManager()->DebugLog(_("PYCC: Call tip result ")+m_ActiveCalltipDef);
+            Manager::Get()->GetLogManager()->DebugLog(_("PyCC: Call tip result ")+m_ActiveCalltipDef);
             ShowCallTip();
         }
         else
         {
-            Manager::Get()->GetLogManager()->DebugLog(_("PYCC: Call tip result is not a string"));
+            Manager::Get()->GetLogManager()->DebugLog(_("PyCC: Call tip result is not a string"));
             XmlRpc::XmlRpcValue val=event.GetResponse();
             Manager::Get()->GetLogManager()->DebugLog(wxString(val.toXml().c_str(),wxConvUTF8));
         }
@@ -303,24 +313,24 @@ void PythonCodeCompletion::OnCompletePhrase(XmlRpcResponseEvent &event)
 {
     if(event.GetState()==XMLRPC_STATE_RESPONSE)
     {
-        Manager::Get()->GetLogManager()->DebugLog(_("PYCC: Completion response"));
+        Manager::Get()->GetLogManager()->DebugLog(_("PyCC: Completion response"));
         XmlRpc::XmlRpcValue val=event.GetResponse();
         m_comp_results.Empty();
         if(val.getType()==val.TypeArray && val.size()>0)
         {
-            Manager::Get()->GetLogManager()->DebugLog(_("PYCC: Getting comp results"));
+            Manager::Get()->GetLogManager()->DebugLog(_("PyCC: Getting comp results"));
             for(int i=0;i<val.size();++i)
                 m_comp_results.Add(wxString(std::string(val[i]).c_str(),wxConvUTF8));
-            Manager::Get()->GetLogManager()->DebugLog(wxString::Format(_("PYCC: Beginning comp with %i items"),val.size()));
+            Manager::Get()->GetLogManager()->DebugLog(wxString::Format(_("PyCC: Beginning comp with %i items"),val.size()));
             CodeComplete();
             return;
         }
-        Manager::Get()->GetLogManager()->DebugLog(_("PYCC: Unexpected phrase completion result"));
+        Manager::Get()->GetLogManager()->DebugLog(_("PyCC: Unexpected phrase completion result"));
         Manager::Get()->GetLogManager()->DebugLog(wxString(val.toXml().c_str(),wxConvUTF8));
         return;
     }
     else
-        HandleError(event,_T("PYCC: Error requesting completion result"));
+        HandleError(event,_T("PyCC: Error requesting completion result"));
 }
 
 
@@ -390,6 +400,8 @@ void PythonCodeCompletion::BuildModuleMenu(const ModuleType type, wxMenu* menu, 
 
 bool PythonCodeCompletion::IsProviderFor(cbEditor *ed)
 {
+    if(!m_libs_loaded)
+        return false;
     if(ed->GetControl()->GetLexer()==wxSCI_LEX_PYTHON)
         return true;
     return false;
@@ -467,7 +479,7 @@ void PythonCodeCompletion::ShowCallTip()
     cbEditor* ed = Manager::Get()->GetEditorManager()->GetBuiltinActiveEditor();
     if (!ed)
         return;
-    Manager::Get()->GetLogManager()->DebugLog(_T("PYCC: Showing calltip"));
+    Manager::Get()->GetLogManager()->DebugLog(_T("PyCC: Showing calltip"));
 
 
     // calculate the size of the calltips window
@@ -524,7 +536,7 @@ void PythonCodeCompletion::RequestCallTip(cbStyledTextCtrl *control, int pos, co
     value[3] = column;
     py_server->ClearJobs();
     py_server->ExecAsync(_T("complete_tip"),value,this,ID_CALLTIP);
-    Manager::Get()->GetLogManager()->DebugLog(_T("PYCC: Started server request"));
+    Manager::Get()->GetLogManager()->DebugLog(_T("PyCC: Started server request"));
 }
 
 void PythonCodeCompletion::RequestDocString(cbStyledTextCtrl *control, int pos, const wxString &filename)
@@ -535,6 +547,8 @@ void PythonCodeCompletion::RequestDocString(cbStyledTextCtrl *control, int pos, 
 void PythonCodeCompletion::CompleteCodeEvt(CodeBlocksEvent& event)
 {
     event.Skip();
+    if(!m_libs_loaded)
+        return;
     cbEditor *ed = Manager::Get()->GetEditorManager()->GetBuiltinActiveEditor();
     if(!ed)
         return;
@@ -549,6 +563,8 @@ void PythonCodeCompletion::CompleteCodeEvt(CodeBlocksEvent& event)
 void PythonCodeCompletion::ShowCallTipEvt(CodeBlocksEvent& event)
 {
     event.Skip();
+    if(!m_libs_loaded)
+        return;
     cbEditor *ed = Manager::Get()->GetEditorManager()->GetBuiltinActiveEditor();
     if(!ed)
         return;
@@ -562,9 +578,11 @@ void PythonCodeCompletion::ShowCallTipEvt(CodeBlocksEvent& event)
 
 void PythonCodeCompletion::EditorEventHook(cbEditor* editor, wxScintillaEvent& event)
 {
+    if(!m_libs_loaded)
+        return;
     if (!IsAttached())
     {
-        Manager::Get()->GetLogManager()->DebugLog(_("PYCC: Not attached"));
+        Manager::Get()->GetLogManager()->DebugLog(_("PyCC: Not attached"));
         event.Skip();
         return;
     }
@@ -580,7 +598,7 @@ void PythonCodeCompletion::EditorEventHook(cbEditor* editor, wxScintillaEvent& e
     if (event.GetEventType() == wxEVT_SCI_CHARADDED)
     {
         // a character was just added in the editor
-        Manager::Get()->GetLogManager()->DebugLog(_("PYCC: completion check begin"));
+        Manager::Get()->GetLogManager()->DebugLog(_("PyCC: completion check begin"));
         wxChar ch = event.GetKey();
         int pos = control->GetCurrentPos();
         int wordStartPos = control->WordStartPosition(pos, true);
@@ -610,26 +628,26 @@ void PythonCodeCompletion::EditorEventHook(cbEditor* editor, wxScintillaEvent& e
         if (   (autoCC && !control->AutoCompActive()) // not already active autocompletion
                  || (ch == _T('.')))
         {
-            Manager::Get()->GetLogManager()->DebugLog(_("PYCC: Checking lexical state..."));
+            Manager::Get()->GetLogManager()->DebugLog(_("PyCC: Checking lexical state..."));
             int style = control->GetStyleAt(pos-2);
             if (  ch != _T('.') && style != wxSCI_P_DEFAULT
                 && style != wxSCI_P_CLASSNAME
                 && style != wxSCI_P_DEFNAME
                 && style != wxSCI_P_IDENTIFIER )
             {
-                Manager::Get()->GetLogManager()->DebugLog(_("PYCC: Not a completable lexical state"));
+                Manager::Get()->GetLogManager()->DebugLog(_("PyCC: Not a completable lexical state"));
                 event.Skip();
                 return;
             }
             wxString phrase=control->GetTextRange(wordStartPos,pos);
-            Manager::Get()->GetLogManager()->DebugLog(_T("PYCC: Looking for ")+phrase+_T(" in ")+editor->GetFilename()+wxString::Format(_T(" %i"),pos));
+            Manager::Get()->GetLogManager()->DebugLog(_T("PyCC: Looking for ")+phrase+_T(" in ")+editor->GetFilename()+wxString::Format(_T(" %i"),pos));
             RequestCompletion(control,pos,editor->GetFilename());
             event.Skip();
             return;
         }
 
         // calltip
-        Manager::Get()->GetLogManager()->DebugLog(_T("PYCC: Checking for calltip"));
+        Manager::Get()->GetLogManager()->DebugLog(_T("PyCC: Checking for calltip"));
         pos=control->GetCurrentPos()-1;
         int startpos=pos;
         int cursorpos = pos+1;
@@ -653,14 +671,14 @@ void PythonCodeCompletion::EditorEventHook(cbEditor* editor, wxScintillaEvent& e
         }
         if(pos<minpos || control->BraceMatch(pos)<control->GetCurrentPos() && control->BraceMatch(pos)!=-1)
         {
-            Manager::Get()->GetLogManager()->DebugLog(_T("PYCC: Not in function scope"));
+            Manager::Get()->GetLogManager()->DebugLog(_T("PyCC: Not in function scope"));
             event.Skip();
             return;
         }
 
         m_ActiveCalltipPos=cursorpos;
 
-        Manager::Get()->GetLogManager()->DebugLog(_T("PYCC: Finding the calltip symbol"));
+        Manager::Get()->GetLogManager()->DebugLog(_T("PyCC: Finding the calltip symbol"));
         //now find the symbol, if any, associated with the parens
         int end_pos=pos;
         pos--;
@@ -711,7 +729,7 @@ void PythonCodeCompletion::EditorEventHook(cbEditor* editor, wxScintillaEvent& e
             return;
         }
         m_ActiveSymbol=symbol;
-        Manager::Get()->GetLogManager()->DebugLog(_T("PYCC: Found calltip symbol ")+symbol);
+        Manager::Get()->GetLogManager()->DebugLog(_T("PyCC: Found calltip symbol ")+symbol);
         RequestCallTip(control, cursorpos, editor->GetFilename());
     }
     // allow others to handle this event
@@ -720,6 +738,9 @@ void PythonCodeCompletion::EditorEventHook(cbEditor* editor, wxScintillaEvent& e
 
 void PythonCodeCompletion::OnClickedGotoDefinition(wxCommandEvent& event)
 {
+    if(!m_libs_loaded)
+        return;
+
     cbEditor* ed = Manager::Get()->GetEditorManager()->GetBuiltinActiveEditor();
     if(!ed)
         return;
@@ -745,10 +766,10 @@ void PythonCodeCompletion::OnGotoDefinition(XmlRpcResponseEvent &event)
 {
     if(event.GetState()==XMLRPC_STATE_RESPONSE)
     {
-        Manager::Get()->GetLogManager()->DebugLog(_("PYCC: Goto Definition response"));
+        Manager::Get()->GetLogManager()->DebugLog(_("PyCC: Goto Definition response"));
         XmlRpc::XmlRpcValue val=event.GetResponse(); //Should return an array of path, lineno
         m_comp_results.Empty();
-        Manager::Get()->GetLogManager()->DebugLog(wxString::Format(_("PYCC: XML response \n%s"),val.toXml().c_str()));
+        Manager::Get()->GetLogManager()->DebugLog(wxString::Format(_("PyCC: XML response \n%s"),val.toXml().c_str()));
         if(val.getType()==val.TypeArray && val.size()>0)
         {
             wxString path = wxString(std::string(val[0]).c_str(),wxConvUTF8);
@@ -758,7 +779,7 @@ void PythonCodeCompletion::OnGotoDefinition(XmlRpcResponseEvent &event)
 //            if(!ed)
 //                return;
 //            f.MakeRelativeTo(ed->GetFilename());
-            Manager::Get()->GetLogManager()->DebugLog(wxString::Format(_("PYCC: Definition is at %s:%i"),f.GetFullPath().wx_str(),line));
+            Manager::Get()->GetLogManager()->DebugLog(wxString::Format(_("PyCC: Definition is at %s:%i"),f.GetFullPath().wx_str(),line));
             if(f.FileExists())
             {
                 cbEditor* ed = Manager::Get()->GetEditorManager()->Open(f.GetFullPath());
@@ -769,13 +790,12 @@ void PythonCodeCompletion::OnGotoDefinition(XmlRpcResponseEvent &event)
                 }
                 return;
             }
-            Manager::Get()->GetLogManager()->LogWarning(wxString::Format(_("PYCC: Definition could not be opened at %s:%i"),f.GetFullPath().wx_str(),line));
+            Manager::Get()->GetLogManager()->LogWarning(wxString::Format(_("PyCC: Definition could not be opened at %s:%i"),f.GetFullPath().wx_str(),line));
             XmlRpc::XmlRpcValue val=event.GetResponse();
             Manager::Get()->GetLogManager()->DebugLog(wxString(val.toXml().c_str(),wxConvUTF8));
             return;
         }
     }
     else
-        HandleError(event,_T("PYCC: Bad response for goto definition"));
+        HandleError(event,_T("PyCC: Bad response for goto definition"));
 }
-

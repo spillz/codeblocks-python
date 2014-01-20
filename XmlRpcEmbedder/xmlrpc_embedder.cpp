@@ -419,11 +419,14 @@ XmlRpcInstance::XmlRpcInstance(const XmlRpcInstance &copy)
 
 bool XmlRpcInstance::Exec(const wxString &method, const XmlRpc::XmlRpcValue &inarg, XmlRpc::XmlRpcValue &result)
 {
-    wxMutexLocker ml(exec_mutex);
-    if(m_client)
-        return m_client->execute(method.utf8_str(), inarg, result);
-    else if(m_pipeclient)
-        return m_pipeclient->execute(method.utf8_str(), inarg, result);
+    if(!IsDead())
+    {
+        wxMutexLocker ml(exec_mutex);
+        if(m_client)
+            return m_client->execute(method.utf8_str(), inarg, result);
+        else if(m_pipeclient)
+            return m_pipeclient->execute(method.utf8_str(), inarg, result);
+    }
     result.setSize(1);
     result[0] = "XmlRpc server is not connected.";
     return false;

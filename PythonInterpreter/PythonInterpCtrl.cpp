@@ -134,6 +134,9 @@ PythonCodeCtrl::PythonCodeCtrl(wxWindow *parent, PythonInterpCtrl *py)
 
     SetMouseDwellTime(1000);
 
+    SetScrollWidthTracking(true);
+    SetScrollWidth(5); //Hides horizontal scrollbar if text doesn't exceed the window width
+
     int caretStyle = mgr->ReadInt(_T("/caret/style"), wxSCI_CARETSTYLE_LINE);
     SetCaretStyle(caretStyle);
     if (caretStyle == wxSCI_CARETSTYLE_LINE)
@@ -317,6 +320,7 @@ void PythonCodeCtrl::OnUserInput(wxKeyEvent& ke)
             int pos = GetLength(); //was GetLastPosition();
             SetSelectionStart(pos);//was SetSelection(pos,pos);
             SetSelectionEnd(pos);
+            SetScrollWidth(5); //Hides horizontal scrollbar if text doesn't exceed the window width
             return;
         }
         if(ke.GetKeyCode()==WXK_DOWN)
@@ -333,6 +337,7 @@ void PythonCodeCtrl::OnUserInput(wxKeyEvent& ke)
             int pos = GetLength(); //was LastPosition();
             SetSelectionStart(pos); //was SetSelection(pos,pos);
             SetSelectionEnd(pos);
+            SetScrollWidth(5); //Hides horizontal scrollbar if text doesn't exceed the window width
             return;
         }
 
@@ -504,12 +509,14 @@ void PythonInterpCtrl::OnPyNotify(XmlRpcResponseEvent& event)
         if (return_code == 1) // Eval was successful and is still running
         {
             m_codectrl->ClearAll();
+            m_codectrl->SetScrollWidth(5); //Hides horizontal scrollbar if text doesn't exceed the window width
             this->Continue();
             return;
         }
         if (return_code == 0) //Eval has finished
         {
             m_codectrl->ClearAll();
+            m_codectrl->SetScrollWidth(5); //Hides horizontal scrollbar if text doesn't exceed the window width
             //Now fall through to re-enable the control
         }
         //Otherwise it's an error (-1 syntax error, -2 statement incomplete, -3 code already running

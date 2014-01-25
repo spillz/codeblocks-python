@@ -79,8 +79,9 @@ void PythonIOCtrl::OnUserInput(wxKeyEvent& ke)
                     line=GetRange(m_line_entry_point,GetLastPosition());
                 line.Replace(_T("\n"),_T("")); //will cause major problems if there is more than one line feed returned here, so we remove them (TODO: fix on server side?? server should treat buffered lines as new input without errors)
                 line.Append(_T("\n"));
+                AppendText(_T("\n"));
                 m_pyctrl->stdin_append(line);
-                return;
+                m_pyctrl->Continue();
             }
         }
     }
@@ -102,6 +103,7 @@ void PythonIOCtrl::LineInputRequest()
         m_line_entry_point=GetLastPosition();
         SetSelection(m_line_entry_point,m_line_entry_point);
         SetEditable(true);
+        SetFocus();
     }
 }
 ////////////////////////////////////// PythonCodeCtrl //////////////////////////////////////////////
@@ -504,9 +506,13 @@ void PythonInterpCtrl::OnPyNotify(XmlRpcResponseEvent& event)
         m_ioctrl->AppendText(wxString(sstderr.c_str(),wxConvUTF8));
 
         if (input_request)
-            m_ioctrl->ProcessEvent(event); //TODO: Need to set up the handler on the ioctrl
-
-        if (return_code == 1) // Eval was successful and is still running
+        {
+            m_ioctrl->LineInputRequest(); //TODO: Need to set up the handler on the ioctrl
+            m_codectrl->ClearAll();
+            m_codectrl->SetScrollWidth(5); //Hides horizontal scrollbar if text doesn't exceed the window width
+            return;
+        }
+        else if (return_code == 1) // Eval was successful and is still running
         {
             m_codectrl->ClearAll();
             m_codectrl->SetScrollWidth(5); //Hides horizontal scrollbar if text doesn't exceed the window width

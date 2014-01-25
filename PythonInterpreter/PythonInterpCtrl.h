@@ -101,6 +101,7 @@ ShellCtrlRegistrant<PythonInterpCtrl> reg(_T("Python Interpreter"));
 
 class PythonInterpCtrl : public ShellCtrlBase
 {
+    friend class PythonIOCtrl;
     public:
         PythonInterpCtrl() { m_pyinterp=NULL; }
         PythonInterpCtrl(wxWindow* parent, int id, const wxString &name, ShellManager *shellmgr=NULL);

@@ -104,6 +104,10 @@ void PythonIOCtrl::LineInputRequest()
         SetSelection(m_line_entry_point,m_line_entry_point);
         SetEditable(true);
         SetFocus();
+
+        InfoWindow::Display(_("Python Interpreter Input Requested"),
+                            _("An interpreter has needs keyboard input in its I/O window to proceed"), 8000);
+
     }
 }
 ////////////////////////////////////// PythonCodeCtrl //////////////////////////////////////////////

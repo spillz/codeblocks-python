@@ -167,13 +167,18 @@ class PyInterp (code.InteractiveInterpreter):
                         logmsg('interp: ran code')
                     except KeyboardInterrupt:
                         print 'Keyboard Interrupt'
+                    except SystemExit:
+                        print 'Session Terminated'
+                        self._running = False
+                        #return
                     except:
                         print "error in eval_str", sys.exc_info()[0]
                 self.lock.acquire() #acquire the lock to reset eval string and running status
                 self._runningeval=False
                 self.eval_str=''
                 self.lock.notify() #notify the server in case it is waiting
-                self.lock.wait() #now await the next instruction
+                if self._running:
+                    self.lock.wait() #now await the next instruction
                 self.lock.release()
             except KeyboardInterrupt:
                 logmsg('keyboard interrupt')
@@ -205,7 +210,7 @@ class AsyncServer(threading.Thread):
         self.server.register_function(self.end,'end')
         self.server.register_function(self.run_code,'run_code')
         self.server.register_function(self.cont,'cont')
-        while not self._quit:
+        while not self._quit and self.interp._running:
             self.server.handle_request()
 
     def end(self):

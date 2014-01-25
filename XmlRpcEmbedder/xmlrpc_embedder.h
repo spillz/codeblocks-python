@@ -105,6 +105,8 @@ protected:
     // Retrieves the next threaded job from the queue and starts it
     bool NextJob();
 private:
+    // Deletes process object and empties queue
+    void CleanupTerminatedProcess();
     // Called by the constructor to actually start the process running
     long LaunchProcess(const wxString &processcmd);
     wxWindow *m_parent;

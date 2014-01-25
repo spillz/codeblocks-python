@@ -347,17 +347,17 @@ XmlRpcInstance::~XmlRpcInstance()
         delete m_client;
     if(m_pipeclient)
         delete m_pipeclient;
-    m_client=NULL;
-    m_pipeclient=NULL;
+    m_client=0;
+    m_pipeclient=0;
 }
 
 XmlRpcInstance::XmlRpcInstance(const wxString &processcmd, int port, const wxString &hostaddress, wxWindow *parent)
 {
     m_parent=parent;
     m_port=port;
-    m_proc=NULL;
-    m_client=NULL;
-    m_pipeclient=NULL;
+    m_proc=0;
+    m_client=0;
+    m_pipeclient=0;
     m_proc_dead=true;
     m_hostaddress=hostaddress;
     m_paused=false;
@@ -437,18 +437,29 @@ bool XmlRpcInstance::ExecAsync(const wxString &method, const XmlRpc::XmlRpcValue
     return AddJob(new ExecAsyncJob(this,method,inarg,hndlr,id));
 }
 
+void XmlRpcInstance::CleanupTerminatedProcess()
+{
+    if(m_proc!=0)
+    {
+        ClearJobs();
+        delete m_proc;
+        m_proc=0;
+        m_proc_id=-1;
+        m_proc_killlevel=0;
+    }
+}
+
 void XmlRpcInstance::OnEndProcess(wxProcessEvent &event)
 {
 //    std::cout<<"PYCC: PROCESS DIED!!"<<std::endl;
     //TODO: m_exitcode=event.GetExitCode();
     m_proc_dead=true;
-    delete m_proc;
-    m_proc=NULL;
-    m_proc_id=-1;
-    m_proc_killlevel=0;
     wxCommandEvent ce(wxEVT_XMLRPC_PROC_END,0);
     if(m_parent)
         m_parent->AddPendingEvent(ce);
+    if(m_jobrunning)
+        return;
+    CleanupTerminatedProcess();
 //    XmlRpcMgr::Get().Remove(this);
 }
 
@@ -557,6 +568,8 @@ void XmlRpcInstance::OnJobNotify(wxCommandEvent &event)
     }
     if(m_paused)
         return;
+    if(m_proc_dead)
+        CleanupTerminatedProcess();
     NextJob();
 }
 

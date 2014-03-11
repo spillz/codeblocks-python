@@ -147,17 +147,17 @@ void PythonDebugger::DispatchWatchCommands()
         wxString s;
         w->GetSymbol(s);
         command=_T("ps ")+s+_T("\n");
-        DispatchCommands(command,DBGCMDTYPE_WATCHEXPRESSION);
+        DispatchCommands(command,DBGCMDTYPE_WATCHEXPRESSION,false);
         if (w->IsExpanded())
         {
             command=_T("pm ")+s+_T("\n");
-            DispatchCommands(command,DBGCMDTYPE_WATCHGETCHILDREN);
+            DispatchCommands(command,DBGCMDTYPE_WATCHGETCHILDREN,false);
         }
     }
     if (m_locals_watch->IsExpanded())
     {
         command=_T("pl *Locals:\n");
-        DispatchCommands(command,DBGCMDTYPE_WATCHGETCHILDREN);
+        DispatchCommands(command,DBGCMDTYPE_WATCHGETCHILDREN,false);
     }
 }
 
@@ -705,8 +705,8 @@ void PythonDebugger::Stop()
 
 bool PythonDebugger::RunToCursor(const wxString& filename, int line, const wxString& line_text)
 {
-    if(filename!=m_curfile)
-        return false;
+//    if(filename!=m_curfile)
+//        return false;
     if(!m_DebuggerActive)
         return false;
     wxString sfile=filename;

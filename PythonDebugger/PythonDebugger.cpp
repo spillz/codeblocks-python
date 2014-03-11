@@ -131,25 +131,34 @@ wxString PythonDebugger::AssembleBreakpointCommands()
 //        }
         int line=(*itr)->GetLine();
         wxString cmd=_T("break ")+sfile+_T(":")+wxString::Format(_T("%i"),line)+_T("\n");
-        Manager::Get()->GetLogManager()->Log(cmd);
         commands+=cmd;
     }
     return commands;
 }
 
 
-wxString PythonDebugger::AssembleWatchCommands()
+void PythonDebugger::DispatchWatchCommands()
 {
-    wxString commands;
+    wxString command;
 
     for (unsigned int i=0;i<m_watchlist.size();++i)
     { //TODO: ITERATE INTO CHILD WATCHES
         PythonWatch::Pointer w=m_watchlist[i];
         wxString s;
         w->GetSymbol(s);
-        commands+=_T("ps ")+s+_T("\n");
+        command=_T("ps ")+s+_T("\n");
+        DispatchCommands(command,DBGCMDTYPE_WATCHEXPRESSION);
+        if (w->IsExpanded())
+        {
+            command=_T("pm ")+s+_T("\n");
+            DispatchCommands(command,DBGCMDTYPE_WATCHGETCHILDREN);
+        }
     }
-    return commands;
+    if (m_locals_watch->IsExpanded())
+    {
+        command=_T("pl *Locals:\n");
+        DispatchCommands(command,DBGCMDTYPE_WATCHGETCHILDREN);
+    }
 }
 
 wxString PythonDebugger::AssembleAliasCommands()
@@ -157,16 +166,56 @@ wxString PythonDebugger::AssembleAliasCommands()
     wxString commands;
     //NB: \001 is the separator character used when parsing in OnTimer
     //Print variables associated with a child
-    commands+=_T("alias pm for x in sorted(%1.__dict__): print '%s\\001%s\\001'%(x,type(%1.__dict__[x])),str(%1.__dict__[x])[:800],'\\001',\n");
+    commands+=_T("alias pm for x in sorted(%1.__dict__): print '%s\\001%s\\001'%(x,type(%1.__dict__[x])),str(%1.__dict__[x])[:1200],'\\001',\n");
+    //Print all local variables
+    commands+=_T("alias pl for x in sorted(locals()): print '%s\\001%s\\001'%(x,type(locals()[x])),str(locals()[x])[:1200],'\\001',\n");
     //Print variable name, type and value
-    commands+=_T("alias ps print '%1\\001',;print str(type(%1))+'\\001',;print str(%1)[:800]\n");
+    commands+=_T("alias ps print '%1\\001',;print str(type(%1))+'\\001',;print str(%1)[:1200]\n");
     //Print comment
     commands+=_T("alias pc print '%1'\n");
+    //TODO: Print function arguments too (currently included in locals)
 
     //Alias for creating tooltip watch output
-    commands+=_T("alias pw print '%1',type(%1);print str(%1)[:800]\n");
+    commands+=_T("alias pw print '%1',type(%1);print str(%1)[:1200]\n");
     return commands;
 }
+
+void PythonDebugger::RequestUpdate(DebugWindows window)
+{
+//    switch (window)
+//    {
+//        case Backtrace:
+//            RunCommand(CMD_BACKTRACE);
+//            break;
+//        case CPURegisters:
+//            RunCommand(CMD_REGISTERS);
+//            break;
+//        case Disassembly:
+//            RunCommand(CMD_DISASSEMBLE);
+//            break;
+//        case ExamineMemory:
+//            RunCommand(CMD_MEMORYDUMP);
+//            break;
+//        case Threads:
+//            RunCommand(CMD_RUNNINGTHREADS);
+//            break;
+//        case Watches:
+//            if (IsWindowReallyShown(Manager::Get()->GetDebuggerManager()->GetWatchesDialog()->GetWindow()))
+//            {
+//                if (!m_locals_watch)
+//                {
+//                    m_locals_watch = PythonWatch::Pointer(new PythonWatch(_T("*Locals:")));
+//                    cbWatch::AddChild(m_locals_watch,PythonWatch::Pointer(new PythonWatch(_("#child"))));
+//                    Manager::Get()->GetDebuggerManager()->GetWatchesDialog()->AddSpecialWatch(m_locals_watch,false);
+//                }
+//            }
+//            break;
+//        default:
+//            break;
+//    }
+
+}
+
 
 
 void PythonDebugger::ClearActiveMarkFromAllEditors()
@@ -222,7 +271,7 @@ void PythonDebugger::OnTimer(wxTimerEvent& event)
                     exprresult.RemoveLast();
                     exprresult.Replace(_T("\t"),_T("\\t"),true);
                     exprresult.Replace(_T("\n"),_T("\\n"),true);
-                    wxString symbol=exprresult.BeforeFirst(_T('\001'));
+                    wxString symbol=exprresult.BeforeFirst(_T('\001')).Trim(false);
                     exprresult=exprresult.AfterFirst(_T('\001'));
                     wxString type=exprresult.BeforeFirst(_T('\001'));
                     wxString value=exprresult.AfterFirst(_T('\001'));
@@ -237,6 +286,10 @@ void PythonDebugger::OnTimer(wxTimerEvent& event)
                             p=m_watchlist[i]->FindChild(symbol);
                         if(p)
                         {
+                            wxString oldval,oldtype;
+                            p->GetValue(oldval);
+                            p->GetType(oldtype);
+                            p->MarkAsChanged(oldval!=value || oldtype!=type);
                             p->SetType(type);
                             p->SetValue(value);
                         }
@@ -267,22 +320,49 @@ void PythonDebugger::OnTimer(wxTimerEvent& event)
                         }
                     }
                     if(it==m_watchlist.end())
-                        break;
-                    parentwatch->RemoveChildren();
+                    {
+                        if (parentsymbol == _("*Locals:"))
+                            parentwatch = m_locals_watch;
+                        else
+                            break;
+                    }
+//                    parentwatch->RemoveChildren();
+//                    parentwatch->MarkAsChanged(true);
 
                     //Now add the newly updated children
-                    while(exprresult.Len()>0)
+                    std::set<wxString> foundsyms;
+                    while (exprresult.Len()>0)
                     {
-                        wxString symbol=exprresult.BeforeFirst(_T('\001'));
+                        wxString symbol=exprresult.BeforeFirst(_T('\001')).Trim(false);
                         exprresult=exprresult.AfterFirst(_T('\001'));
                         wxString type=exprresult.BeforeFirst(_T('\001'));
                         exprresult=exprresult.AfterFirst(_T('\001'));
                         wxString value=exprresult.BeforeFirst(_T('\001'));
                         exprresult=exprresult.AfterFirst(_T('\001'));
-                        PythonWatch::Pointer p(new PythonWatch(symbol));
+                        foundsyms.insert(symbol);
+                        cb::shared_ptr<cbWatch> p = parentwatch->FindChild(symbol);
+                        if(!p)
+                        {
+                            p = cb::shared_ptr<cbWatch>(new PythonWatch(symbol));
+                            cbWatch::AddChild(parentwatch,p);
+                        }
+                        wxString oldval,oldtype;
+                        p->GetValue(oldval);
+                        p->GetType(oldtype);
+                        p->MarkAsChanged(oldval!=value || oldtype!=type);
                         p->SetType(type);
                         p->SetValue(value);
-                        cbWatch::AddChild(parentwatch,p);
+                    }
+                    for (int i=0; i<parentwatch->GetChildCount(); ++i)
+                    {
+                        cb::shared_ptr<cbWatch> p(parentwatch->GetChild(i));
+                        wxString s;
+                        p->GetSymbol(s);
+                        if (foundsyms.find(s)==foundsyms.end())
+                        {
+                            parentwatch->RemoveChild(i);
+                            --i;
+                        }
                     }
                     DebuggerManager &dbg_manager = *Manager::Get()->GetDebuggerManager();
                     dbg_manager.GetWatchesDialog()->UpdateWatches();
@@ -337,7 +417,7 @@ void PythonDebugger::OnTimer(wxTimerEvent& event)
                     {
                         wxString err=re.GetMatch(exprresult,1);
     //                    wxMessageBox(_T("Runtime Error During Debug:\n")+err+_T("\n at line ")+wxString().Format(_T("%u"),m_curline)+_T(" in ")+m_curfile);
-                        wxMessageBox(_T("Runtime Error During Debug:\nEntering post mortem debug mode...\nYou may inspect variables by updating the watch\n(Select continue/next to restart or Stop to cancel debug)"));
+                        wxMessageBox(_T("Runtime Error During Debug:\nEntering post mortem debug mode...\nYou may inspect variables by updating the watch\n(Select continue/next to restart or Stop to cancel debug)\n\nError:\n")+err);
                     }
                     if(!debugoutputmode) // in standard debug mode, only log flow control information (clearer)
                     {
@@ -435,7 +515,6 @@ bool PythonDebugger::IsAttachedToProcess() const
 
 bool PythonDebugger::Debug(bool breakOnEntry)
 {
-// TODO: figure out why debug watch and breakpoints fail after the first debug session - not erasing the command list with clear()???
     if(m_DebuggerActive)
         return 0;
     m_changeposition=false;
@@ -449,12 +528,15 @@ bool PythonDebugger::Debug(bool breakOnEntry)
     m_outprogbuf=_T("");
     if(!m_RunTarget)
     {
-        EditorBase *ed=Manager::Get()->GetEditorManager()->GetActiveEditor();
+        cbEditor *ed=Manager::Get()->GetEditorManager()->GetBuiltinActiveEditor();
         if(!ed)
             return false;
         wxString s=ed->GetFilename();
-        if(!(wxFileName(s).FileExists() && IsPythonFile(s)))
-            return false;
+        if(!ed->GetControl()->GetLexer()==wxSCI_LEX_PYTHON)
+        {
+            if(!(wxFileName(s).FileExists() && IsPythonFile(s)))
+                return false;
+        }
         m_RunTarget=s;
     }
 
@@ -469,6 +551,10 @@ bool PythonDebugger::Debug(bool breakOnEntry)
     PyDebuggerConfiguration &cfg =  GetActiveConfigEx();
     wxString commandln = cfg.GetCommandLine(cfg.GetState());
     commandln.Replace(wxT("$target"),target);
+
+    //TODO:
+    //read args for this target from config
+    //commandln.Replace(wxT("$args"),args);
 
     Manager::Get()->GetLogManager()->Log(_T("Running python debugger with command line\n")+commandln);
     m_pid=wxExecute(commandln,wxEXEC_ASYNC,m_pp);
@@ -488,12 +574,12 @@ bool PythonDebugger::Debug(bool breakOnEntry)
     dd.cmdtext=_T("Starting New Python Debug Session...");
     m_DispatchedCommands.push_back(dd);//the debug console reports a command prompt on startup, which should be included in the parse count
     m_DebugCommandCount=1;
+
     wxString acommands=AssembleAliasCommands();
     DispatchCommands(acommands,DBGCMDTYPE_OTHER,false);
     wxString bpcommands=AssembleBreakpointCommands();
     DispatchCommands(bpcommands,DBGCMDTYPE_BREAKPOINT,false);
-    wxString wcommands=AssembleWatchCommands();
-    DispatchCommands(wcommands,DBGCMDTYPE_WATCHEXPRESSION,false);
+    DispatchWatchCommands();
     DispatchCommands(_T("w\n"),DBGCMDTYPE_CALLSTACK,true); //where
     m_DebuggerActive=true;
 
@@ -508,8 +594,7 @@ void PythonDebugger::Continue()
     if(m_DebuggerActive)
     {
         DispatchCommands(_T("cont\n"),DBGCMDTYPE_FLOWCONTROL,false);
-        wxString wcommands=AssembleWatchCommands();
-        DispatchCommands(wcommands,DBGCMDTYPE_WATCHEXPRESSION,false);
+        DispatchWatchCommands();
         DispatchCommands(_T("w\n"),DBGCMDTYPE_CALLSTACK,true);
     }
 }
@@ -519,8 +604,7 @@ void PythonDebugger::Next()
     if(m_DebuggerActive)
     {
         DispatchCommands(_T("next\n"),DBGCMDTYPE_FLOWCONTROL,false);
-        wxString wcommands=AssembleWatchCommands();
-        DispatchCommands(wcommands,DBGCMDTYPE_WATCHEXPRESSION,false);
+        DispatchWatchCommands();
         DispatchCommands(_T("w\n"),DBGCMDTYPE_CALLSTACK,true);
     }
 }
@@ -535,8 +619,7 @@ void PythonDebugger::Step()
     if(m_DebuggerActive)
     {
         DispatchCommands(_T("step\n"),DBGCMDTYPE_FLOWCONTROL,false);
-        wxString wcommands=AssembleWatchCommands();
-        DispatchCommands(wcommands,DBGCMDTYPE_WATCHEXPRESSION,false);
+        DispatchWatchCommands();
         DispatchCommands(_T("w\n"),DBGCMDTYPE_CALLSTACK,true);
     }
 }
@@ -551,8 +634,7 @@ void PythonDebugger::StepOut()
     if(m_DebuggerActive)
     {
         DispatchCommands(_T("r\n"),DBGCMDTYPE_FLOWCONTROL,false);
-        wxString wcommands=AssembleWatchCommands();
-        DispatchCommands(wcommands,DBGCMDTYPE_WATCHEXPRESSION,false);
+        DispatchWatchCommands();
         DispatchCommands(_T("w\n"),DBGCMDTYPE_CALLSTACK,true);
     }
 }
@@ -567,8 +649,7 @@ void PythonDebugger::Break()
     {
         if(wxProcess::Exists(m_pid))
             wxProcess::Kill(m_pid,wxSIGINT);
-        wxString wcommands=AssembleWatchCommands();
-        DispatchCommands(wcommands,DBGCMDTYPE_WATCHEXPRESSION,false);
+        DispatchWatchCommands();
         DispatchCommands(_T("w\n"),DBGCMDTYPE_CALLSTACK,true);
     }
 }
@@ -602,8 +683,7 @@ bool PythonDebugger::RunToCursor(const wxString& filename, int line, const wxStr
 //    }
     DispatchCommands(_T("tbreak ")+sfile+wxString::Format(_T(":%i\n"),line),DBGCMDTYPE_FLOWCONTROL,false);
     DispatchCommands(wxString::Format(_T("c\n"),line),DBGCMDTYPE_FLOWCONTROL,false);
-    wxString wcommands=AssembleWatchCommands();
-    DispatchCommands(wcommands,DBGCMDTYPE_WATCHEXPRESSION,false);
+    DispatchWatchCommands();
     DispatchCommands(_T("w\n"),DBGCMDTYPE_CALLSTACK,true);
     return true;
 }
@@ -615,8 +695,7 @@ void PythonDebugger::SetNextStatement(const wxString& filename, int line)
     if(m_DebuggerActive)
     {
         DispatchCommands(wxString::Format(_T("j %i\n"),line),DBGCMDTYPE_FLOWCONTROL,false);
-        wxString wcommands=AssembleWatchCommands();
-        DispatchCommands(wcommands,DBGCMDTYPE_WATCHEXPRESSION,false);
+        DispatchWatchCommands();
         DispatchCommands(_T("w\n"),DBGCMDTYPE_CALLSTACK,true);
     }
 }
@@ -711,12 +790,14 @@ void PythonDebugger::DeleteAllBreakpoints()
 
 cb::shared_ptr<cbWatch> PythonDebugger::AddWatch(const wxString& symbol)
 {
-    PythonWatch::Pointer pwatch(new PythonWatch(symbol));
+    wxString sym(symbol);
+    sym = sym.Trim().Trim(false);
+    PythonWatch::Pointer pwatch(new PythonWatch(sym));
     m_watchlist.push_back(pwatch);
     cbWatch::AddChild(pwatch,PythonWatch::Pointer(new PythonWatch(_("#child"))));
 
     if(IsRunning())
-        DispatchCommands(_T("ps ")+symbol+_T("\n"),DBGCMDTYPE_WATCHEXPRESSION);
+        DispatchCommands(_T("ps ")+sym+_T("\n"),DBGCMDTYPE_WATCHEXPRESSION);
     return pwatch;
 }
 
@@ -745,9 +826,9 @@ bool PythonDebugger::HasWatch(cb::shared_ptr<cbWatch> watch)
     for (i=0;i<m_watchlist.size();++i)
     {
         if (m_watchlist[i]==watch)
-            break;
+            return true;
     }
-    return i<m_watchlist.size();
+    return watch = m_locals_watch;
 }
 
 void PythonDebugger::ShowWatchProperties(cb::shared_ptr<cbWatch> watch)
@@ -763,9 +844,14 @@ void PythonDebugger::ExpandWatch(cb::shared_ptr<cbWatch> watch)
 {
     if(IsRunning())
     {
-        wxString symbol;
-        watch->GetSymbol(symbol);
-        DispatchCommands(_T("pm ")+symbol+_T("\n"),DBGCMDTYPE_WATCHGETCHILDREN);
+        if (watch == m_locals_watch)
+            DispatchCommands(_T("pl *Locals:\n"),DBGCMDTYPE_WATCHGETCHILDREN);
+        else
+        {
+            wxString symbol;
+            watch->GetSymbol(symbol);
+            DispatchCommands(_T("pm ")+symbol+_T("\n"),DBGCMDTYPE_WATCHGETCHILDREN);
+        }
     }
 }
 
@@ -773,8 +859,8 @@ void PythonDebugger::CollapseWatch(cb::shared_ptr<cbWatch> watch)
 {
     if(IsRunning())
     {
-        watch->RemoveChildren();
-        cbWatch::AddChild(watch,PythonWatch::Pointer(new PythonWatch(_("...members..."))));
+//        watch->RemoveChildren();
+//        cbWatch::AddChild(watch,PythonWatch::Pointer(new PythonWatch(_("...members..."))));
     }
 }
 
@@ -782,12 +868,11 @@ void PythonDebugger::UpdateWatch(cb::shared_ptr<cbWatch> watch)
 {
     if(IsRunning())
     {
-        watch->RemoveChildren(); //TODO: Update instead of removing children
+//        watch->RemoveChildren(); //TODO: Update instead of removing children
 
         wxString symbol;
         watch->GetSymbol(symbol);
         DispatchCommands(_T("ps ")+symbol+_T("\n"),DBGCMDTYPE_WATCHEXPRESSION);
-
     }
 }
 
@@ -910,6 +995,12 @@ void PythonDebugger::OnAttachReal()
 
     Manager::Get()->RegisterEventSink(cbEVT_EDITOR_TOOLTIP, new cbEventFunctor<PythonDebugger, CodeBlocksEvent>(this, &PythonDebugger::OnValueTooltip));
 
+    m_locals_watch = PythonWatch::Pointer(new PythonWatch(_T("*Locals:")));
+//    cbWatch::AddChild(m_locals_watch,PythonWatch::Pointer(new PythonWatch(_("#child"))));
+    m_locals_watch->Expand(true);
+    m_locals_watch->MarkAsChanged(false);
+    Manager::Get()->GetDebuggerManager()->GetWatchesDialog()->AddSpecialWatch(m_locals_watch,true);
+
 }
 
 void PythonDebugger::OnReleaseReal(bool appShutDown)
@@ -926,9 +1017,10 @@ void PythonDebugger::OnReleaseReal(bool appShutDown)
     Manager::Get()->ProcessEvent(evt);
     m_DebugLog = 0L;
 
-    DebuggerManager &dbg_manager = *Manager::Get()->GetDebuggerManager();
-    dbg_manager.UnregisterDebugger(this);
-
+//    DebuggerManager &dbg_manager = *Manager::Get()->GetDebuggerManager();
+//    dbg_manager.UnregisterDebugger(this);
+    Manager::Get()->GetDebuggerManager()->GetWatchesDialog()->RemoveWatch(m_locals_watch);
+    m_locals_watch = PythonWatch::Pointer();
 }
 
 void PythonDebugger::SetWatchTooltip(const wxString &tip, int definition_length)

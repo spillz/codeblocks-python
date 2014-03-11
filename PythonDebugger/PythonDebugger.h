@@ -208,7 +208,7 @@ class PythonDebugger : public cbDebuggerPlugin
         virtual void ResetProject() {}
         virtual void CleanupWhenProjectClosed(cbProject *project) {}
 
-        virtual void RequestUpdate(DebugWindows window) {}
+        virtual void RequestUpdate(DebugWindows window);
 
 // Debugger Plugin Specific Virtuals
 
@@ -258,7 +258,7 @@ class PythonDebugger : public cbDebuggerPlugin
 
         bool DispatchCommands(const wxString& cmd, int cmdtype=DBGCMDTYPE_FLOWCONTROL, bool poll=true);
         wxString AssembleBreakpointCommands();
-        wxString AssembleWatchCommands();
+        void DispatchWatchCommands();
         wxString AssembleAliasCommands();
 
         wxMenu *LangMenu;  // pointer to the interpreters menu
@@ -290,6 +290,7 @@ class PythonDebugger : public cbDebuggerPlugin
         BPList m_bplist;
         StackInfo m_stackinfo; //call stack
         PythonWatchesContainer m_watchlist;
+        PythonWatch::Pointer m_locals_watch;
 
         bool m_DebuggerActive;
         wxString m_debugfile; // file and line of current debug code position

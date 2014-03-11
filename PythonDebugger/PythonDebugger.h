@@ -291,6 +291,9 @@ class PythonDebugger : public cbDebuggerPlugin
         StackInfo m_stackinfo; //call stack
         PythonWatchesContainer m_watchlist;
         PythonWatch::Pointer m_locals_watch;
+        PythonWatch::Pointer m_functions_watch;
+        PythonWatch::Pointer m_classes_watch;
+        PythonWatch::Pointer m_modules_watch;
 
         bool m_DebuggerActive;
         wxString m_debugfile; // file and line of current debug code position

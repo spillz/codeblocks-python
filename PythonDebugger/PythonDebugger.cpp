@@ -229,6 +229,22 @@ void PythonDebugger::ClearActiveMarkFromAllEditors()
     }
 }
 
+void RemoveMissingChildren(cb::shared_ptr<cbWatch> parent, const std::set<wxString> &knownsyms)
+{
+    for (int i=0; i<parent->GetChildCount(); ++i)
+    {
+        cb::shared_ptr<cbWatch> p(parent->GetChild(i));
+        wxString s;
+        p->GetSymbol(s);
+        if (knownsyms.find(s)==knownsyms.end())
+        {
+            parent->RemoveChild(i);
+            --i;
+            continue;
+        }
+    }
+}
+
 void PythonDebugger::OnTimer(wxTimerEvent& event)
 {
     bool debugoutputmode=false;
@@ -273,7 +289,7 @@ void PythonDebugger::OnTimer(wxTimerEvent& event)
                     exprresult.Replace(_T("\n"),_T("\\n"),true);
                     wxString symbol=exprresult.BeforeFirst(_T('\001')).Trim(false);
                     exprresult=exprresult.AfterFirst(_T('\001'));
-                    wxString type=exprresult.BeforeFirst(_T('\001'));
+                    wxString type=exprresult.BeforeFirst(_T('\001')).Trim().Trim(false);
                     wxString value=exprresult.AfterFirst(_T('\001'));
                     for(size_t i=0;i<m_watchlist.size();++i)
                     {
@@ -307,7 +323,7 @@ void PythonDebugger::OnTimer(wxTimerEvent& event)
                     parentsymbol=parentsymbol.BeforeLast(_T('\n'));
 
                     //Find the parent watch and remove it's children
-                    PythonWatch::Pointer parentwatch;
+                    PythonWatch::Pointer parentwatch, pw;
                     PythonWatchesContainer::iterator it;
                     for(it=m_watchlist.begin();it!=m_watchlist.end();it++)
                     {
@@ -331,20 +347,42 @@ void PythonDebugger::OnTimer(wxTimerEvent& event)
 
                     //Now add the newly updated children
                     std::set<wxString> foundsyms;
+                    foundsyms.insert(_T("*Modules:"));
+                    foundsyms.insert(_T("*Classes:"));
+                    foundsyms.insert(_T("*Functions:"));
                     while (exprresult.Len()>0)
                     {
                         wxString symbol=exprresult.BeforeFirst(_T('\001')).Trim(false);
                         exprresult=exprresult.AfterFirst(_T('\001'));
-                        wxString type=exprresult.BeforeFirst(_T('\001'));
+                        wxString type=exprresult.BeforeFirst(_T('\001')).Trim(false).Trim();
                         exprresult=exprresult.AfterFirst(_T('\001'));
                         wxString value=exprresult.BeforeFirst(_T('\001'));
                         exprresult=exprresult.AfterFirst(_T('\001'));
                         foundsyms.insert(symbol);
                         cb::shared_ptr<cbWatch> p = parentwatch->FindChild(symbol);
+                        pw = parentwatch;
+                        if (parentwatch == m_locals_watch)
+                        {
+                            if(!p && type == _("<type 'module'>"))
+                            {
+                                p = m_modules_watch->FindChild(symbol);
+                                pw = m_modules_watch;
+                            }
+                            if(!p && type == _("<type 'classobj'>"))
+                            {
+                                p = m_classes_watch->FindChild(symbol);
+                                pw = m_classes_watch;
+                            }
+                            if(!p && type == _("<type 'function'>"))
+                            {
+                                p = m_functions_watch->FindChild(symbol);
+                                pw = m_functions_watch;
+                            }
+                        }
                         if(!p)
                         {
                             p = cb::shared_ptr<cbWatch>(new PythonWatch(symbol));
-                            cbWatch::AddChild(parentwatch,p);
+                            cbWatch::AddChild(pw,p);
                         }
                         wxString oldval,oldtype;
                         p->GetValue(oldval);
@@ -353,16 +391,12 @@ void PythonDebugger::OnTimer(wxTimerEvent& event)
                         p->SetType(type);
                         p->SetValue(value);
                     }
-                    for (int i=0; i<parentwatch->GetChildCount(); ++i)
+                    RemoveMissingChildren(parentwatch, foundsyms);
+                    if (parentwatch == m_locals_watch)
                     {
-                        cb::shared_ptr<cbWatch> p(parentwatch->GetChild(i));
-                        wxString s;
-                        p->GetSymbol(s);
-                        if (foundsyms.find(s)==foundsyms.end())
-                        {
-                            parentwatch->RemoveChild(i);
-                            --i;
-                        }
+                        RemoveMissingChildren(m_functions_watch, foundsyms);
+                        RemoveMissingChildren(m_classes_watch, foundsyms);
+                        RemoveMissingChildren(m_modules_watch, foundsyms);
                     }
                     DebuggerManager &dbg_manager = *Manager::Get()->GetDebuggerManager();
                     dbg_manager.GetWatchesDialog()->UpdateWatches();
@@ -996,11 +1030,23 @@ void PythonDebugger::OnAttachReal()
     Manager::Get()->RegisterEventSink(cbEVT_EDITOR_TOOLTIP, new cbEventFunctor<PythonDebugger, CodeBlocksEvent>(this, &PythonDebugger::OnValueTooltip));
 
     m_locals_watch = PythonWatch::Pointer(new PythonWatch(_T("*Locals:")));
-//    cbWatch::AddChild(m_locals_watch,PythonWatch::Pointer(new PythonWatch(_("#child"))));
-    m_locals_watch->Expand(true);
     m_locals_watch->MarkAsChanged(false);
     Manager::Get()->GetDebuggerManager()->GetWatchesDialog()->AddSpecialWatch(m_locals_watch,true);
 
+    m_functions_watch = PythonWatch::Pointer(new PythonWatch(_T("*Functions:")));
+    m_functions_watch->MarkAsChanged(false);
+    cbWatch::AddChild(m_locals_watch,m_functions_watch);
+
+    m_classes_watch = PythonWatch::Pointer(new PythonWatch(_T("*Classes:")));
+    m_classes_watch->MarkAsChanged(false);
+    cbWatch::AddChild(m_locals_watch,m_classes_watch);
+
+    m_modules_watch = PythonWatch::Pointer(new PythonWatch(_T("*Modules:")));
+    m_modules_watch->MarkAsChanged(false);
+    cbWatch::AddChild(m_locals_watch,m_modules_watch);
+
+    m_locals_watch->Expand(true);
+    Manager::Get()->GetDebuggerManager()->GetWatchesDialog()->UpdateWatches();
 }
 
 void PythonDebugger::OnReleaseReal(bool appShutDown)
@@ -1021,6 +1067,8 @@ void PythonDebugger::OnReleaseReal(bool appShutDown)
 //    dbg_manager.UnregisterDebugger(this);
     Manager::Get()->GetDebuggerManager()->GetWatchesDialog()->RemoveWatch(m_locals_watch);
     m_locals_watch = PythonWatch::Pointer();
+    m_functions_watch = PythonWatch::Pointer();
+    m_classes_watch = PythonWatch::Pointer();
 }
 
 void PythonDebugger::SetWatchTooltip(const wxString &tip, int definition_length)

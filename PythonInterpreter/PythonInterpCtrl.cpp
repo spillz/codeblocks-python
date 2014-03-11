@@ -78,6 +78,7 @@ void PythonIOCtrl::OnUserInput(wxKeyEvent& ke)
                 if(m_line_entry_point<GetLastPosition())
                     line=GetRange(m_line_entry_point,GetLastPosition());
                 line.Replace(_T("\n"),_T("")); //will cause major problems if there is more than one line feed returned here, so we remove them (TODO: fix on server side?? server should treat buffered lines as new input without errors)
+                line.Replace(_T("\r"),_T(""));
                 line.Append(_T("\n"));
                 AppendText(_T("\n"));
                 m_pyctrl->stdin_append(line);
@@ -493,6 +494,7 @@ void PythonInterpCtrl::OnPyNotify(XmlRpcResponseEvent& event)
             m_ioctrl->AppendText(m_code);
             m_ioctrl->SetDefaultStyle(oldta);
 //            m_ioctrl->AppendText(_T("\n"));
+            m_code.Replace(_T("\r"),_T(""));
             m_codectrl->m_history_commands.Add(m_code.BeforeLast(_T('\n')));
             m_codectrl->m_history_position = -1;
             m_code = wxEmptyString;

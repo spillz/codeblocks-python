@@ -166,9 +166,9 @@ wxString PythonDebugger::AssembleAliasCommands()
     wxString commands;
     //NB: \001 is the separator character used when parsing in OnTimer
     //Print variables associated with a child
-    commands+=_T("alias pm for x in sorted(%1.__dict__): print '%s\\001%s\\001'%(x,type(%1.__dict__[x])),str(%1.__dict__[x])[:1200],'\\001',\n");
+    commands+=_T("alias pm for __x in sorted(%1.__dict__): print '%s\\001%s\\001'%(__x,type(%1.__dict__[__x])),str(%1.__dict__[__x])[:1200],'\\001',\n");
     //Print all local variables
-    commands+=_T("alias pl for x in sorted(locals()): print '%s\\001%s\\001'%(x,type(locals()[x])),str(locals()[x])[:1200],'\\001',\n");
+    commands+=_T("alias pl for __x in sorted(locals()): print '%s\\001%s\\001'%(__x,type(locals()[__x])),str(locals()[__x])[:1200],'\\001',\n");
     //Print variable name, type and value
     commands+=_T("alias ps print '%1\\001',;print str(type(%1))+'\\001',;print str(%1)[:1200]\n");
     //Print comment

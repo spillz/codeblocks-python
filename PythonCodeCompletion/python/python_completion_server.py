@@ -22,13 +22,6 @@ def type_suffix(d):
 
 isz=struct.calcsize('I')
 
-class Logger:
-    def __init__(self):
-        self.log = open(os.path.expanduser('~/cbpycc.log'),'wb')
-    def write(self,msg):
-        self.log.write(str(msg)+'\n')
-        self.log.flush()
-
 class XmlRpcPipeServer:
     '''
     A simple XMLRPC server implementation that uses the stdin, stdout
@@ -40,9 +33,6 @@ class XmlRpcPipeServer:
         self.inpipe=sys.stdin
         self.outpipe=sys.stdout
         sys.stdout=open(os.devnull,'wb')
-        sys.stderr=open(os.devnull,'wb')
-        self.req_count=0
-#        self.log = Logger()
 
     def register_function(self,fn,name):
         self.fn_dict[name]=fn
@@ -52,17 +42,10 @@ class XmlRpcPipeServer:
 
     def handle_request(self):
         ##TODO: Need more error handling!
-#        self.log.write('#'*80)
-#        self.log.write('#'*80)
-#        self.log.write('waiting for request %i'%(self.req_count))
         size_buf = self.inpipe.read(isz)
         size = struct.unpack('I',size_buf)[0]
-#        self.log.write('read size %i'%(size))
         call_xml = self.inpipe.read(size)
-#        self.log.write('read call\n%s'%(call_xml))
         self.outpipe.write(struct.pack('c','M'))
-#        self.log.write('#'*80)
-#        self.log.write('wrote "M"')
         name=''
         try:
             args,name = xmlrpclib.loads(call_xml)
@@ -71,23 +54,17 @@ class XmlRpcPipeServer:
                 result=(result,)
         except:
             import traceback
-            result ='Error running call '+name+'\n'+call_xml+'\n'
+            result ='Error running call'+name+'\n'+call_xml+'\n'
             result += '\n'.join(traceback.format_exception(*sys.exc_info()))
-            result = (result,)
+            result = ({'error':'ERROR','desc':result},)
         try:
             res_xml = bytes(xmlrpclib.dumps(result, methodresponse=True))
         except:
-            res_xml = bytes(xmlrpclib.dumps('Method result of length %i could not be converted to XML'%(len(res_xml)), methodresponse=True))
+            result = ({'error':'ERROR','desc':'Method result of length %i could not be converted to XML'%(len(res_xml))},)
+            res_xml = bytes(xmlrpclib.dumps(result), methodresponse=True)
         size = len(res_xml)
-#        self.log.write('about to write mesage of length %i'%(size,))
-#        self.log.write('message\n%s'%(res_xml,))
         self.outpipe.write(struct.pack('I',size))
-#        self.log.write('wrote message size')
         self.outpipe.write(res_xml)
-#        self.log.write('wrote message')
-        self.outpipe.flush()
-#        self.log.write('completed request %i'%(self.req_count))
-        self.req_count+=1
 
     def __call__(self,name,*args):
         return self.fn_dict[name](*args)
@@ -116,6 +93,7 @@ class PythonCompletionServer:
         self.server.register_function(self.end,'end')
         self.server.register_function(self.complete_phrase,'complete_phrase')
         self.server.register_function(self.complete_tip,'complete_tip')
+        self.server.register_function(self.get_doc,'get_doc')
         self.server.register_function(self.get_definition_location,'get_definition_location')
         while not self._quit:
             self.server.handle_request()
@@ -123,9 +101,25 @@ class PythonCompletionServer:
     def complete_phrase(self,path,source,line,column):
         source=source.replace('\r','')
         script = jedi.Script(source,line=line+1,column=column,source_path=path)
-        results = script.completions()
-        completions=sorted([s.name+type_suffix(s.description) for s in results])
-        return completions
+        self.completions = script.completions()
+        comps=[s.name+type_suffix(s.description) for s in self.completions]
+        return comps
+
+    def get_doc(self,index):
+        '''
+        gets the documentation for the `index`th item of the last completion result in self.completions
+        '''
+        comp = self.completions[index]
+        if comp.type in ['class','import']:
+            doclines = comp.follow_definition()[0].raw_doc.splitlines()
+        else:
+            doclines = comp.doc.splitlines()
+        if len(doclines)>0:
+            doclines[0] = '<b>'+doclines[0]+'</b>'
+        else:
+            doclines =['<b>'+comp.type+' '+comp.name+'</b>']
+        doc = '<br>'.join(doclines)
+        return doc
 
     def complete_tip(self,path,source,line,column):
         source=source.replace('\r','')

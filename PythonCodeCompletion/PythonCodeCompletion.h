@@ -7,6 +7,11 @@
  * License:   GPL
  **************************************************************/
 
+//TODO: Possible need to relaunch the py_server if it fails
+//TODO: Let user customize the python command used to launch the server
+//TODO: Code browsing pane
+
+
 #ifndef PYTHON_CODE_COMPLETION_H_INCLUDED
 #define PYTHON_CODE_COMPLETION_H_INCLUDED
 
@@ -26,18 +31,20 @@ class wxScintillaEvent;
 class PythonCodeCompletion : public cbCodeCompletionPlugin
 {
     public:
-        /** Constructor. */
+        enum StateType
+        {
+            STATE_NONE,
+            STATE_COMPLETION_REQUEST,
+            STATE_COMPLETION_RETURNED,
+            STATE_CALLTIP_REQUEST,
+            STATE_CALLTIP_RETURNED,
+            STATE_DOC_REQUEST,
+            STATE_DOC_RETURNED,
+            STATE_GOTO_REQUEST,
+            STATE_GOTO_RETURNED
+        };
         PythonCodeCompletion();
-        /** Destructor. */
         virtual ~PythonCodeCompletion();
-
-        virtual wxArrayString GetCallTips() {}
-        virtual int CodeComplete();
-        virtual void ShowCallTip();
-
-        void EditorEventHook(cbEditor* editor, wxScintillaEvent& event);
-
-        /** Invoke configuration dialog. */
         virtual int Configure();
 
         /** Return the plugin's configuration priority.
@@ -104,58 +111,50 @@ class PythonCodeCompletion : public cbCodeCompletionPlugin
           */
         virtual bool BuildToolBar(wxToolBar* toolBar){ return false; }
 
-        virtual bool IsProviderFor(cbEditor* ed);
-    protected:
-        /** Any descendent plugin should override this virtual method and
-          * perform any necessary initialization. This method is called by
-          * Code::Blocks (PluginManager actually) when the plugin has been
-          * loaded and should attach in Code::Blocks. When Code::Blocks
-          * starts up, it finds and <em>loads</em> all plugins but <em>does
-          * not</em> activate (attaches) them. It then activates all plugins
-          * that the user has selected to be activated on start-up.\n
-          * This means that a plugin might be loaded but <b>not</b> activated...\n
-          * Think of this method as the actual constructor...
-          */
-        virtual void OnAttach();
+        virtual CCProviderStatus GetProviderStatusFor(cbEditor* ed);
 
-        /** Any descendent plugin should override this virtual method and
-          * perform any necessary de-initialization. This method is called by
-          * Code::Blocks (PluginManager actually) when the plugin has been
-          * loaded, attached and should de-attach from Code::Blocks.\n
-          * Think of this method as the actual destructor...
-          * @param appShutDown If true, the application is shutting down. In this
-          *         case *don't* use Manager::Get()->Get...() functions or the
-          *         behaviour is undefined...
-          */
+        virtual std::vector<CCToken> GetAutocompList(bool isAuto, cbEditor* ed, int& tknStart, int& tknEnd);
+        /// returns html
+        virtual wxString GetDocumentation(const CCToken& token);
+        virtual std::vector<CCCallTip> GetCallTips(int pos, int style, cbEditor* ed, int& argsPos);
+        virtual std::vector<CCToken> GetTokenAt(int pos, cbEditor* ed, bool& allowCallTip);
+        /// dismissPopup is false by default
+        virtual wxString OnDocumentationLink(wxHtmlLinkEvent& event, bool& dismissPopup);
+
+    protected:
+        /// Called when the plugin is enabled
+        virtual void OnAttach();
+        /// Called when the plugin is disabled
         virtual void OnRelease(bool appShutDown);
 
-        void OnClickedGotoDefinition(wxCommandEvent& event);
-        void HandleError(XmlRpcResponseEvent &event, wxString message);
-
-        // Handlers for responses from XMLRPC server
-        void OnStdLibLoaded(XmlRpcResponseEvent &event);
+        //Handlers for the responses to asynchronous XMLRPC requests
         void OnCalltip(XmlRpcResponseEvent &event);
         void OnCompletePhrase(XmlRpcResponseEvent &event);
+        void OnClickedGotoDefinition(wxCommandEvent& event);
         void OnGotoDefinition(XmlRpcResponseEvent &event);
+        void OnXmlRpcTerminated(wxCommandEvent &event);
+        void HandleError(XmlRpcResponseEvent &event, wxString message);
 
-        // Generate the XMLRPC server requests
+        // Additional implementation details
+        // Helper for figuring out the position of calltips
+        void GetCalltipPositions(cbEditor* editor, int pos, int &argsStartPos, int &argNumber);
+        // Functions to make the XmlRpc server request
         void RequestCompletion(cbStyledTextCtrl *control, int pos, const wxString &filename);
         void RequestCallTip(cbStyledTextCtrl *control, int pos, const wxString &filename);
-        void RequestDocString(cbStyledTextCtrl *control, int pos, const wxString &filename);
-        void CompleteCodeEvt(CodeBlocksEvent& event);
-        void ShowCallTipEvt(CodeBlocksEvent& event);
+        wxString RequestDocString(int id);
 
     private:
+        int m_state; // takes one of the values of the StateType enum (used to report current state of the engine)
+        int m_request_submitted_count; // m_request_id is used to keep track of the active request and is used to prevent responses from stale requests from propagating
+        int m_request_completed_count; // m_request_id is used to keep track of the active request and is used to prevent responses from stale requests from propagating
+        int m_argsPos; // position of the call args in the active editor
+        int m_argNumber; // zero-based numerical position of the cursor within the function call spec
         wxString GetExtraFile(const wxString &short_name);
         XmlRpcInstance *py_server; //Code Completion Server (a python process running an XMLRPC server)
-        wxImageList* m_pImageList;
-        bool m_libs_loaded;
-        int m_EditorHookId;
-        wxString m_ActiveSymbol;
-        int m_ActiveCalltipPos;
-        wxString m_ActiveCalltip;
-        wxString m_ActiveCalltipDef;
-        wxArrayString m_comp_results;
+        wxImageList* m_pImageList; //Type icons displayed in the code completion popup
+        CCCallTip m_ActiveCalltipDef; //contains the call tip definition retrieved from the server
+        wxArrayString m_comp_results; //contains an array of completion results retrieved from the server
+
         DECLARE_EVENT_TABLE();
 };
 

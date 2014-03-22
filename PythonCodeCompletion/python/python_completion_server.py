@@ -123,7 +123,8 @@ class PythonCompletionServer:
 
     def complete_tip(self,path,source,line,column):
         source=source.replace('\r','')
-        script = jedi.Script(source,line=line+1,column=column,source_path=path)
+        #don't use the source_path arg because it causes buggy caching to be used
+        script = jedi.Script(source,line=line+1,column=column)#,source_path=path)
         call_def = script.call_signatures()
         calltip = ''
         for c in call_def:

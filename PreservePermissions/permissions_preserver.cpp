@@ -1,7 +1,7 @@
 #include <sdk.h> // Code::Blocks SDK
 #include <editorbase.h>
 #include <configurationpanel.h>
-#include "Permissions_Preserver.h"
+#include "permissions_preserver.h"
 
 // Register the plugin with Code::Blocks.
 // We are using an anonymous namespace so we don't litter the global one.

@@ -136,6 +136,13 @@ void PythonCodeCompletion::OnAttach()
     m_pImageList->Add(bmp); // Function
 
 
+    const wxString ctChars = wxT(",\n()"); // default set
+    const wxString alChars = wxT("."); // default set
+
+    Manager::Get()->GetCCManager()->RegisterCallTipChars(ctChars, this);
+    Manager::Get()->GetCCManager()->RegisterAutoLaunchChars(alChars, this);
+
+
     if(port!=-1)
         ::wxSleep(2); //need a delay to allow the xmlrpc server time to start
 }
@@ -333,7 +340,7 @@ std::vector<PythonCodeCompletion::CCToken> PythonCodeCompletion::GetAutocompList
 //                 || (ch == _T('.')))
         Manager::Get()->GetLogManager()->DebugLog(_("PYCC: Checking lexical state..."));
         cbStyledTextCtrl *control=ed->GetControl();
-        int pos = control->GetCurrentPos();
+        int pos = tknEnd;
         int style = control->GetStyleAt(pos);
         wxChar ch = control->GetCharAt(pos);
         if (  ch != _T('.') && style != wxSCI_P_DEFAULT

@@ -129,7 +129,11 @@ class PythonCompletionServer:
         calltip = ''
         for c in call_def:
             calltip=c.call_name+'('
-            calltip+=', '.join([p.get_name().names[0] for p in c.params])+')'
+            if jedi.__version__ >= '0.8.0':
+                calltip+=', '.join([p.name for p in c.params])+')'
+            else:
+                calltip+=', '.join([p.get_name().names[0] for p in c.params])+')'
+            calltip = '\n'.join(textwrap.wrap(calltip,70))
             calltip = '\n'.join(textwrap.wrap(calltip,70))
 #            docstr=''
 #            for p in c.params:

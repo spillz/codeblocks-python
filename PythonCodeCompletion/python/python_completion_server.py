@@ -167,7 +167,7 @@ def cmd_err():
     sys.exit()
 
 if __name__=='__main__':
-    if len(sys.argv)!=2:
+    if len(sys.argv)<2:
         port=8001
     else:
         try:
@@ -176,6 +176,17 @@ if __name__=='__main__':
             cmd_err()
         if port<-1:
             cmd_err()
+        if len(sys.argv)>2:
+            config_module_path = sys.argv[2]
+            config_path, module_name = os.path.split(config_module_path)
+            module_name = os.path.splitext(module_name)[0]
+            import importlib
+            try:
+                sys.path.insert(0, config_path)
+                importlib.import_module(module_name)
+            except:
+                #TODO: Do something better than silently failing here
+                pass
 
     server=PythonCompletionServer(port)
     server.run()

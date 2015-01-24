@@ -88,6 +88,8 @@ void PythonCodeCompletion::OnAttach()
 
     ConfigManager *mgr=Manager::Get()->GetConfigManager(_T("PythonCC"));
 
+    wxString server_config_module = ConfigManager::GetFolder(sdDataUser)+_T("/python/python_completion_config.py");
+
     wxString script = GetExtraFile(_T("/python/python_completion_server.py"));
     if(script==wxEmptyString)
     {
@@ -96,7 +98,7 @@ void PythonCodeCompletion::OnAttach()
     }
     #ifndef EMBEDDER_DEBUG
     int port = -1; // Port == -1 uses pipe to do RPC over redirected stdin/stdout of the process, otherwise uses a socket
-    wxString command = wxString::Format(_T("python -u %s %i"),script.c_str(),port);
+    wxString command = wxString::Format(_T("python -u %s %i %s"),script.c_str(),port, server_config_module.c_str());
     #else
     int port = 3456;
     wxString command = wxString::Format(_T("xterm -e python -u %s %i"),script.c_str(),port);

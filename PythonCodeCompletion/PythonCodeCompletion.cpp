@@ -381,7 +381,7 @@ std::vector<PythonCodeCompletion::CCCallTip> PythonCodeCompletion::GetCallTips(i
         Manager::Get()->GetLogManager()->DebugLog(_("PYCC: Supplying the calltip ")+m_ActiveCalltipDef.tip);
         PythonCodeCompletion::CCCallTip ct=m_ActiveCalltipDef;
         m_ActiveCalltipDef=PythonCodeCompletion::CCCallTip(_T(""));
-        wxString s = ct.tip;
+        wxString s = ct.tip.BeforeFirst(_T('\n'));
         if(s==_(""))
         {
             return cts;

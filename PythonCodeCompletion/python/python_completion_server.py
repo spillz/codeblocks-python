@@ -114,11 +114,11 @@ class PythonCompletionServer:
             doclines = comp.follow_definition()[0].raw_doc.splitlines()
         else:
             doclines = comp.doc.splitlines()
+        doclines = [l.strip() for l in doclines]
         if len(doclines)>0:
-            doclines[0] = '<b>'+doclines[0]+'</b>'
-        else:
-            doclines =['<b>'+comp.type+' '+comp.name+'</b>']
-        doc = '<br>'.join(doclines)
+            doclines = ['<br><br>']+[l + ' ' if l!='' else '<br><br>' for l in doclines[:-1]] + [doclines[-1]]
+        doclines =['<b>'+comp.type+' '+comp.name+'</b>'] + doclines
+        doc = ''.join(doclines)
         return doc
 
     def complete_tip(self,path,source,line,column):
@@ -131,15 +131,18 @@ class PythonCompletionServer:
             calltip=c.call_name+'('
             if jedi.__version__ >= '0.8.0':
                 calltip+=', '.join([p.name for p in c.params])+')'
+                default_args=[]
+                for p in c.params:
+                    if '=' in p.description:
+                        default_args.append(p.description)
+                if default_args:
+                    calltip = calltip + '\n\nDefault Arguments: ' + ', '.join(default_args)
+#                if c.doc:
+#                    calltip = calltip + '\n\nDescription\n' + c.doc
             else:
                 calltip+=', '.join([p.get_name().names[0] for p in c.params])+')'
-            calltip = '\n'.join(textwrap.wrap(calltip,70))
-            calltip = '\n'.join(textwrap.wrap(calltip,70))
-#            docstr=''
-#            for p in c.params:
-#                docstr+=p.docstr
-#            if docstr!='':
-#                calltip+='\n'+docstr
+#            calltip = '\n'.join(textwrap.wrap(calltip,70))
+
             return calltip
         return ''
 

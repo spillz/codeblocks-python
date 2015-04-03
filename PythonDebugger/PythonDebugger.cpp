@@ -862,7 +862,10 @@ bool PythonDebugger::HasWatch(cb::shared_ptr<cbWatch> watch)
         if (m_watchlist[i]==watch)
             return true;
     }
-    return watch = m_locals_watch;
+    return watch == m_functions_watch
+        || watch == m_classes_watch
+        || watch == m_modules_watch
+        || watch == m_locals_watch;
 }
 
 void PythonDebugger::ShowWatchProperties(cb::shared_ptr<cbWatch> watch)

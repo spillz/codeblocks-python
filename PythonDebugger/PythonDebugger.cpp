@@ -252,10 +252,11 @@ void PythonDebugger::OnTimer(wxTimerEvent& event)
     {
         while(m_pp->IsInputAvailable())
         {
-            if(!m_istream->Eof())
-                m_outbuf+=m_istream->GetC();
-            else
-                break;
+            int c;
+            if (m_istream->CanRead())
+                c = m_istream->GetC();
+            if (m_istream->LastRead()>0)
+                m_outbuf += c;
         }
         //TODO: Program could hang if debug output is incorrectly parsed
         m_outdebugbuf=m_outbuf;

@@ -46,6 +46,8 @@ END_EVENT_TABLE()
 // constructor
 PythonCodeCompletion::PythonCodeCompletion() : m_ActiveCalltipDef(_(""))
 {
+    m_comp_position.line = 0;
+    m_comp_position.column = 0;
     // Make sure our resources are available.
     // In the generated boilerplate code we have no resources but when
     // we add some, it will be nice that this code is in place already ;)
@@ -318,9 +320,29 @@ PythonCodeCompletion::CCProviderStatus PythonCodeCompletion::GetProviderStatusFo
 std::vector<PythonCodeCompletion::CCToken> PythonCodeCompletion::GetAutocompList(bool isAuto, cbEditor* ed, int& tknStart, int& tknEnd)
 {
     Manager::Get()->GetLogManager()->DebugLog(_("PYCC: GetAutocompList called"));
+
+    cbStyledTextCtrl* control = ed->GetControl();
+    const int line = control->LineFromPosition(tknStart);
+    const int lnStart = control->PositionFromLine(line);
+    int column = tknStart - lnStart;
+    for (; column > 0; --column)
+    {
+        if (   !wxIsspace(control->GetCharAt(lnStart + column - 1))
+            || (column != 1 && !wxIsspace(control->GetCharAt(lnStart + column - 2))) )
+        {
+            break;
+        }
+    }
+
     std::vector<CCToken> tokens;
     if (m_state == STATE_COMPLETION_RETURNED)
     {
+        if ((m_comp_position.line != line)||(m_comp_position.column != column))
+        {
+            Manager::Get()->GetLogManager()->DebugLog( _("PYCC: Position has changed since last CC request") );
+            m_state=STATE_NONE;
+            return tokens;
+        }
         for (int i = 0; i<m_comp_results.Count(); ++i)
         {
             long int category=-1;
@@ -329,7 +351,6 @@ std::vector<PythonCodeCompletion::CCToken> PythonCodeCompletion::GetAutocompList
             PythonCodeCompletion::CCToken t(i,m_comp_results[i].BeforeFirst('?'),category);
             tokens.push_back(t);
         }
-        cbStyledTextCtrl* control = ed->GetControl();
         control->ClearRegisteredImages();
         for (int i = 0; i < m_pImageList->GetImageCount(); i++)
             control->RegisterImage(i+1,m_pImageList->GetBitmap(i));
@@ -341,7 +362,6 @@ std::vector<PythonCodeCompletion::CCToken> PythonCodeCompletion::GetAutocompList
 //        if (   (!ed->AutoCompActive()) // not already active autocompletion
 //                 || (ch == _T('.')))
         Manager::Get()->GetLogManager()->DebugLog(_("PYCC: Checking lexical state..."));
-        cbStyledTextCtrl *control=ed->GetControl();
         int pos = tknEnd;
         int style = control->GetStyleAt(pos);
         wxChar ch = control->GetCharAt(pos);
@@ -357,6 +377,8 @@ std::vector<PythonCodeCompletion::CCToken> PythonCodeCompletion::GetAutocompList
         wxString phrase=control->GetTextRange(tknStart,tknEnd);
         Manager::Get()->GetLogManager()->DebugLog(_T("PYCC: Looking for ")+phrase+_T(" in ")+ed->GetFilename()+wxString::Format(_T(" %i"),pos));
         m_state = STATE_COMPLETION_REQUEST;
+        m_comp_position.line = line;
+        m_comp_position.column = column;
         RequestCompletion(control,pos,ed->GetFilename());
         return tokens;
     }

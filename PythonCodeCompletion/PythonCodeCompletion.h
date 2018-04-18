@@ -15,12 +15,6 @@
 #ifndef PYTHON_CODE_COMPLETION_H_INCLUDED
 #define PYTHON_CODE_COMPLETION_H_INCLUDED
 
-// For compilers that support precompilation, includes <wx/wx.h>
-#include <wx/wxprec.h>
-
-#ifndef WX_PRECOMP
-    #include <wx/wx.h>
-#endif
 
 #include <cbplugin.h> // for "class cbPlugin"
 #include "xmlrpc_embedder.h"

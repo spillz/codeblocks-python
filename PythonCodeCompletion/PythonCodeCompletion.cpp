@@ -1,4 +1,6 @@
 #include <sdk.h> // Code::Blocks SDK
+#include <wx/menu.h>
+
 #include <configurationpanel.h>
 #include "PythonCodeCompletion.h"
 

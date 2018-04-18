@@ -1,10 +1,18 @@
 #include <wx/notebook.h>
 #include <wx/textctrl.h>
 #include <wx/regex.h>
-#include "PythonInterpCtrl.h"
-#include <globals.h>
+#include <wx/fontutil.h>
 
+#include <wx/wxscintilla.h>
 #include <cbcolourmanager.h>
+#include <configmanager.h>
+#include <editorcolourset.h>
+#include <globals.h>
+#include <infowindow.h>
+#include <logmanager.h>
+
+#include "PythonInterpCtrl.h"
+
 
 //DECLARE_LOCAL_EVENT_TYPE(wxEVT_PY_NOTIFY_UI_CODEOK, -1)
 DEFINE_EVENT_TYPE( wxEVT_PY_NOTIFY_UI_CODEOK )

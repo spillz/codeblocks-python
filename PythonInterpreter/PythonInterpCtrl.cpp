@@ -249,7 +249,7 @@ PythonCodeCtrl::PythonCodeCtrl(wxWindow *parent, PythonInterpCtrl *py)
     SetTabWidth(mgr->ReadInt(_T("/tab_size"), 4));
     SetIndent(mgr->ReadInt(_T("/tab_size"), 4)); //NEEDED FOR AUTO INDENTATION (NOT IN CB EDITOR)
 
-    em->GetColourSet()->Apply(_("Python"),this);
+    em->GetColourSet()->Apply(HighlightLanguage(wxT("Python")),this, false, true);
 
 }
 

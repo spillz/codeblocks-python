@@ -26,8 +26,8 @@
 					<Add option="-DCB_PRECOMP" />
 					<Add option="-DWX_PRECOMP" />
 					<Add option="-DwxUSE_UNICODE" />
-					<Add directory="$(#cb)\include" />
-					<Add directory="$(#cb)\include\wxscintilla\include" />
+					<Add directory="$(#cb.include)" />
+					<Add directory="$(#cb.include)\wxscintilla\include" />
 					<Add directory="$(#wx.include)" />
 					<Add directory="$(#wx.lib)\gcc_dll\mswu" />
 				</Compiler>

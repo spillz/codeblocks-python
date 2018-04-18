@@ -37,15 +37,15 @@
 					<Add option="-DWXUSINGDLL" />
 					<Add option="-DwxUSE_UNICODE" />
 					<Add option="-D_WINDOWS" />
-					<Add directory="$(#wx)/include" />
-					<Add directory="$(#wx)/lib/gcc_dll/mswu" />
+					<Add directory="$(#wx.include)" />
+					<Add directory="$(#wx.lib)/gcc_dll/mswu" />
 					<Add directory="XMLRPC/include" />
 				</Compiler>
 				<Linker>
 					<Add library="wxmsw28u" />
 					<Add library="Ws2_32" />
 					<Add library="XmlRpc" />
-					<Add directory="$(#wx)/lib/gcc_dll" />
+					<Add directory="$(#wx.lib)/gcc_dll" />
 					<Add directory="XMLRPC" />
 				</Linker>
 			</Target>
@@ -64,14 +64,14 @@
 					<Add option="-DWXUSINGDLL" />
 					<Add option="-DwxUSE_UNICODE" />
 					<Add option="-D_WINDOWS" />
-					<Add directory="$(#wx)/lib/gcc_dll/mswu" />
-					<Add directory="$(#wx)/include" />
+					<Add directory="$(#wx.lib)/gcc_dll/mswu" />
+					<Add directory="$(#wx.include)" />
 					<Add directory="XMLRPC/include" />
 				</Compiler>
 				<Linker>
 					<Add library="Ws2_32" />
 					<Add library="libwxmsw28u.a" />
-					<Add directory="$(#wx)/lib/gcc_dll" />
+					<Add directory="$(#wx.lib)/gcc_dll" />
 				</Linker>
 			</Target>
 			<Target title="wxEmbedder-Mono">
@@ -90,14 +90,14 @@
 					<Add option="-DWXUSINGDLL" />
 					<Add option="-DwxUSE_UNICODE" />
 					<Add option="-D_WINDOWS" />
-					<Add directory="$(#wx)/lib/gcc_dll/mswu" />
-					<Add directory="$(#wx)/include" />
+					<Add directory="$(#wx.lib)/gcc_dll/mswu" />
+					<Add directory="$(#wx.include)" />
 					<Add directory="XMLRPC/include" />
 				</Compiler>
 				<Linker>
 					<Add library="Ws2_32" />
 					<Add library="libwxmsw28u.a" />
-					<Add directory="$(#wx)/lib/gcc_dll" />
+					<Add directory="$(#wx.lib)/gcc_dll" />
 				</Linker>
 			</Target>
 		</Build>

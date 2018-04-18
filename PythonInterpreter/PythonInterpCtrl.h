@@ -1,18 +1,14 @@
 #ifndef PPCTRL_H
 #define PPCTRL_H
 
-#include <wx/wxprec.h>
-
 #ifndef WX_PRECOMP
-    #include <wx/wx.h>
+    #include <wx/splitter.h>
 #endif
 
 #include "xmlrpc_embedder.h"
 #include "ShellCtrlBase.h"
 #include "editormanager.h"
 #include "cbstyledtextctrl.h"
-
-#include <sdk.h>
 
 class PythonInterpCtrl;
 

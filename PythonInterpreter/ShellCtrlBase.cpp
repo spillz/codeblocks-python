@@ -1,8 +1,14 @@
+#include <wx/artprov.h>
+#include <wx/button.h>
 #include <wx/notebook.h>
 #include <wx/textctrl.h>
 #include <wx/regex.h>
-#include "ShellCtrlBase.h"
+
 #include <globals.h>
+#include <logmanager.h>
+#include <manager.h>
+
+#include "ShellCtrlBase.h"
 
 // The global instance of the shell registry
 ShellRegistry& GlobalShellRegistry()

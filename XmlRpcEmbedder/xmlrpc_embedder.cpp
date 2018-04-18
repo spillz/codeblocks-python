@@ -1,9 +1,13 @@
 #include "stdint.h"
 
 #include "xmlrpc_embedder.h"
+#include <wx/msgdlg.h>
+#include <wx/window.h>
+#include "ExecHiddenMSW.h"
+
 #include <wx/listimpl.cpp>
 #include <wx/arrimpl.cpp>
-#include "ExecHiddenMSW.h"
+
 //WX_DEFINE_OBJARRAY(XmlRpcInstanceCollection);
 WX_DEFINE_LIST(XmlRpcJobQueue);
 

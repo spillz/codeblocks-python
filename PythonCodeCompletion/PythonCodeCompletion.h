@@ -148,7 +148,10 @@ class PythonCodeCompletion : public cbCodeCompletionPlugin
         wxImageList* m_pImageList; //Type icons displayed in the code completion popup
         CCCallTip m_ActiveCalltipDef; //contains the call tip definition retrieved from the server
         wxArrayString m_comp_results; //contains an array of completion results retrieved from the server
-
+        struct {
+            int line;
+            int column;
+        } m_comp_position;
         DECLARE_EVENT_TABLE();
 };
 

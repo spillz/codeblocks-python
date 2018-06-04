@@ -1,9 +1,15 @@
-#include "PythonDebugger.h"
-#include <configurationpanel.h>
+#include <wx/process.h>
 #include <wx/regex.h>
+
 #include <cbdebugger_interfaces.h>
+#include <cbeditor.h>
 #include <cbstyledtextctrl.h>
+#include <configurationpanel.h>
+#include <editormanager.h>
+#include <logmanager.h>
 //#include <watchesdlg.h>
+
+#include "PythonDebugger.h"
 
 // Register the plugin with Code::Blocks.
 // We are using an anonymous namespace so we don't litter the global one.

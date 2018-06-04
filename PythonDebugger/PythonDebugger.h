@@ -10,17 +10,14 @@
 #ifndef PYTHONDEBUGGER_H_INCLUDED
 #define PYTHONDEBUGGER_H_INCLUDED
 
-// For compilers that support precompilation, includes <wx/wx.h>
-#include <wx/wxprec.h>
+#include <list>
 
-#ifndef WX_PRECOMP
-	#include <wx/wx.h>
-#endif
+#include <wx/stream.h>
+#include <wx/timer.h>
 
 #include <cbplugin.h> // for "class cbPlugin/cbDebuggerPlugin"
 #include <loggers.h>
 #include <logger.h>
-#include <sdk.h>
 
 #include <debuggermanager.h>
 #include "debuggeroptionsdlg.h"
@@ -36,6 +33,8 @@
 #define DBGCMDTYPE_CALLSTACK 8
 #define DBGCMDTYPE_OTHER 9
 
+class wxProcessEvent;
+class wxTimerEvent;
 
 typedef std::set<int> BPLtype;
 

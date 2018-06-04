@@ -30,7 +30,8 @@
 					<Add option="-DCB_PRECOMP" />
 					<Add option="-DWX_PRECOMP" />
 					<Add option="-DwxUSE_UNICODE" />
-					<Add directory="$(#cb)/include" />
+					<Add directory="$(#cb.include)" />
+					<Add directory="$(#cb.include)/tinyxml" />
 					<Add directory="$(#cb)/sdk/wxscintilla/include" />
 					<Add directory="$(#wx.include)" />
 					<Add directory="$(#wx.lib)/gcc_dll/mswu" />
@@ -70,7 +71,8 @@
 					<Add option="-DCB_PRECOMP" />
 					<Add option="-DWX_PRECOMP" />
 					<Add option="-DwxUSE_UNICODE" />
-					<Add directory="$(#cb)/include" />
+					<Add directory="$(#cb.include)" />
+					<Add directory="$(#cb.include)/tinyxml" />
 					<Add directory="$(#cb)/sdk/wxscintilla/include" />
 					<Add directory="$(#wx.include)" />
 					<Add directory="$(#wx.lib)/gcc_dll/mswu" />
@@ -93,8 +95,8 @@
 		</VirtualTargets>
 		<Compiler>
 			<Add option="-Wall" />
-			<Add option="-DCB_PRECOMP" />
-			<Add option="-DWX_PRECOMP" />
+			<Add option="-std=gnu++11" />
+			<Add option="-DNOPCH" />
 		</Compiler>
 		<Unit filename="PythonDebugger.cpp" />
 		<Unit filename="PythonDebugger.h" />

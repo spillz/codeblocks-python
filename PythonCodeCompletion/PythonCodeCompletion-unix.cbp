@@ -20,7 +20,7 @@
 					<Add option="-fPIC" />
 					<Add directory="../XmlRpcEmbedder/XMLRPC/include" />
 					<Add directory="../XmlRpcEmbedder" />
-					<Add directory="$(#cb)/include" />
+					<Add directory="$(#cb.include)" />
 					<Add directory="$(#cb)/sdk/wxscintilla/include" />
 				</Compiler>
 				<Linker>

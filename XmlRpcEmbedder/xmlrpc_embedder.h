@@ -1,7 +1,6 @@
 #ifndef PYEMBEDDER_H_INCLUDED
 #define PYEMBEDDER_H_INCLUDED
 
-#include <wx/wx.h>
 #include <wx/app.h>
 //#include <wx/dynarray.h>
 #include <wx/process.h>

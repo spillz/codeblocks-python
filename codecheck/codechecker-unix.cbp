@@ -23,8 +23,8 @@
 					<Add option="-fPIC" />
 					<Add option="-DcbDEBUG" />
 					<Add option="-DCB_PRECOMP" />
-					<Add directory="$(#cb)/include" />
-					<Add directory="$(#cb)/include/wxscintilla/include" />
+					<Add directory="$(#cb.include)" />
+					<Add directory="$(#cb.include)/wxscintilla/include" />
 				</Compiler>
 				<Linker>
 					<Add option="`wx-config --libs`" />

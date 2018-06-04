@@ -22,12 +22,12 @@
 					<Add option="-Winvalid-pch" />
 					<Add option="-D__WXMSW__" />
 					<Add option="-DWXUSINGDLL" />
-					<Add option="-DWX_PRECOMP" />
 					<Add option="-DwxUSE_UNICODE" />
 					<Add option="-D_WINDOWS" />
-					<Add directory="$(#wx)/lib/gcc_dll/mswu" />
-					<Add directory="$(#wx)/include" />
-					<Add directory="$(#cb)/include" />
+					<Add directory="$(#wx.lib)/gcc_dll/mswu" />
+					<Add directory="$(#wx.include)" />
+					<Add directory="$(#cb.include)" />
+					<Add directory="$(#cb.include)/tinyxml" />
 					<Add directory="$(#cb)/sdk/wxscintilla/include" />
 					<Add directory="../XmlRpcEmbedder/XMLRPC/include" />
 					<Add directory="../XmlRpcEmbedder" />
@@ -36,7 +36,7 @@
 					<Add library="wxmsw28u" />
 					<Add library="codeblocks" />
 					<Add library="XmlRpcEmbedder" />
-					<Add directory="$(#wx)/lib/gcc_dll" />
+					<Add directory="$(#wx.lib)/gcc_dll" />
 					<Add directory="$(#cb)/devel" />
 				</Linker>
 				<ExtraCommands>
@@ -62,12 +62,11 @@
 					<Add option="-Winvalid-pch" />
 					<Add option="-D__WXMSW__" />
 					<Add option="-DWXUSINGDLL" />
-					<Add option="-DWX_PRECOMP" />
 					<Add option="-DwxUSE_UNICODE" />
 					<Add option="-D_WINDOWS" />
-					<Add directory="$(#wx)/lib/gcc_dll/mswu" />
-					<Add directory="$(#wx)/include" />
-					<Add directory="$(#cb)/include" />
+					<Add directory="$(#wx.lib)/gcc_dll/mswu" />
+					<Add directory="$(#wx.include)" />
+					<Add directory="$(#cb.include)" />
 					<Add directory="$(#cb)/sdk/wxscintilla/include" />
 					<Add directory="../XmlRpcEmbedder/XMLRPC/include" />
 					<Add directory="../XmlRpcEmbedder" />
@@ -76,7 +75,7 @@
 					<Add library="wxmsw28u" />
 					<Add library="codeblocks" />
 					<Add library="XmlRpcEmbedder" />
-					<Add directory="$(#wx)/lib/gcc_dll" />
+					<Add directory="$(#wx.lib)/gcc_dll" />
 					<Add directory="$(#cb)/devel" />
 				</Linker>
 				<ExtraCommands>
@@ -89,6 +88,10 @@
 		<VirtualTargets>
 			<Add alias="All" targets="default;" />
 		</VirtualTargets>
+		<Compiler>
+			<Add option="-std=gnu++11" />
+			<Add option="-DNOPCH" />
+		</Compiler>
 		<Unit filename="PythonCodeCompletion.cpp" />
 		<Unit filename="PythonCodeCompletion.h" />
 		<Unit filename="manifest.xml" />

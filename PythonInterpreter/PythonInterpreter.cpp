@@ -1,12 +1,14 @@
-#include "PythonInterpreter.h"
+#include <wx/menu.h>
+#include <wx/regex.h>
 
 #include <configurationpanel.h>
-#include <wx/regex.h>
 
 //#include "ConfigDialog.h"
 #ifdef TOOLSPLUSLINK
 #include "ToolsPlus.h"
 #endif
+
+#include "PythonInterpreter.h"
 
 // Register the plugin with Code::Blocks.
 // We are using an anonymous namespace so we don't litter the global one.

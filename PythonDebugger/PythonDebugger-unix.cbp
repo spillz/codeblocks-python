@@ -16,7 +16,7 @@
 				<Compiler>
 					<Add option="-ansi" />
 					<Add option="-g" />
-					<Add directory="$(#cb)/include" />
+					<Add directory="$(#cb.include)" />
 					<Add directory="$(#cb)/sdk/wxscintilla/include" />
 				</Compiler>
 				<Linker>

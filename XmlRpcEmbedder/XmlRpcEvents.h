@@ -1,7 +1,8 @@
 #ifndef PYEVENTS_H_INCLUDED
 #define PYEVENTS_H_INCLUDED
 
-#include <wx/wx.h>
+#include <wx/event.h>
+
 #include "XmlRpc.h"
 
 /////////////////////////////////////////////////////////////////////////////////////

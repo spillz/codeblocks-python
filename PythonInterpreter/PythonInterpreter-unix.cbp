@@ -18,7 +18,7 @@
 					<Add option="-g" />
 					<Add option="`wx-config --cflags`" />
 					<Add option="`pkg-config --cflags codeblocks`" />
-					<Add directory="$(#cb)/include" />
+					<Add directory="$(#cb.include)" />
 				</Compiler>
 				<Linker>
 					<Add option="-Wl,-z,defs" />
@@ -43,7 +43,7 @@
 					<Add option="`wx-config --cflags`" />
 					<Add option="-DTOOLSPLUSLINK" />
 					<Add directory="$(#cb)/plugins/contrib/ToolsPlus" />
-					<Add directory="$(#cb)/include" />
+					<Add directory="$(#cb.include)" />
 				</Compiler>
 				<Linker>
 					<Add option="-Wl,-z,defs" />

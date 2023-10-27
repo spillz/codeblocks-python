@@ -165,8 +165,8 @@ class PythonCompletionServer:
         return True
 
 def cmd_err():
-    print 'Correct usage: python_completion_server.py <port>'
-    print '<port> must be a positive integer or -1 to use stdin/stdout'
+    print('Correct usage: python_completion_server.py <port>')
+    print('<port> must be a positive integer or -1 to use stdin/stdout')
     sys.exit()
 
 if __name__=='__main__':
